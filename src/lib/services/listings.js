@@ -1,0 +1,68 @@
+/** @file Listing lifecycle orchestration for actions and moderation. */
+
+import { cache } from "react";
+import { findListingByPublicId } from "@/lib/public-id";
+import { setListingStatus } from "@/lib/listings/status";
+import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
+
+/**
+ * Mark a listing resolved by its owner.
+ * @param {import("mongoose").Document} listing
+ * @returns {Promise<import("mongoose").Document>}
+ */
+export async function resolveListingRecord(listing) {
+  listing.resolvedAt = new Date();
+  return setListingStatus(listing, "resolved");
+}
+
+/**
+ * Extend expiry and reactivate if currently expired.
+ *
+ * @param {import("mongoose").Document} listing
+ * @param {{ listingExtensionDays: number }} settings
+ * @returns {Promise<import("mongoose").Document>}
+ */
+export async function extendListingRecord(listing, settings) {
+  const baseExpiry = listing.expiresAt || new Date();
+  listing.expiresAt = computeExtendedExpiresAt(baseExpiry, settings);
+  listing.extensionCount = (listing.extensionCount || 0) + 1;
+
+  if (listing.status === "expired") {
+    return setListingStatus(listing, "active");
+  }
+
+  await listing.save();
+  return listing;
+}
+
+/**
+ * Admin edit with optional status change — syncs ML index when status changes.
+ *
+ * @param {import("mongoose").Document} listing
+ * @param {object} fields
+ * @returns {Promise<import("mongoose").Document>}
+ */
+export async function applyListingAdminUpdate(listing, fields) {
+  const prevStatus = listing.status;
+
+  listing.type = fields.type;
+  listing.petType = fields.petType;
+  listing.breed = fields.breed || "";
+  listing.color = fields.color;
+  listing.description = fields.description || "";
+  listing.location = fields.location;
+
+  if (prevStatus !== fields.status) {
+    return setListingStatus(listing, fields.status);
+  }
+
+  listing.status = fields.status;
+  await listing.save();
+  return listing;
+}
+
+/** Cached listing fetch — shared by page render and generateMetadata. */
+export const getListingForPage = cache(async (publicId) => {
+  const doc = await findListingByPublicId(publicId);
+  return doc?.toObject?.() ?? null;
+});

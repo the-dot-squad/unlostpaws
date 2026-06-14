@@ -1,0 +1,703 @@
+{
+  "common": {
+    "appName": "UnLostPaws",
+    "tagline": "Help reunite pets with their families",
+    "search": "Search",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "all": "All",
+    "none": "None",
+    "error": "Something went wrong",
+    "success": "Success",
+    "required": "Required",
+    "optional": "Optional"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "We couldn't find the page you're looking for. It may have been moved, deleted, or never existed.",
+    "backHome": "Back to Home",
+    "backNav": "Go Back"
+  },
+  "upload": {
+    "uploading": "Uploading photos…",
+    "percent": "{percent}%",
+    "failed": "Upload failed. Please try again.",
+    "invalidExtension": "Only JPG and PNG files are allowed.",
+    "invalidType": "Only JPEG and PNG images are allowed.",
+    "formatsHint": "JPG or PNG only",
+    "addPhotos": "Add photos"
+  },
+  "nav": {
+    "home": "Home",
+    "listings": "Pet Alerts",
+    "map": "Map",
+    "about": "About us",
+    "createListing": "Post Alert",
+    "account": "My Account",
+    "myListings": "My Alerts",
+    "myPets": "My Pets",
+    "matches": "Possible Matches",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "admin": "Admin"
+  },
+  "home": {
+    "heroTitle": "Find lost pets and reunite families.",
+    "heroSubtitle": "Post a missing, found, or sighting alert. Our community and smart matching help bring pets home.",
+    "ctaReport": "Report a Pet",
+    "ctaBrowse": "Browse Alerts",
+    "statsTitle": "Community impact at a glance",
+    "statsSubtitle": "Live counts from active alerts and successful reunions across the platform.",
+    "statsMissing": "Missing pets",
+    "statsFound": "Found pets",
+    "statsSurrender": "Surrender listings",
+    "statsReunited": "Pets reunited",
+    "statsUsers": "Community members",
+    "featuresTitle": "How UnLostPaws helps",
+    "featuresSubtitle": "Everything you need to report, search, and reunite pets in your community.",
+    "features": {
+      "search": {
+        "title": "Browse & filter alerts",
+        "description": "Search by pet type, color, and location to find missing or found animals near you."
+      },
+      "matching": {
+        "title": "Smart photo matching",
+        "description": "When you report a missing pet, our system compares photos against found and sighting alerts automatically."
+      },
+      "map": {
+        "title": "Interactive map",
+        "description": "See all active alerts on a live map and explore what's happening in your area."
+      },
+      "alerts": {
+        "title": "Community alerts",
+        "description": "Post missing, found, or sighting reports and get notified when a possible match is found."
+      },
+      "about": {
+        "title": "Who we are",
+        "description": "UnLostPaws is a community-driven platform built to help neighbors spot, share, and reunite lost pets.",
+        "link": "Learn about us"
+      }
+    },
+    "recentAlerts": {
+      "title": "Latest alerts",
+      "subtitle": "Recently posted missing and found pet reports",
+      "viewAll": "View all alerts",
+      "emptyTitle": "No alerts yet",
+      "emptyDescription": "Be the first to help: post a missing or found pet alert.",
+      "emptyAction": "Post an alert"
+    }
+  },
+  "listingTypes": {
+    "missing": "Missing",
+    "found": "Found",
+    "sighting": "Sighting",
+    "surrender": "Surrender"
+  },
+  "petTypes": {
+    "dog": "Dog",
+    "cat": "Cat",
+    "bird": "Bird",
+    "rabbit": "Rabbit",
+    "hamster": "Hamster",
+    "fish": "Fish",
+    "reptile": "Reptile",
+    "horse": "Horse",
+    "other": "Other"
+  },
+  "listings": {
+    "title": "Pet Alerts",
+    "heroSubtitle": "Filter by type, pet, color, or location.",
+    "createTitle": "Create Pet Alert",
+    "detailTitle": "Alert Details",
+    "noResults": "No alerts found",
+    "filters": "Filters",
+    "type": "Alert type",
+    "petType": "Pet type",
+    "color": "Color",
+    "breed": "Breed",
+    "description": "Description",
+    "location": "Location",
+    "radius": "Search radius",
+    "radiusKm": "{km} km",
+    "nearMe": "Near me",
+    "useMyLocation": "Use my location",
+    "clearLocation": "Clear location",
+    "clearCountry": "Clear country",
+    "locationDenied": "Location access denied. Enable location in your browser settings.",
+    "locationActive": "Showing alerts near you",
+    "noResultsTitle": "No alerts found",
+    "noResultsDescription": "Try adjusting your filters or expanding your search radius.",
+    "noResultsAction": "Post an alert",
+    "search": "Search",
+    "clearFilters": "Clear filters",
+    "resultsSummary": "Showing {from}-{to} of {total} results",
+    "radiusOptions": {
+      "5": "5 km",
+      "10": "10 km",
+      "25": "25 km",
+      "50": "50 km",
+      "100": "100 km"
+    },
+    "images": "Photos",
+    "imagesHint": "Upload at least 2 clear photos. Location from photo metadata is applied automatically when available.",
+    "stepOf": "Step {current} of {total}",
+    "locationFromPhoto": "Location detected from photo",
+    "locationFromPhotoHint": "Location was detected from your photo. Drag the pin on the map if you need to adjust it.",
+    "contact": "Contact",
+    "wantToContact": "Want to get in touch?",
+    "contactRevealHint": "Complete a quick verification to view the owner's contact details.",
+    "contactRevealed": "Contact details",
+    "contactUnavailable": "Contact is not available for this alert.",
+    "contactReveal": "Show contact info",
+    "contactVerifying": "Verifying…",
+    "contactLoading": "Loading contact…",
+    "contactErrors": {
+      "captchaRequired": "Please complete the verification.",
+      "captchaFailed": "Verification failed. Please try again.",
+      "captchaExpired": "Verification expired. Please try again.",
+      "captchaUnavailable": "Verification is temporarily unavailable.",
+      "notFound": "This alert is no longer available.",
+      "selfContact": "You cannot contact yourself.",
+      "unavailable": "The owner has not enabled contact methods.",
+      "generic": "Could not load contact details. Please try again."
+    },
+    "allowEmail": "Allow contact via email",
+    "allowPhone": "Allow contact via phone",
+    "exifConsent": "Use location from photo metadata (if available)",
+    "status": {
+      "active": "Active",
+      "resolved": "Resolved",
+      "expired": "Expired",
+      "removed": "Removed",
+      "under_review": "Under review"
+    },
+    "steps": {
+      "details": "Pet details",
+      "location": "Location",
+      "photos": "Photos & contact"
+    },
+    "report": "Report this alert",
+    "reportHint": "Help us keep the community safe. Your report is reviewed by our moderation team.",
+    "reportSignInHint": "Sign in to report issues with this alert.",
+    "signInToReport": "Sign in to report",
+    "reportReason": "Reason",
+    "reportDetails": "Additional details",
+    "reportDetailsPlaceholder": "Describe the issue (optional)",
+    "reported": "Report submitted. Thank you.",
+    "reportErrors": {
+      "authRequired": "Sign in to report this alert.",
+      "captchaRequired": "Please complete the verification.",
+      "captchaFailed": "Verification failed. Please try again.",
+      "captchaExpired": "Verification expired. Please try again.",
+      "captchaUnavailable": "Verification is temporarily unavailable.",
+      "notFound": "This alert is no longer available.",
+      "selfReport": "You cannot report your own alert.",
+      "alreadyReported": "You have already reported this alert.",
+      "reportLimitBanned": "Daily report limit exceeded. Your account has been suspended.",
+      "detailsTooLong": "Details are too long (max 2,000 characters).",
+      "generic": "Could not submit your report. Please try again."
+    },
+    "markResolved": "Mark as resolved",
+    "resolvedSuccess": "Alert marked as resolved",
+    "postedAt": "Posted",
+    "postedBy": "Posted by",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "anonymousPoster": "Community member",
+    "showOnMap": "Show on map",
+    "editListing": "Edit alert",
+    "saveChanges": "Save changes",
+    "extension": {
+      "title": "Alert duration",
+      "expiresOn": "Expires on {date}",
+      "disabled": "Extensions are not available for alerts at this time.",
+      "canExtend": "You can extend this alert by {days} days ({remaining, plural, one {# day} other {# days}} left).",
+      "tooEarly": "Extension opens when {fromDay} or fewer days remain (currently {remaining} days left).",
+      "expired": "This alert has expired and can no longer be extended.",
+      "extendButton": "Extend by {days} days",
+      "extending": "Extending…",
+      "success": "Alert extended successfully",
+      "errors": {
+        "extension_disabled": "Extensions are currently disabled.",
+        "not_active": "Only active alerts can be extended.",
+        "no_expiry": "This alert has no expiry date.",
+        "already_expired": "This alert has already expired.",
+        "too_early": "It is too early to extend this alert.",
+        "reunion_confirmed": "This alert is locked because a reunion match was confirmed.",
+        "generic": "Could not extend this alert. Please try again."
+      }
+    },
+    "reunionLocked": "Extension is disabled: a reunion match was confirmed for this alert.",
+    "created": "Alert created successfully",
+    "createdProcessingDelayed": "Alert posted. Photo analysis will start shortly.",
+    "duplicateWarning": "This alert is under review due to possible duplicate images",
+    "processing": {
+      "pending": "Analyzing photos…",
+      "processing": "Analyzing photos…",
+      "ready": "Photos analyzed",
+      "failed": "Photo analysis failed"
+    },
+    "retryProcessing": "Retry photo analysis",
+    "suggestedPet": "This alert may match your registered pet: {name}",
+    "viewSuggestedPet": "View registered pet",
+    "createSubtitle": "Three quick steps: pet details, location, then photos and contact.",
+    "colorRequired": "Please enter the pet's color.",
+    "locationRequired": "Please pick a location on the map or use your current position.",
+    "contactRequired": "Enable at least one contact method — email or phone.",
+    "contactHint": "Choose how other users can reach you. At least one method must be enabled.",
+    "createErrors": {
+      "captchaRequired": "Please complete the verification.",
+      "captchaFailed": "Verification failed. Please try again.",
+      "captchaExpired": "Verification expired. Please try again.",
+      "captchaUnavailable": "Verification is temporarily unavailable.",
+      "contactRequired": "Enable at least one contact method — email or phone.",
+      "imagesRequired": "Upload at least 2 clear photos.",
+      "uploadLimit": "Photo limit reached for this session. Go back and verify again to continue.",
+      "createFailed": "Could not create the listing. Please try again."
+    },
+    "country": "Country",
+    "city": "City",
+    "address": "Address",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "selectCountry": "Select country",
+    "searchCountry": "Search countries…",
+    "noCountryResults": "No countries found",
+    "mapPickerHint": "Click the map or drag the pin to set the alert location.",
+    "geocoding": "Looking up address…",
+    "stepGuide": {
+      "footer": "Your data helps reunite pets faster. We never share contact details without your permission.",
+      "photos": {
+        "title": "Photos & how to reach you",
+        "description": "Upload clear photos first; location data in your images can pre-fill the map in the next step.",
+        "point1": "At least 2 photos (multiple angles help others recognize the pet).",
+        "point2": "Photos with GPS metadata auto-detect where the pet was seen.",
+        "point3": "Enable email or phone so people can reach you when they spot a match."
+      },
+      "details": {
+        "title": "Describe the pet",
+        "description": "Pick the alert type and tell us about the animal.",
+        "point1": "Alert type sets how your post appears: missing, found, sighting, or surrender.",
+        "point2": "Pet type and color are used in search filters across the platform.",
+        "point3": "Breed and description help people confirm they've found the right animal."
+      },
+      "location": {
+        "title": "Where was the pet seen?",
+        "description": "Confirm or adjust the pin; we pre-fill from your photos when GPS data is available.",
+        "point1": "Drag the pin if the auto-detected spot needs a small correction.",
+        "point2": "We reverse-geocode coordinates to pre-fill the address for you.",
+        "point3": "Geo-search lets people nearby discover your alert instantly."
+      }
+    }
+  },
+  "reportReasons": {
+    "spam": "Spam",
+    "fake": "Fake or misleading",
+    "inappropriate": "Inappropriate content",
+    "duplicate": "Duplicate listing",
+    "other": "Other"
+  },
+  "account": {
+    "title": "My Account",
+    "welcome": "Welcome back, {name}",
+    "dashboardSubtitle": "Here's an overview of your alerts, pets, and possible matches.",
+    "phone": "Phone number",
+    "phoneHint": "International format, e.g. +1 555 123 4567",
+    "locale": "Preferred language",
+    "profileUpdated": "Profile updated",
+    "listingsSubtitle": "Pet alerts you've posted: missing, found, and sightings.",
+    "petsSubtitle": "Registered pets linked to your account for faster matching.",
+    "noListings": "You haven't posted any alerts yet",
+    "noMatches": "No possible matches yet. Post a missing pet alert to start matching.",
+    "pendingMatchesLabel": "Pending matches",
+    "pendingMatches": "{count} new",
+    "matchCount": "{count, plural, one {# match} other {# matches}}",
+    "matchesSection": "Matches on your alerts",
+    "matchesSectionHint": "Candidates for your missing pet alerts.",
+    "viewAllMatches": "View all",
+    "daysRemaining": "{count, plural, one {# day left} other {# days left}}",
+    "quickActions": "Quick actions",
+    "quickActionsHint": "Common tasks from your account.",
+    "changeAvatar": "Change photo",
+    "avatarUploading": "Uploading…",
+    "avatarHint": "JPG, PNG or WebP. Shown on your profile and contact requests.",
+    "nav": {
+      "dashboard": "Dashboard",
+      "profile": "Profile",
+      "openMenu": "Open account menu"
+    },
+    "profile": {
+      "subtitle": "Manage your personal details, contact info, and preferences.",
+      "photoTitle": "Profile photo",
+      "photoDescription": "Your photo from sign-in or a custom upload.",
+      "personalTitle": "Personal details",
+      "personalDescription": "Name and contact information used across the platform.",
+      "name": "Display name",
+      "email": "Email",
+      "emailHint": "Managed by your sign-in provider and cannot be changed here.",
+      "locationTitle": "Location",
+      "locationDescription": "Helps personalize alerts and matching in your area.",
+      "preferencesTitle": "Preferences",
+      "deleteAccountTitle": "Delete account",
+      "deleteAccountDescription": "Permanently delete your account and all associated data (alerts, pets, photos, and activity logs). This cannot be undone.",
+      "deleteAccountAction": "Delete my account",
+      "deleteAccountConfirm": "Delete your account ({email})? This permanently removes your alerts, pets, uploads, and all activity logs. This cannot be undone.",
+      "deleteAccountSuccess": "Your account has been deleted",
+      "deleteAccountError": "Could not delete your account"
+    }
+  },
+  "matches": {
+    "title": "Possible Matches",
+    "subtitle": "Review suggested matches for your missing pet alerts",
+    "similarity": "{score}% match",
+    "bestScore": "Best: {score}%",
+    "confidenceHigh": "High confidence",
+    "confidenceGood": "Good confidence",
+    "confidenceMedium": "Moderate confidence",
+    "confidenceLow": "Low confidence",
+    "dismiss": "Not a match",
+    "confirm": "Yes, reunited",
+    "compare": "Compare photos",
+    "viewCandidate": "View alert",
+    "viewAlert": "View alert",
+    "viewYourAlert": "View your alert",
+    "viewOnlyHint": "The missing pet owner will review this match. You can view the related alert but cannot confirm it.",
+    "reunitedMessage": "You confirmed this match. Your missing alert has been marked as reunited.",
+    "confirmSuccess": "Missing alert marked as reunited.",
+    "dismissSuccess": "Match dismissed.",
+    "actionError": "Could not update this match. Please try again.",
+    "notified": "We've emailed you about this possible match",
+    "yourPet": "Your alert photo",
+    "candidate": "Candidate photo",
+    "forAlert": "For alert",
+    "forListingTitle": "{type} - {color}",
+    "forListingSubtitle": "{count, plural, one {# possible match} other {# possible matches}}",
+    "filterActive": "Active",
+    "filterAll": "All",
+    "filterConfirmed": "Confirmed",
+    "filterDismissed": "Dismissed",
+    "noFiltered": "No matches in this category.",
+    "status": {
+      "pending": "Pending review",
+      "notified": "Notified",
+      "dismissed": "Dismissed",
+      "confirmed": "Confirmed"
+    }
+  },
+  "auth": {
+    "signInTitle": "Sign in to continue",
+    "signInSubtitle": "Use your social account to post and manage pet alerts",
+    "continueWith": "Continue with {provider}",
+    "welcomeBack": "Welcome back",
+    "brandPanelSubtitle": "Join our community helping reunite pets with their families.",
+    "termsNotice": "By signing in, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
+    "noProviders": "Sign-in is temporarily unavailable. No OAuth providers are configured.",
+    "errors": {
+      "access_denied": "Access was denied. You may have cancelled the sign-in request or refused permissions.",
+      "configuration_error": "There is a configuration issue with this sign-in method. Please try a different method or contact support.",
+      "invalid_credentials": "The credentials provided are invalid or have expired.",
+      "session_expired": "Your session has expired. Please try signing in again.",
+      "unauthorized": "You are not authorized to access this page.",
+      "user_banned": "Your account has been suspended due to violations of our policies.",
+      "generic": "An unexpected authentication error occurred. Please try again."
+    }
+  },
+  "myPets": {
+    "title": "My Pets",
+    "addPet": "Add Pet",
+    "editPet": "Edit Pet",
+    "name": "Name",
+    "microchipId": "Microchip ID",
+    "microchipHint": "15-digit ISO microchip number (e.g. 900123456789012)",
+    "petType": "Pet type",
+    "breed": "Breed",
+    "color": "Color",
+    "description": "Description",
+    "photo": "Photo",
+    "passportPhoto": "Pet passport photo",
+    "passportPhotoHint": "Official pet passport or registration document photo",
+    "noPets": "You haven't registered any pets yet",
+    "noPetsHint": "Register your pets to get match suggestions when similar alerts are posted.",
+    "petPhotosTitle": "Pet photos",
+    "petPhotosSubtitle": "Add up to 2 clear photos of your pet",
+    "petPhotosHint": "A front-facing photo is required. A second angle helps improve match accuracy.",
+    "photoPrimary": "Photo 1",
+    "photoSecondary": "Photo 2",
+    "passportSectionTitle": "Pet passport",
+    "passportSectionSubtitle": "Official registration or passport document",
+    "passportUploadAction": "Upload passport document",
+    "passportUploaded": "Passport document uploaded",
+    "passportReplace": "Replace",
+    "passportRemove": "Remove passport",
+    "viewPassport": "Click to view full document",
+    "photoCounter": "Photo {current} of {total}",
+    "details": "Details",
+    "noPhoto": "No photo",
+    "noPassportPhoto": "No passport photo",
+    "backToPets": "Back to pets",
+    "backToPet": "Back to pet",
+    "createdAt": "Added",
+    "updatedAt": "Last updated",
+    "created": "Pet registered successfully",
+    "updated": "Pet updated successfully",
+    "archived": "Pet archived",
+    "archive": "Archive",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "fillRequired": "Please fill in all required fields",
+    "invalidMicrochip": "Invalid microchip ID (must be 15 digits).",
+    "microchipDuplicate": "This microchip is already registered",
+    "maxPetsReached": "You've reached the maximum number of registered pets",
+    "photoRequired": "A photo is required",
+    "notFound": "Pet not found",
+    "status": {
+      "active": "Active",
+      "archived": "Archived",
+      "removed": "Removed"
+    }
+  },
+  "map": {
+    "title": "Alert Map",
+    "heroSubtitle": "Pan the map, set filters, then search the visible area for nearby alerts.",
+    "filters": "Filters",
+    "openFilters": "Filters",
+    "applyFilters": "Apply",
+    "alertType": "Alert type",
+    "petType": "Pet type",
+    "locateMe": "Use my location",
+    "loading": "Loading alerts...",
+    "noResults": "No alerts in this area",
+    "truncated": "Showing first {count} alerts. Zoom in to see more.",
+    "viewAlert": "View alert",
+    "searchThisArea": "Search this area",
+    "zoomInToSearch": "Zoom in closer to search this area",
+    "noPhoto": "Photo unavailable",
+    "locationDenied": "Location access denied",
+    "locationFound": "Centered on your location"
+  },
+  "footer": {
+    "description": "Every paw print tells a story. We help neighbors spot, share, and match lost pets (powered by community alerts, live maps, and smart photo matching) so more reunions happen close to home.",
+    "explore": "Explore",
+    "support": "Support & policies",
+    "contactHint": "Questions, feedback, or a partnership idea? Reach out through our contact form — we're here to help.",
+    "postAlertCta": "Post an alert",
+    "about": "About us",
+    "faq": "FAQ",
+    "privacy": "Privacy policy",
+    "terms": "Terms of service",
+    "contact": "Contact us",
+    "cookieSettings": "Cookie settings",
+    "copyright": "© {year} {appName}. All rights reserved."
+  },
+  "consent": {
+    "consentModal": {
+      "title": "We value your privacy",
+      "description": "We use essential cookies to keep you signed in and remember your preferences. With your permission, we also use analytics cookies to understand how UnLostPaws is used and improve the service.",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "managePreferences": "Manage preferences",
+      "privacyLink": "Privacy policy",
+      "termsLink": "Terms of service"
+    },
+    "preferencesModal": {
+      "title": "Cookie preferences",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "save": "Save preferences",
+      "close": "Close",
+      "serviceCounter": "Service|Services",
+      "sections": {
+        "intro": {
+          "title": "Your privacy choices",
+          "description": "You can change these settings at any time using the Cookie settings link in the footer. Essential cookies cannot be disabled because the site needs them to function."
+        },
+        "necessary": {
+          "title": "Essential cookies",
+          "description": "Required for sign-in, session security, language and theme preferences, and bot protection on forms (Cloudflare Turnstile). These cannot be disabled."
+        },
+        "analytics": {
+          "title": "Analytics",
+          "description": "Help us understand how visitors use UnLostPaws through Google Tag Manager. Data is used in aggregate to improve the platform. No advertising cookies are set by us."
+        },
+        "moreInfo": {
+          "title": "More information",
+          "description": "Read our <a href=\"{privacyUrl}\">privacy policy</a> or <a href=\"{contactUrl}\">contact us</a> if you have questions about cookies and your choices."
+        }
+      }
+    },
+    "services": {
+      "gtm": "Google Tag Manager"
+    }
+  },
+  "pages": {
+    "about": {
+      "title": "About us",
+      "heroSubtitle": "A community platform built to bring lost pets back to the people who love them.",
+      "intro": "UnLostPaws is a community-driven platform that helps reunite lost pets with their families.",
+      "missionTitle": "Our mission",
+      "mission": "We believe every lost pet deserves a chance to come home. By combining community alerts, geographic search, and smart photo matching, we make it easier for owners and finders to connect.",
+      "howTitle": "How it works",
+      "how1": "Post a missing, found, or sighting alert with photos and location details.",
+      "how2": "Browse and filter alerts on the map or listings page to find relevant reports.",
+      "how3": "Our system automatically compares photos and notifies owners when a possible match is found.",
+      "communityTitle": "Community first",
+      "community": "UnLostPaws is built for pet lovers who want to help. Every alert you post or share could be the link that brings a pet home."
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "heroSubtitle": "Quick answers to common questions about posting alerts, photo matching, and using UnLostPaws.",
+      "intro": "Can't find what you're looking for? Visit our contact page and we'll be happy to help.",
+      "items": [
+        {
+          "q": "How do I report a lost or found pet?",
+          "a": "Sign in, go to Post Alert, and follow the four steps: upload photos, add pet details, set the location on the map, and choose how others can contact you."
+        },
+        {
+          "q": "Is UnLostPaws free to use?",
+          "a": "Yes. Browsing alerts, posting reports, and receiving match notifications are free for everyone in the community."
+        },
+        {
+          "q": "How does photo matching work?",
+          "a": "When you upload photos, our system analyzes them and compares them against other active alerts. If a possible match is found, we notify the relevant owners."
+        },
+        {
+          "q": "Should I trust a match notification?",
+          "a": "Match suggestions are helpful starting points, not guarantees. Always verify in person and use your judgment before taking action."
+        },
+        {
+          "q": "How is my location used?",
+          "a": "Location powers map search and nearby alerts. You control when your browser shares location, and photo GPS metadata is only used if you allow it when posting."
+        },
+        {
+          "q": "How do I contact someone about an alert?",
+          "a": "Open the alert detail page and use the contact option if the poster allowed email or phone contact. You need to be signed in."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "heroSubtitle": "The rules and responsibilities that keep UnLostPaws safe and trustworthy for everyone.",
+      "lastUpdated": "Last updated: June 2026",
+      "s1Title": "1. Acceptance",
+      "s1": "By using UnLostPaws, you agree to these Terms of Service. If you do not agree, please do not use the platform.",
+      "s2Title": "2. User accounts",
+      "s2": "You must sign in with a supported social account to post alerts. You are responsible for the accuracy of information you provide.",
+      "s3Title": "3. Pet alerts",
+      "s3": "Alerts must relate to real missing, found, or sighting reports. False, misleading, or spam content may be removed and accounts may be suspended.",
+      "s4Title": "4. Photo matching",
+      "s4": "Smart matching is provided as a helpful suggestion only. We do not guarantee matches are correct. Always verify in person before taking action.",
+      "s5Title": "5. Liability",
+      "s5": "UnLostPaws is provided as-is. We are not liable for disputes between users or outcomes of reunification efforts.",
+      "s6Title": "6. Changes",
+      "s6": "We may update these terms at any time. Continued use of the platform constitutes acceptance of updated terms."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "heroSubtitle": "How we collect, use, and protect your information when you use UnLostPaws.",
+      "lastUpdated": "Last updated: June 2026",
+      "s1Title": "1. Information we collect",
+      "s1": "We collect information you provide when signing in (name, email via OAuth), posting alerts (photos, location, pet details), and using the platform.",
+      "s2Title": "2. How we use data",
+      "s2": "Your data is used to operate the platform, display alerts, run photo matching, and send match notifications. We do not sell your personal data.",
+      "s3Title": "3. Location data",
+      "s3": "Location is used for geographic search and map features. You control when location is shared via browser permissions.",
+      "s4Title": "4. Photos",
+      "s4": "Uploaded photos are processed for duplicate detection and photo matching. Embeddings are stored securely for matching purposes.",
+      "s5Title": "5. Data retention",
+      "s5": "Alerts expire automatically. You may request deletion of your account and associated data by contacting us.",
+      "s6Title": "6. Contact",
+      "s6": "For privacy questions, please use our contact page."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "heroSubtitle": "Questions, feedback, or need a hand? Send us a message and we'll get back to you.",
+      "formTitle": "Send a message",
+      "formDescription": "Tell us your name, what it's about, and how we can help.",
+      "responseTitle": "Response time",
+      "response": "We aim to respond within 2 business days.",
+      "reportTitle": "Report an issue",
+      "report": "To report a problematic alert, use the report button on the alert detail page.",
+      "form": {
+        "name": "Your name",
+        "namePlaceholder": "Jane Smith",
+        "topic": "Topic",
+        "topicPlaceholder": "e.g. Account help, partnership, feedback",
+        "message": "Message",
+        "messagePlaceholder": "How can we help you?",
+        "submit": "Send message",
+        "sending": "Sending...",
+        "success": "Message sent. Thank you! We'll be in touch soon.",
+        "errors": {
+          "name_too_short": "Please enter your name (at least 2 characters).",
+          "name_too_long": "Name is too long.",
+          "topic_too_short": "Please enter a topic (at least 2 characters).",
+          "topic_too_long": "Topic is too long.",
+          "message_too_short": "Please write a bit more detail (at least 10 characters).",
+          "message_too_long": "Message is too long.",
+          "send_failed": "Could not send your message. Please try again later.",
+          "captcha_required": "Please complete the security check.",
+          "captcha_failed": "Security check failed. Please try again.",
+          "captcha_unavailable": "Security check is unavailable. Try again later.",
+          "rate_limit_exceeded": "Too many requests. Please wait a moment and try again."
+        }
+      },
+      "emailTemplate": {
+        "subject": "Contact form: {topic}",
+        "heading": "New contact form submission",
+        "nameLabel": "Name",
+        "topicLabel": "Topic",
+        "messageLabel": "Message"
+      }
+    }
+  },
+  "users": {
+    "member": "Community member",
+    "memberSince": "Member since {date}",
+    "activeListings": "Active alerts",
+    "browseAll": "Browse all alerts",
+    "noListings": "No active alerts right now."
+  },
+  "seo": {
+    "defaultTitle": "Lost & Found Pets",
+    "defaultDescription": "Help reunite pets with their families worldwide. Post and browse missing, found, and sighting alerts.",
+    "homeTitle": "Find lost pets. Reunite families.",
+    "homeDescription": "Post a missing, found, or sighting alert. Browse the map and listings to help bring pets home.",
+    "listingsTitle": "Pet Alerts",
+    "listingsDescription": "Browse and filter missing, found, and sighting pet alerts by type, location, and details.",
+    "mapTitle": "Pet Alerts Map",
+    "mapDescription": "Explore active pet alerts on an interactive map and find reports near you.",
+    "createListingTitle": "Post Alert",
+    "signInTitle": "Sign In",
+    "accountTitle": "My Account",
+    "listingDetailDescription": "{type} {petType} alert in {location}. View photos and contact details on UnLostPaws.",
+    "userProfileTitle": "{name}",
+    "userProfileDescription": "View active pet alerts posted by {name} on UnLostPaws."
+  },
+  "feeds": {
+    "listingsTitle": "Pet Alerts",
+    "listingsDescription": "Latest active missing, found, and sighting pet alerts on UnLostPaws.",
+    "filteredTitle": "{filters} Alerts",
+    "filteredDescription": "Latest active pet alerts filtered by {filters}.",
+    "itemSummary": "{type} {petType} - {color}",
+    "breed": "Breed",
+    "location": "Location"
+  }
+}

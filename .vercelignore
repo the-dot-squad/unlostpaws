@@ -1,0 +1,4 @@
+# Python workers — not part of the Next.js app.
+# Excluded so Vercel does not upload PyTorch/requirements or confuse the Node build.
+# Next.js never imports workers/ anyway; deploy workers separately (Docker on Dokploy, etc.).
+workers/

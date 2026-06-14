@@ -1,0 +1,76 @@
+/* Admin CMS — align Jodit with the shadcn admin shell */
+
+.jodit-admin-editor .jodit-container:not(.jodit_inline) {
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+.jodit-admin-editor .jodit-toolbar__box {
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.jodit-admin-editor .jodit-workplace {
+  background: var(--background);
+}
+
+.jodit-admin-editor .jodit-wysiwyg {
+  min-height: 280px;
+  padding: 1rem 1.25rem;
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.jodit-admin-editor .jodit-wysiwyg h2 {
+  margin-top: 1.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.jodit-admin-editor .jodit-wysiwyg h3 {
+  margin-top: 1.25rem;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.jodit-admin-editor .jodit-wysiwyg p {
+  color: color-mix(in oklab, var(--foreground) 82%, var(--muted-foreground));
+}
+
+/* Tailwind preflight removes list markers — restore them inside the editor. */
+.jodit-admin-editor .jodit-wysiwyg ul,
+.jodit-admin-editor .jodit-wysiwyg ol {
+  margin-block: 0.75rem;
+  padding-inline-start: 1.75rem;
+  list-style-position: outside;
+}
+
+.jodit-admin-editor .jodit-wysiwyg ul {
+  list-style-type: disc;
+}
+
+.jodit-admin-editor .jodit-wysiwyg ol {
+  list-style-type: decimal;
+}
+
+.jodit-admin-editor .jodit-wysiwyg li {
+  display: list-item;
+  margin-block: 0.35rem;
+  color: color-mix(in oklab, var(--foreground) 82%, var(--muted-foreground));
+}
+
+.jodit-admin-editor .jodit-wysiwyg li p {
+  margin: 0;
+}
+
+.jodit-admin-editor .jodit-wysiwyg img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.jodit-admin-editor .jodit-placeholder {
+  color: var(--muted-foreground);
+}
