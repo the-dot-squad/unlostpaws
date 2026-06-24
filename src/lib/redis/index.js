@@ -50,7 +50,7 @@ export async function ensureRedisConnection() {
   const redis = getRedisConnection();
   if (redis.status === "ready") return redis;
 
-  if (redis.status === "end") {
+  if (redis.status === "end" || redis.status === "wait") {
     connectPromise = null;
   }
 

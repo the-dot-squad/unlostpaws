@@ -29,7 +29,15 @@ async function mapConcurrent(items, fn, concurrency = BULK_CONCURRENCY) {
  */
 export async function syncListingImageStatus(listingId, status) {
   await ListingImage.updateMany({ listingId }, { $set: { listingStatus: status } });
-  await updateQdrantListingImageStatus(listingId, status);
+
+  try {
+    await updateQdrantListingImageStatus(listingId, status);
+  } catch (err) {
+    console.error(
+      `[syncListingImageStatus] Qdrant update failed for listing ${listingId}:`,
+      err.message
+    );
+  }
 }
 
 /**
@@ -45,5 +53,14 @@ export async function syncListingImageStatusBulk(listingIds, status) {
 
   await ListingImage.updateMany({ listingId: { $in: listingIds } }, { $set: { listingStatus: status } });
 
-  await mapConcurrent(listingIds, (listingId) => updateQdrantListingImageStatus(listingId, status));
+  await mapConcurrent(listingIds, async (listingId) => {
+    try {
+      await updateQdrantListingImageStatus(listingId, status);
+    } catch (err) {
+      console.error(
+        `[syncListingImageStatusBulk] Qdrant update failed for listing ${listingId}:`,
+        err.message
+      );
+    }
+  });
 }

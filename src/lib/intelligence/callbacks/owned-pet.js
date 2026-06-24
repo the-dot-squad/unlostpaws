@@ -49,13 +49,6 @@ export async function processOwnedPetCallback(body) {
 
   const modelId = embeddingModel || "";
 
-  await OwnedPet.findByIdAndUpdate(ownedPetId, {
-    embeddingModel: modelId,
-    hasEmbedding: true,
-    processingStatus: "ready",
-    processingError: errors.length ? errors.map((e) => `${e.url}: ${e.error}`).join("; ") : "",
-  });
-
   await upsertOwnedPetVector({
     ownedPetId,
     vector: img.embedding,
@@ -66,6 +59,13 @@ export async function processOwnedPetCallback(body) {
       embeddingModel: modelId,
       name: pet.name,
     },
+  });
+
+  await OwnedPet.findByIdAndUpdate(ownedPetId, {
+    embeddingModel: modelId,
+    hasEmbedding: true,
+    processingStatus: "ready",
+    processingError: errors.length ? errors.map((e) => `${e.url}: ${e.error}`).join("; ") : "",
   });
 
   return NextResponse.json({
