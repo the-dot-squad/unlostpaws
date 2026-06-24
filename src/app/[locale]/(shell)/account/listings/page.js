@@ -1,5 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { getSession } from "@/lib/auth/session";
+import { requireActiveSessionPage } from "@/lib/auth/session";
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";
 import { ListingCard } from "@/components/listings/listing-card";
@@ -10,11 +10,11 @@ export default async function MyListingsPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await getSession();
+  const session = await requireActiveSessionPage(locale);
 
   await connectDB();
   const listings = (
-    await Listing.find({ userId: session.user.id }).sort({ createdAt: -1 }).lean()
+    await Listing.find({ userId: session.user.id, status: { $ne: "removed" } }).sort({ createdAt: -1 }).lean()
   ).map(attachListingPublicId);
 
   return (

@@ -47,7 +47,6 @@ export async function updateProfile({ name, phone, locale, country, city, image 
 export async function deleteMyAccount() {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const user = normalizeAuthUser(await getAuthUserById(session.user.id));
     if (!user) return { error: "Account not found" };

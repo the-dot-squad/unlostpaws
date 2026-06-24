@@ -47,13 +47,14 @@ async function redisCount(key, windowStart, now, windowSec) {
   const { ensureRedisConnection } = await import("@/lib/redis");
   const member = `${now}:${Math.random().toString(36).slice(2, 8)}`;
   const redis = await ensureRedisConnection();
-  const [, , card] = await redis
+  const results = await redis
     .multi()
     .zremrangebyscore(key, 0, windowStart)
     .zadd(key, now, member)
     .zcard(key)
     .expire(key, windowSec)
     .exec();
+  const card = results?.[2];
   return Number(card?.[1]) || 0;
 }
 

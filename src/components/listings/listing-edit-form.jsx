@@ -15,6 +15,7 @@ import { CountrySelect } from "@/components/form/country-select";
 import { LocationPickerMap } from "@/components/map/location-picker";
 import { updateListing } from "@/lib/actions/listings";
 import { ListingExtensionPanel } from "@/components/listings/listing-extension-panel";
+import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { hasSetCoordinates } from "@/lib/geo";
 
 /**
@@ -175,13 +176,16 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
               />
             </div>
 
-            <div className="flex justify-end gap-2 border-t pt-6">
-              <Button type="button" variant="outline" asChild>
-                <Link href={`/${locale}/listings/${listingId}`}>{t("common.cancel")}</Link>
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? t("common.loading") : t("listings.saveChanges")}
-              </Button>
+            <div className="flex items-center justify-between border-t pt-6">
+              <DeleteListingButton listingId={listingId} locale={locale} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" asChild>
+                  <Link href={`/${locale}/listings/${listingId}`}>{t("common.cancel")}</Link>
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? t("common.loading") : t("listings.saveChanges")}
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>

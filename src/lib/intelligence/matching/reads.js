@@ -77,7 +77,7 @@ export async function getAccountDashboardData(userId) {
   await connectDB();
 
   const [listingsCount, petsCount, matchGroups] = await Promise.all([
-    Listing.countDocuments({ userId }),
+    Listing.countDocuments({ userId, status: { $ne: "removed" } }),
     OwnedPet.countDocuments({ userId, status: "active" }),
     getMatchGroupsForUser(userId),
   ]);

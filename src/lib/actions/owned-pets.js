@@ -23,7 +23,6 @@ async function checkMicrochipUnique(microchipId, excludeId = null) {
 export async function createOwnedPet(data) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const parsed = validate(ownedPetSchema, data);
     if (!parsed.ok) {
@@ -96,10 +95,13 @@ export async function createOwnedPet(data) {
 export async function updateOwnedPet(publicId, data) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
     if (!pet) return { error: "NOT_FOUND" };
+
+    if (pet.status === "archived") {
+      return { error: "CANNOT_EDIT_ARCHIVED" };
+    }
 
     const parsed = validate(ownedPetSchema, data);
     if (!parsed.ok) {
@@ -161,7 +163,6 @@ export async function updateOwnedPet(publicId, data) {
 export async function archiveOwnedPet(publicId) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
     if (!pet) return { error: "NOT_FOUND" };
@@ -169,6 +170,48 @@ export async function archiveOwnedPet(publicId) {
     pet.status = "archived";
     await pet.save();
     await syncOwnedPetStatus(pet._id, "archived");
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    const authErr = authActionError(err);
+    if (authErr) return authErr;
+    throw err;
+  }
+}
+
+/** Restore an archived pet back to active. */
+export async function restoreOwnedPet(publicId) {
+  try {
+    const session = await requireActiveSession();
+
+    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
+    if (!pet) return { error: "NOT_FOUND" };
+
+    pet.status = "active";
+    await pet.save();
+    await syncOwnedPetStatus(pet._id, "active");
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (err) {
+    const authErr = authActionError(err);
+    if (authErr) return authErr;
+    throw err;
+  }
+}
+
+/** Soft-remove a pet (sets status to removed, deletes vectors). */
+export async function removeOwnedPet(publicId) {
+  try {
+    const session = await requireActiveSession();
+
+    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
+    if (!pet) return { error: "NOT_FOUND" };
+
+    pet.status = "removed";
+    await pet.save();
+    await syncOwnedPetStatus(pet._id, "removed");
 
     revalidatePath("/");
     return { success: true };

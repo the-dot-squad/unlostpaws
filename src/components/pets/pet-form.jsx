@@ -29,6 +29,7 @@ const ERROR_KEYS = {
   MAX_PETS_REACHED: "maxPetsReached",
   PHOTO_REQUIRED: "photoRequired",
   NOT_FOUND: "notFound",
+  CANNOT_EDIT_ARCHIVED: "cannotEditArchived",
 };
 
 export function PetForm({ locale, pet = null }) {

@@ -83,8 +83,7 @@ export async function pruneOrphanUploads({ maxAgeHours = 24 } = {}) {
   // 1. GATHER DATABASE REFERENCES
   
   // A. Listings
-  const listings = await Listing.find({}, { "images.s3Key": 1, "images.url": 1 }).lean();
-  for (const listing of listings) {
+  for await (const listing of Listing.find({}, { "images.s3Key": 1, "images.url": 1 }).cursor()) {
     if (listing.images) {
       for (const img of listing.images) {
         addReference(img);
@@ -93,22 +92,20 @@ export async function pruneOrphanUploads({ maxAgeHours = 24 } = {}) {
   }
 
   // B. ListingImages (denormalized ML vector metadata)
-  const listingImages = await ListingImage.find({}, { s3Key: 1, url: 1 }).lean();
-  for (const img of listingImages) {
+  for await (const img of ListingImage.find({}, { s3Key: 1, url: 1 }).cursor()) {
     addReference(img);
   }
 
   // C. OwnedPets
-  const pets = await OwnedPet.find({}, { photo: 1, photo2: 1, passportPhoto: 1 }).lean();
-  for (const pet of pets) {
+  for await (const pet of OwnedPet.find({}, { photo: 1, photo2: 1, passportPhoto: 1 }).cursor()) {
     addReference(pet.photo);
     addReference(pet.photo2);
     addReference(pet.passportPhoto);
   }
 
   // D. Users (profile pictures / avatars)
-  const users = await db.collection("user").find({}, { projection: { image: 1 } }).toArray();
-  for (const user of users) {
+  const userCursor = db.collection("user").find({}, { projection: { image: 1 } });
+  for await (const user of userCursor) {
     addReference(user.image);
   }
 

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { archiveOwnedPet } from "@/lib/actions/owned-pets";
 
@@ -22,7 +23,8 @@ export function ArchivePetButton({ petId, locale }) {
   }
 
   return (
-    <Button variant="destructive" size="sm" onClick={handleArchive}>
+    <Button variant="outline" size="sm" onClick={handleArchive} className="gap-1.5">
+      <Archive className="size-3.5" />
       {t("archive")}
     </Button>
   );

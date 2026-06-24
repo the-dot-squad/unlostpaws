@@ -7,7 +7,7 @@ import { Listing } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkListingRateLimit, incrementListingCount } from "@/lib/rate-limit";
 import { enqueueListingProcessing } from "@/lib/intelligence";
-import { extendListingRecord, resolveListingRecord } from "@/lib/services/listings";
+import { extendListingRecord, resolveListingRecord, deleteListingRecord } from "@/lib/services/listings";
 import {
   validate,
   createListingSchema,
@@ -29,7 +29,6 @@ import { verifyListingTurnstile } from "@/lib/turnstile";
 export async function createListing(data) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const rateCheck = await checkListingRateLimit(session.user.id);
     if (!rateCheck.allowed) {
@@ -113,7 +112,6 @@ export async function createListing(data) {
 export async function resolveListing(publicId) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const listing = await findListingByPublicId(publicId, { userId: session.user.id });
     if (!listing) return { error: "Not found" };
@@ -128,11 +126,33 @@ export async function resolveListing(publicId) {
   }
 }
 
+/** Soft-delete a listing (owner only). */
+export async function deleteListing(publicId) {
+  try {
+    const session = await requireActiveSession();
+
+    const listing = await findListingByPublicId(publicId, { userId: session.user.id });
+    if (!listing) return { error: "Not found" };
+
+    if (listing.status === "removed") {
+      return { success: true };
+    }
+
+    await deleteListingRecord(listing);
+    revalidatePath("/");
+    revalidatePath(`/listings/${publicId}`);
+    return { success: true };
+  } catch (err) {
+    const authErr = authActionError(err);
+    if (authErr) return authErr;
+    throw err;
+  }
+}
+
 /** Update editable fields on an active listing (owner only). */
 export async function updateListing(publicId, data) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const listing = await findListingByPublicId(publicId, {
       userId: session.user.id,
@@ -177,7 +197,6 @@ export async function updateListing(publicId, data) {
 export async function extendListing(publicId) {
   try {
     const session = await requireActiveSession();
-    await connectDB();
 
     const listing = await findListingByPublicId(publicId, { userId: session.user.id });
     if (!listing) {

@@ -4,6 +4,7 @@ import { cache } from "react";
 import { findListingByPublicId } from "@/lib/public-id";
 import { setListingStatus } from "@/lib/listings/status";
 import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
+import { ListingMatch } from "@/models/listing-match";
 
 /**
  * Mark a listing resolved by its owner.
@@ -13,6 +14,20 @@ import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
 export async function resolveListingRecord(listing) {
   listing.resolvedAt = new Date();
   return setListingStatus(listing, "resolved");
+}
+
+/**
+ * Soft-remove a listing by its owner.
+ * Sets status to "removed" and deletes all existing matches for this listing.
+ * @param {import("mongoose").Document} listing
+ * @returns {Promise<import("mongoose").Document>}
+ */
+export async function deleteListingRecord(listing) {
+  await setListingStatus(listing, "removed");
+  await ListingMatch.deleteMany({
+    $or: [{ listingAId: listing._id }, { listingBId: listing._id }],
+  });
+  return listing;
 }
 
 /**

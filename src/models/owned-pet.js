@@ -2,6 +2,7 @@
 
 import mongoose from "mongoose";
 import { OWNED_PET_STATUSES, PET_TYPES, PROCESSING_STATUSES } from "@/config/constants/enums";
+import { resolveImageUrl } from "@/lib/storage/urls";
 
 const imageSchema = new mongoose.Schema(
   {
@@ -49,8 +50,8 @@ export function serializeOwnedPetMedia(pet) {
   if (!pet) return { photo: null, photo2: null, passportPhoto: null };
 
   return {
-    photo: pet.photo?.url ? { url: String(pet.photo.url) } : null,
-    photo2: pet.photo2?.url ? { url: String(pet.photo2.url) } : null,
-    passportPhoto: pet.passportPhoto?.url ? { url: String(pet.passportPhoto.url) } : null,
+    photo: pet.photo ? { url: resolveImageUrl(pet.photo) } : null,
+    photo2: pet.photo2 ? { url: resolveImageUrl(pet.photo2) } : null,
+    passportPhoto: pet.passportPhoto ? { url: resolveImageUrl(pet.passportPhoto) } : null,
   };
 }

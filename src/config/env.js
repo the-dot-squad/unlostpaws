@@ -31,7 +31,10 @@ function resolveStorageConfig() {
   const forcePathStyle = process.env.S3_FORCE_PATH_STYLE !== "false";
 
   const normalizedEndpoint = endpoint?.replace(/\/$/, "");
-  const normalizedPublicUrl = publicUrl?.replace(/\/$/, "");
+  let normalizedPublicUrl = publicUrl?.replace(/\/$/, "");
+  if (normalizedPublicUrl && !normalizedPublicUrl.includes("://")) {
+    normalizedPublicUrl = `https://${normalizedPublicUrl}`;
+  }
 
   const credentials = {
     endpoint: normalizedEndpoint,

@@ -45,9 +45,6 @@ export async function ingestProcessedListing({
     return { error: "No images processed", status: 400 };
   }
 
-  listing.processingStatus = "processing";
-  await listing.save();
-
   const contentSafety = await assessContentSafety({ listing, images });
 
   if (contentSafety.blocked) {
