@@ -129,8 +129,9 @@ export async function assessContentSafety({ listing, images }) {
       reason: "inappropriate",
       note: details,
       silent: false,
+      save: false,
     });
-    await createSafetyReport(listing, evidence, details, "auto_soft_remove");
+    await createSafetyReport(listing, evidence, details, "auto_soft_remove", { save: false });
     return {
       blocked: true,
       blockMatching: true,
@@ -141,8 +142,8 @@ export async function assessContentSafety({ listing, images }) {
   }
 
   if (needsReview && listing.status === "active") {
-    await setListingStatus(listing, "under_review");
-    await createSafetyReport(listing, evidence, details, "auto_under_review");
+    await setListingStatus(listing, "under_review", { save: false });
+    await createSafetyReport(listing, evidence, details, "auto_under_review", { save: false });
     return {
       blocked: true,
       blockMatching: true,
@@ -152,7 +153,7 @@ export async function assessContentSafety({ listing, images }) {
     };
   }
 
-  await createSafetyReport(listing, evidence, details, "auto_flag");
+  await createSafetyReport(listing, evidence, details, "auto_flag", { save: false });
   return {
     blocked: false,
     blockMatching: true,
@@ -176,8 +177,9 @@ function buildDetailsSummary(signals) {
  * @param {object} evidence
  * @param {string} details
  * @param {string} auditAction
+ * @param {{ save?: boolean }} [options]
  */
-async function createSafetyReport(listing, evidence, details, auditAction) {
+async function createSafetyReport(listing, evidence, details, auditAction, { save = true } = {}) {
   const existing = await ModerationReport.findOne({
     listingId: listing._id,
     reporterId: "system",
@@ -210,7 +212,9 @@ async function createSafetyReport(listing, evidence, details, auditAction) {
   });
 
   listing.reportCount = (listing.reportCount || 0) + 1;
-  await listing.save();
+  if (save) {
+    await listing.save();
+  }
 }
 
 /**

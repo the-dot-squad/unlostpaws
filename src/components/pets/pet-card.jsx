@@ -36,7 +36,12 @@ export function PetCard({ pet, locale, petTypeLabel, statusLabel, processingLabe
 
   return (
     <Link href={ownedPetPath(pet.publicId, locale)} className="group block h-full">
-      <Card className="h-full overflow-hidden transition-all hover:border-primary/30 hover:shadow-md">
+      <Card
+        className={cn(
+          "h-full overflow-hidden transition-all hover:border-primary/30 hover:shadow-md",
+          pet.status === "archived" && "opacity-75 grayscale-[20%]"
+        )}
+      >
         <div
           className={cn(
             "relative bg-muted",

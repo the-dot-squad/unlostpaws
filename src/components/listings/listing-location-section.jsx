@@ -1,8 +1,20 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { MapPin } from "lucide-react";
-import { ListingReadonlyMap } from "@/components/map/listing-readonly-map";
+import { MapPin, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const ListingReadonlyMap = dynamic(
+  () => import("@/components/map/listing-readonly-map").then((mod) => mod.ListingReadonlyMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-72 min-h-[18rem] items-center justify-center rounded-lg border bg-muted">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 
 /**
  * Location address with an inline map below.

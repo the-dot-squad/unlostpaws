@@ -41,7 +41,7 @@ export async function purgeListingAssets(listing) {
  * @param {string} [options.note]
  * @param {boolean} [options.silent] Skip owner warning email
  */
-export async function softRemoveListing(listing, { reason = "duplicate", note = "", silent = false } = {}) {
+export async function softRemoveListing(listing, { reason = "duplicate", note = "", silent = false, save = true } = {}) {
   if (listing.status === "removed") {
     return { alreadyRemoved: true };
   }
@@ -50,7 +50,7 @@ export async function softRemoveListing(listing, { reason = "duplicate", note = 
 
   listing.moderationRemovedAt = new Date();
   listing.moderationReason = reason;
-  await setListingStatus(listing, "removed");
+  await setListingStatus(listing, "removed", { save });
 
   await recordConfirmedViolation(listing.userId, {
     listing,

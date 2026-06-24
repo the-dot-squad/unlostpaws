@@ -16,6 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { ProcessingStatusBadge } from "@/components/listings/processing-status-badge";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { ArchivePetButton } from "@/components/pets/archive-pet-button";
+import { RestorePetButton } from "@/components/pets/restore-pet-button";
+import { DeletePetButton } from "@/components/pets/delete-pet-button";
 import { PetDetailPhotos, PetPassportLink } from "@/components/pets/pet-detail-media";
 import { serializeOwnedPetMedia } from "@/models/owned-pet";
 import { formatDateTime } from "@/lib/format";
@@ -88,14 +90,22 @@ export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/${locale}/account/pets/${pet.publicId}?edit=1`}>
-              <Pencil className="size-3.5" />
-              {t("editPet")}
-            </Link>
-          </Button>
+          {pet.status !== "archived" && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/${locale}/account/pets/${pet.publicId}?edit=1`}>
+                <Pencil className="size-3.5" />
+                {t("editPet")}
+              </Link>
+            </Button>
+          )}
           {pet.status === "active" && (
             <ArchivePetButton petId={pet.publicId} locale={locale} />
+          )}
+          {pet.status === "archived" && (
+            <>
+              <RestorePetButton petId={pet.publicId} locale={locale} />
+              <DeletePetButton petId={pet.publicId} locale={locale} />
+            </>
           )}
         </div>
       </div>

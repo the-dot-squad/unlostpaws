@@ -51,19 +51,20 @@ export async function applyModeration({ listing, abuseScore, signals, relatedLis
       reason: "duplicate",
       note: details,
       silent: false,
+      save: false,
     });
 
-    await createAutoReport(listing, evidence, details, "auto_soft_remove");
+    await createAutoReport(listing, evidence, details, "auto_soft_remove", { save: false });
     return { action: "removed", reported: true };
   }
 
   if (abuseScore >= reviewThreshold && listing.status === "active") {
-    await setListingStatus(listing, "under_review");
-    await createAutoReport(listing, evidence, details, "auto_under_review");
+    await setListingStatus(listing, "under_review", { save: false });
+    await createAutoReport(listing, evidence, details, "auto_under_review", { save: false });
     return { action: "review", reported: true };
   }
 
-  await createAutoReport(listing, evidence, details, "auto_flag");
+  await createAutoReport(listing, evidence, details, "auto_flag", { save: false });
   return { action: "report", reported: true };
 }
 
@@ -72,8 +73,9 @@ export async function applyModeration({ listing, abuseScore, signals, relatedLis
  * @param {object} evidence
  * @param {string} details
  * @param {string} auditAction
+ * @param {{ save?: boolean }} [options]
  */
-async function createAutoReport(listing, evidence, details, auditAction) {
+async function createAutoReport(listing, evidence, details, auditAction, { save = true } = {}) {
   const existing = await ModerationReport.findOne({
     listingId: listing._id,
     reporterId: "system",
@@ -106,5 +108,7 @@ async function createAutoReport(listing, evidence, details, auditAction) {
   });
 
   listing.reportCount = (listing.reportCount || 0) + 1;
-  await listing.save();
+  if (save) {
+    await listing.save();
+  }
 }

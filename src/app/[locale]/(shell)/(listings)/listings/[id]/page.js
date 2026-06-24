@@ -73,6 +73,11 @@ export default async function ListingDetailPage({ params, searchParams }) {
   if (!listing) notFound();
 
   const isOwner = session?.user?.id === listing.userId;
+  const isStaff = session?.user?.role === "admin" || session?.user?.role === "moderator";
+ 
+  if (listing.status === "removed" && !isOwner && !isStaff) {
+    notFound();
+  }
   const prefix = `/${locale}`;
   const location = serializeListingLocation(listing.location);
   const countryLabel = getCountryName(location?.country || listing.location?.country, locale);

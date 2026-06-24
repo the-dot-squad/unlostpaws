@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { connectDB } from "@/config/db";
 import { findOwnedPetByPublicId, resolveOwnedPetPublicId } from "@/lib/public-id";
@@ -26,6 +26,9 @@ export default async function PetDetailPage({ params, searchParams }) {
   const isEditing = sp.edit === "1";
 
   if (isEditing) {
+    if (pet.status === "archived") {
+      redirect(`/${locale}/account/pets/${pet.publicId}`);
+    }
     return (
       <div className="py-2">
         <PetForm locale={locale} pet={{ ...pet, _id: pet._id.toString() }} />

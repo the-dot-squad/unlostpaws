@@ -7,13 +7,15 @@ import { syncListingImageStatus } from "@/lib/intelligence/sync-listing-image-st
  *
  * @param {import("mongoose").Document} listing
  * @param {string} status
- * @param {{ syncMl?: boolean }} [options]
+ * @param {{ syncMl?: boolean, save?: boolean }} [options]
  * @returns {Promise<import("mongoose").Document>}
  */
-export async function setListingStatus(listing, status, { syncMl = true } = {}) {
+export async function setListingStatus(listing, status, { syncMl = true, save = true } = {}) {
   const prev = listing.status;
   listing.status = status;
-  await listing.save();
+  if (save) {
+    await listing.save();
+  }
 
   if (syncMl && prev !== status) {
     await syncListingImageStatus(listing._id, status);

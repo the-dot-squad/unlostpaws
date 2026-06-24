@@ -31,7 +31,6 @@ function revalidateAdmin() {
 export async function updateListingStatus(listingPublicId, status) {
   try {
     await requireStaff();
-    await connectDB();
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
@@ -49,7 +48,6 @@ export async function updateListingStatus(listingPublicId, status) {
 export async function adminPurgeListing(listingPublicId) {
   try {
     await requireAdmin();
-    await connectDB();
 
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
@@ -68,7 +66,6 @@ export async function adminPurgeListing(listingPublicId) {
 export async function adminUpdateListing(listingPublicId, data) {
   try {
     await requireStaff();
-    await connectDB();
 
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
@@ -109,7 +106,6 @@ export async function adminUpdateListing(listingPublicId, data) {
 export async function adminExtendListing(listingPublicId) {
   try {
     await requireStaff();
-    await connectDB();
 
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
@@ -134,8 +130,6 @@ export async function resolveReportCase({ listingId, reason, action, note }) {
     if (action === "purge_listing") {
       await requireAdmin();
     }
-
-    await connectDB();
 
     const result = await resolveReportCaseService({
       listingId,
@@ -268,7 +262,6 @@ export async function updateAppSettings(data) {
 export async function updateOwnedPetStatus(petPublicId, status) {
   try {
     await requireStaff();
-    await connectDB();
 
     const pet = await OwnedPet.findOne({ publicId: petPublicId });
     if (!pet) return { error: "Pet not found" };
@@ -295,7 +288,6 @@ export async function updateOwnedPetStatus(petPublicId, status) {
 export async function updateOwnedPetAdminNote(petPublicId, adminNote) {
   try {
     await requireStaff();
-    await connectDB();
     await OwnedPet.findOneAndUpdate({ publicId: petPublicId }, { adminNote });
     revalidatePath("/admin/pets");
     revalidatePath(`/admin/pets/${petPublicId}`);
@@ -311,7 +303,6 @@ export async function updateOwnedPetAdminNote(petPublicId, adminNote) {
 export async function adminUpdateOwnedPet(petPublicId, data) {
   try {
     await requireStaff();
-    await connectDB();
 
     const pet = await OwnedPet.findOne({ publicId: petPublicId });
     if (!pet) return { error: "Pet not found" };
