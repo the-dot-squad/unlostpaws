@@ -13,7 +13,7 @@ import { syncOwnedPetStatus } from "@/lib/intelligence/sync-owned-pet-status";
 import { encodeOwnedPetPublicId, findOwnedPetByPublicId } from "@/lib/public-id";
 
 async function checkMicrochipUnique(microchipId, excludeId = null) {
-  const query = { microchipId };
+  const query = { microchipId, status: { $ne: "removed" } };
   if (excludeId) query._id = { $ne: excludeId };
   const existing = await OwnedPet.findOne(query);
   return !existing;

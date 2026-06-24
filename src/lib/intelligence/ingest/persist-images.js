@@ -47,11 +47,10 @@ export async function persistListingImages({ listing, images, modelId }) {
         returnDocument: "after",
       });
     } catch (err) {
-      if (err.code !== 11000) {
-        throw err;
-      }
+      if (err.code !== 11000) throw err;
+      // Race condition: concurrent worker inserted between our check and upsert.
+      // Retry as a pure update (no upsert) — the document already exists.
       doc = await ListingImage.findOneAndUpdate(filter, update, {
-        upsert: true,
         returnDocument: "after",
       });
     }

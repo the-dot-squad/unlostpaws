@@ -23,6 +23,8 @@
   - [Persian & Arabic Unicode Normalization](#persian--arabic-unicode-normalization)
   - [Orphan Uploads Cleanup Cron](#orphan-uploads-cleanup-cron)
 - [Tech Stack](#-tech-stack)
+- [Qdrant Collection Configuration](#-qdrant-collection-configuration)
+- [Webhook & Internal API Authentication](#-webhook--internal-api-authentication)
 - [Quick Start Guide](#-quick-start-guide)
   - [Prerequisites](#prerequisites)
   - [1. Frontend App Setup](#1-frontend-app-setup)
@@ -176,6 +178,78 @@ The system splits heavy computation into localized FastAPI worker tasks, running
 *   **Machine Learning Worker:** Python FastAPI, SigLIP2, Falconsai NSFW, pHash
 
 ---
+
+## 🔍 Qdrant Collection Configuration
+
+The platform uses **Qdrant Cloud** for vector similarity search across two collections. Collections and payload indexes are auto-created on first access via `ensureCollections()`, but the schema below is essential for manual recovery if collections are deleted.
+
+### Collections
+
+| Collection | Purpose | Vector Size | Distance |
+| :--- | :--- | :---: | :---: |
+| `listing_images` | Listing image SigLIP2 embeddings for cross-type matching | Configured via `QDRANT_VECTOR_SIZE` (default: `768`) | Cosine |
+| `owned_pets` | Registered pet embeddings for owner-matching | Same as above | Cosine |
+
+### Quantization (Optional)
+
+When `QDRANT_SCALAR_QUANTIZATION=true` is set, collections are created with **int8 scalar quantization**:
+
+```json
+{
+  "quantization_config": {
+    "scalar": {
+      "type": "int8",
+      "quantile": 0.99,
+      "always_ram": true
+    }
+  }
+}
+```
+
+### Payload Indexes
+
+**`listing_images`** indexes (all `keyword` type):
+- `listingId`, `listingStatus`, `petType`, `listingType`, `embeddingModel`, `userId`
+
+**`owned_pets`** indexes (all `keyword` type):
+- `userId`, `status`, `petType`, `embeddingModel`
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+| :--- | :---: | :--- | :--- |
+| `QDRANT_URL` | Yes | — | Qdrant Cloud cluster URL |
+| `QDRANT_API_KEY` | Yes | — | Qdrant API key |
+| `QDRANT_VECTOR_SIZE` | No | `768` | Embedding vector dimensions (must match ML model output) |
+| `QDRANT_SCALAR_QUANTIZATION` | No | `false` | Enable int8 scalar quantization for reduced memory |
+
+---
+
+## 🔐 Webhook & Internal API Authentication
+
+The ML vision worker and cron jobs authenticate via shared secrets. The platform supports three authentication methods for internal endpoints:
+
+### Authentication Methods
+
+| Method | Header / Parameter | Example |
+| :--- | :--- | :--- |
+| **Bearer Token** (preferred) | `Authorization: Bearer <secret>` | `Authorization: Bearer my-webhook-secret` |
+| **API Key Header** | `x-api-key: <secret>` | `x-api-key: my-webhook-secret` |
+| **Query Parameter** | `?token=<secret>` | `?token=my-webhook-secret` |
+
+> **⚠️ Note:** The `Authorization: Bearer` or `x-api-key` header methods are strongly preferred over query parameters. Query strings may be logged by reverse proxies, CDNs, and server access logs, potentially exposing the secret.
+
+### Endpoint Authentication Map
+
+| Endpoint | Secret Variable | Auth Function | Methods |
+| :--- | :--- | :--- | :--- |
+| `POST /api/webhooks/vision` | `WEBHOOK_SECRET` | `rejectInvalidInternalSecret` | Bearer, x-api-key, ?token |
+| `GET /api/cron/*` | `CRON_SECRET` | `rejectInvalidBearer` | Bearer only |
+
+### Worker Configuration
+
+Ensure the `WEBHOOK_SECRET` environment variable matches between the Next.js app (`.env.local`) and the vision worker (`.env`). The worker posts results to the webhook callback URL included in each Redis stream job payload.
+
 
 ## 🚀 Quick Start Guide
 

@@ -11,7 +11,7 @@ const listingImageSchema = new mongoose.Schema(
     listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing", required: true, index: true },
     s3Key: { type: String, required: true },
     url: { type: String, required: true },
-    md5: { type: String, index: true, sparse: true, unique: true },
+    md5: { type: String, index: true, sparse: true },
     phash: { type: String, index: true },
     /** First 4 hex chars of phash — narrows near-duplicate candidate set. */
     phashPrefix: { type: String, index: true },
