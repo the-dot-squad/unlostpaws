@@ -13,19 +13,6 @@ import {
 } from "@/lib/intelligence/matching/pairs";
 import { searchListingImages } from "@/lib/qdrant/listing-images";
 
-/**
- * @param {import("mongoose").Types.ObjectId|string} listingAId
- * @param {import("mongoose").Types.ObjectId|string} listingBId
- */
-async function shareIdenticalImageMd5(listingAId, listingBId) {
-  const [aImages, bImages] = await Promise.all([
-    ListingImage.find({ listingId: listingAId }).select("md5").lean(),
-    ListingImage.find({ listingId: listingBId }).select("md5").lean(),
-  ]);
-
-  const bSet = new Set(bImages.map((i) => i.md5).filter(Boolean));
-  return aImages.some((i) => i.md5 && bSet.has(i.md5));
-}
 
 /**
  * Score and persist cross-type listing matches for a processed listing.
@@ -78,6 +65,27 @@ export async function findListingMatches({
   const candidateMeta = new Map(candidatesInGeo.map((c) => [c._id.toString(), c]));
   const highThreshold = settings.matchConfidenceHighThreshold ?? 0.9;
 
+  // 1. Fetch source listing's image MD5s once outside the loop
+  const sourceImages = await ListingImage.find({ listingId }).select("md5").lean();
+  const sourceMd5s = new Set(sourceImages.map((img) => img.md5).filter(Boolean));
+
+  // 2. Fetch all candidate images and MD5s in a single query
+  const candidateImages = await ListingImage.find({
+    listingId: { $in: candidateIds },
+  }).select("listingId md5").lean();
+
+  // Group candidate MD5s by listingId in memory
+  const candidateMd5sByListing = new Map();
+  for (const img of candidateImages) {
+    const lid = String(img.listingId);
+    if (!candidateMd5sByListing.has(lid)) {
+      candidateMd5sByListing.set(lid, new Set());
+    }
+    if (img.md5) {
+      candidateMd5sByListing.get(lid).add(img.md5);
+    }
+  }
+
   const bestByListing = new Map();
 
   for (let qi = 0; qi < embeddings.length; qi++) {
@@ -124,11 +132,14 @@ export async function findListingMatches({
       continue;
     }
 
-    const [listingAId, listingBId] = canonicalListingPair(listingId, match.listingId);
-
-    if (await shareIdenticalImageMd5(listingAId, listingBId)) {
+    // Check if they share any identical image MD5 using the sets in memory (reduces DB queries)
+    const candidateMd5Set = candidateMd5sByListing.get(String(match.listingId)) || new Set();
+    const hasSharedMd5 = [...sourceMd5s].some((md5) => candidateMd5Set.has(md5));
+    if (hasSharedMd5) {
       continue;
     }
+
+    const [listingAId, listingBId] = canonicalListingPair(listingId, match.listingId);
 
     const isSourceA = String(listingAId) === String(listingId);
     const listingAUserId = isSourceA ? userId : candidate.userId;

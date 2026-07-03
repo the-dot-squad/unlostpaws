@@ -11,15 +11,8 @@ export function phashBitDistance(hexA, hexB) {
   }
 
   try {
-    let xor = BigInt(`0x${hexA}`) ^ BigInt(`0x${hexB}`);
-    let distance = 0;
-
-    while (xor > 0n) {
-      distance += Number(xor & 1n);
-      xor >>= 1n;
-    }
-
-    return distance;
+    const xor = BigInt(`0x${hexA}`) ^ BigInt(`0x${hexB}`);
+    return xor.toString(2).replace(/0/g, "").length;
   } catch {
     return Infinity;
   }
