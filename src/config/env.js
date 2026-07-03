@@ -1,6 +1,6 @@
 /** @file Central environment configuration — the only server-side env module. */
 
-import { resolveRedisUrl } from "@/lib/redis/resolve-url";
+
 
 export const isDev = process.env.NODE_ENV === "development";
 export const isProd = process.env.NODE_ENV === "production";
@@ -99,7 +99,7 @@ function assertProductionSecrets() {
 }
 
 const databaseUrl = requireEnv("DATABASE_URL", process.env.DATABASE_URL);
-const redisUrl = resolveRedisUrl(process.env.REDIS_URL, process.env.REDIS_PASSWORD);
+
 const storage = resolveStorageConfig();
 
 assertProductionSecrets();
@@ -119,7 +119,8 @@ export const env = {
   },
 
   redis: {
-    url: redisUrl,
+    url: process.env.UPSTASH_REDIS_REST_URL?.trim() || "",
+    token: process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || "",
   },
 
   auth: {

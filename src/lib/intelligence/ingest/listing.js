@@ -6,6 +6,7 @@ import { applyModeration } from "@/lib/intelligence/abuse/apply-moderation";
 import { persistListingImages } from "@/lib/intelligence/ingest/persist-images";
 import { findListingMatches } from "@/lib/intelligence/matching/find-listing-matches";
 import { notifyListingMatches } from "@/lib/intelligence/matching/notify";
+import { commitStatusSync } from "@/lib/listings/status";
 
 /**
  * Post-worker ingest for listings.
@@ -53,6 +54,7 @@ export async function ingestProcessedListing({
       ? errors.map((e) => `${e.url}: ${e.error}`).join("; ")
       : "";
     await listing.save();
+    await commitStatusSync(listing);
     return {
       success: true,
       contentBlocked: true,
@@ -77,6 +79,7 @@ export async function ingestProcessedListing({
       ? errors.map((e) => `${e.url}: ${e.error}`).join("; ")
       : "";
     await listing.save();
+    await commitStatusSync(listing);
     return {
       success: true,
       duplicate: true,
@@ -102,6 +105,7 @@ export async function ingestProcessedListing({
     ? errors.map((e) => `${e.url}: ${e.error}`).join("; ")
     : "";
   await listing.save();
+  await commitStatusSync(listing);
 
   const queryImages = images
     .filter((i) => i.embedding?.length)

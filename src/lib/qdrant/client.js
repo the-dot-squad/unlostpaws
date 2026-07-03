@@ -161,16 +161,19 @@ export async function ensureCollections() {
     return;
   }
 
-  await ensureCollection(COLLECTIONS.listingImages);
-  await ensureCollection(COLLECTIONS.ownedPets);
+  // Check and create both collections in parallel
+  await Promise.all([
+    ensureCollection(COLLECTIONS.listingImages),
+    ensureCollection(COLLECTIONS.ownedPets),
+  ]);
 
-  for (const field of LISTING_IMAGE_INDEXES) {
-    await ensurePayloadIndex(COLLECTIONS.listingImages, field);
-  }
+  // Create all payload indexes concurrently
+  const indexPromises = [
+    ...LISTING_IMAGE_INDEXES.map((field) => ensurePayloadIndex(COLLECTIONS.listingImages, field)),
+    ...OWNED_PET_INDEXES.map((field) => ensurePayloadIndex(COLLECTIONS.ownedPets, field)),
+  ];
 
-  for (const field of OWNED_PET_INDEXES) {
-    await ensurePayloadIndex(COLLECTIONS.ownedPets, field);
-  }
+  await Promise.all(indexPromises);
 
   collectionsReady = true;
 }

@@ -55,7 +55,9 @@ async function redisCount(key, windowStart, now, windowSec) {
     .expire(key, windowSec)
     .exec();
   const card = results?.[2];
-  return Number(card?.[1]) || 0;
+  // @upstash/redis returns raw command results directly as elements in the response array
+  // (e.g. results[2] is the number directly). ioredis returns them nested: [null, number].
+  return (Array.isArray(card) ? Number(card[1]) : Number(card)) || 0;
 }
 
 async function countHit(store, key, windowStart, now, windowSec) {

@@ -4,57 +4,34 @@
  */
 
 import mongoose from "mongoose";
-import IORedis from "ioredis";
+import { Redis } from "@upstash/redis";
 import { env } from "../src/config/env.js";
-import { redisConnectionOptions } from "../src/lib/redis/resolve-url.js";
 
 const IMAGE_QUEUE_STREAM = "unlostpaws:stream:vision-processing";
 
 const DATABASE_URL = env.db.url;
-const REDIS_URL = env.redis.url;
+const REST_URL = env.redis.url;
+const REST_TOKEN = env.redis.token;
 
-if (!REDIS_URL) {
-  console.error("REDIS_URL is required in .env.local");
+if (!REST_URL || !REST_TOKEN) {
+  console.error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in .env.local");
   process.exit(1);
-}
-
-/**
- * @param {string} url
- * @returns {Promise<import("ioredis").default>}
- */
-async function connectRedis(url) {
-  const redis = new IORedis(url, {
-    ...redisConnectionOptions(url),
-    retryStrategy: () => null,
-    maxRetriesPerRequest: 1,
-  });
-
-  redis.on("error", () => {});
-
-  try {
-    await redis.ping();
-    return redis;
-  } catch (err) {
-    redis.disconnect();
-    const message = err?.message || String(err);
-
-    if (message.includes("NOAUTH")) {
-      console.error(
-        "Redis authentication failed. Your Redis server requires a password.\n" +
-          "Set credentials in REDIS_URL (e.g. redis://:password@localhost:6379) " +
-          "or add REDIS_PASSWORD to .env.local."
-      );
-    } else {
-      console.error(`Redis connection failed: ${message}`);
-    }
-
-    process.exit(1);
-  }
 }
 
 async function main() {
   await mongoose.connect(DATABASE_URL);
-  const redis = await connectRedis(REDIS_URL);
+  
+  const redis = new Redis({
+    url: REST_URL,
+    token: REST_TOKEN,
+  });
+
+  try {
+    await redis.ping();
+  } catch (err) {
+    console.error(`Redis connection failed: ${err.message}`);
+    process.exit(1);
+  }
 
   const listings = await mongoose.connection.db
     .collection("listings")
@@ -72,15 +49,16 @@ async function main() {
     await redis.xadd(
       IMAGE_QUEUE_STREAM,
       "*",
-      "payload",
-      JSON.stringify({
-        listingId: listing._id.toString(),
-        imageUrls,
-        listingType: listing.type,
-        petType: listing.petType,
-        jobType: "listing",
-        attempt: 0,
-      })
+      {
+        payload: JSON.stringify({
+          listingId: listing._id.toString(),
+          imageUrls,
+          listingType: listing.type,
+          petType: listing.petType,
+          jobType: "listing",
+          attempt: 0,
+        })
+      }
     );
 
     await mongoose.connection.db.collection("listings").updateOne(
@@ -92,7 +70,6 @@ async function main() {
   }
 
   console.log(`Enqueued ${enqueued} listings`);
-  await redis.quit();
   await mongoose.disconnect();
 }
 

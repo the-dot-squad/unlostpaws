@@ -1,101 +1,61 @@
 /** @file Shared Redis connection for server-side job enqueueing and health probes. */
 
-import IORedis from "ioredis";
+import { Redis } from "@upstash/redis";
 import { env } from "@/config/env";
-import { redisConnectionOptions } from "@/lib/redis/resolve-url";
 
-/** @returns {boolean} Whether a Redis URL is configured. */
+/** @returns {boolean} Whether Upstash Redis is configured. */
 export function hasRedis() {
-  return Boolean(env.redis.url);
-}
-
-/** Stop reconnecting after a few attempts — prevents log spam when Redis is down. */
-function retryStrategy(times) {
-  if (times > 5) return null;
-  return Math.min(times * 200, 2000);
+  return Boolean(env.redis.url && env.redis.token);
 }
 
 let sharedConnection = null;
-/** @type {Promise<import("ioredis").default> | null} */
-let connectPromise = null;
 
 /**
- * Lazy singleton Redis client for enqueueing ML jobs.
- * @returns {import("ioredis").default}
+ * Lazy singleton Upstash Redis client.
+ * Returns a client wrapped with ioredis compatibility layer.
+ * @returns {Redis & { status: string, connect: Function, disconnect: Function, quit: Function }}
  */
 export function getRedisConnection() {
-  if (!env.redis.url) {
-    throw new Error("REDIS_URL is not configured");
+  if (!env.redis.url || !env.redis.token) {
+    throw new Error("Upstash Redis is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN");
   }
 
   if (!sharedConnection) {
-    sharedConnection = new IORedis(env.redis.url, {
-      ...redisConnectionOptions(env.redis.url),
-      lazyConnect: true,
-      enableOfflineQueue: false,
-      retryStrategy,
+    const client = new Redis({
+      url: env.redis.url,
+      token: env.redis.token,
     });
 
-    sharedConnection.on("error", () => {});
+    // Decorate client with a compatibility layer for ioredis
+    client.status = "ready";
+    client.connect = async () => client;
+    client.disconnect = () => {};
+    client.quit = async () => {};
+
+    sharedConnection = client;
   }
 
   return sharedConnection;
 }
 
 /**
- * Connect the shared client before issuing commands.
- * @returns {Promise<import("ioredis").default>}
+ * Connect the shared client before issuing commands (compatibility wrapper).
+ * @returns {Promise<Redis>}
  */
 export async function ensureRedisConnection() {
-  const redis = getRedisConnection();
-  if (redis.status === "ready") return redis;
-
-  if (redis.status === "end" || redis.status === "wait") {
-    connectPromise = null;
-  }
-
-  if (!connectPromise) {
-    connectPromise = redis.connect().catch((err) => {
-      connectPromise = null;
-      throw err;
-    });
-  }
-
-  await connectPromise;
-  return redis;
+  return getRedisConnection();
 }
 
 /**
- * Run commands on a short-lived Redis connection (admin probes, health checks).
+ * Run commands on a short-lived Redis connection (compatibility wrapper).
+ * Since Upstash Redis uses HTTP and is stateless, this uses the singleton client directly.
  *
  * @template T
- * @param {(client: import("ioredis").default) => Promise<T>} fn
+ * @param {(client: Redis) => Promise<T>} fn
  * @param {{ timeoutMs?: number }} [options]
  * @returns {Promise<T>}
  */
 export async function withRedisClient(fn, { timeoutMs = 3000 } = {}) {
-  if (!env.redis.url) {
-    throw new Error("REDIS_URL is not configured");
-  }
-
-  const client = new IORedis(env.redis.url, {
-    ...redisConnectionOptions(env.redis.url),
-    connectTimeout: timeoutMs,
-    commandTimeout: timeoutMs,
-    maxRetriesPerRequest: 1,
-    retryStrategy: () => null,
-    lazyConnect: true,
-    enableOfflineQueue: false,
-    autoResubscribe: false,
-    autoResendUnfulfilledCommands: false,
-  });
-
-  client.on("error", () => {});
-
-  try {
-    await client.connect();
-    return await fn(client);
-  } finally {
-    client.disconnect();
-  }
+  const client = getRedisConnection();
+  return await fn(client);
 }

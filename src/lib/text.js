@@ -36,36 +36,26 @@ export function normalizePersianArabic(str) {
  * @returns {number}
  */
 export function levenshteinDistance(a, b) {
-  if (a.length === 0) return b.length;
+  if (a.length < b.length) return levenshteinDistance(b, a);
   if (b.length === 0) return a.length;
 
-  const matrix = [];
+  let prevRow = Array.from({ length: b.length + 1 }, (_, i) => i);
+  let currRow = new Array(b.length + 1);
 
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          Math.min(
-            matrix[i][j - 1] + 1, // insertion
-            matrix[i - 1][j] + 1  // deletion
-          )
-        );
-      }
+  for (let i = 1; i <= a.length; i++) {
+    currRow[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+      currRow[j] = Math.min(
+        currRow[j - 1] + 1,      // insertion
+        prevRow[j] + 1,          // deletion
+        prevRow[j - 1] + cost    // substitution
+      );
     }
+    prevRow = [...currRow];
   }
 
-  return matrix[b.length][a.length];
+  return currRow[b.length];
 }
 
 /**

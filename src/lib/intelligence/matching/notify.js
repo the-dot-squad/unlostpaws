@@ -35,6 +35,15 @@ export async function notifyListingMatches({ listingId }) {
     return;
   }
 
+  // Bulk-fetch all candidate listings involved in these matches in a single query
+  const otherIds = pending.map((row) => {
+    const isSourceA = String(row.listingAId) === String(listingId);
+    return isSourceA ? row.listingBId : row.listingAId;
+  });
+  const uniqueOtherIds = [...new Set(otherIds.map((id) => String(id)))];
+  const otherListings = await Listing.find({ _id: { $in: uniqueOtherIds } }).lean();
+  const listingsMap = new Map(otherListings.map((l) => [l._id.toString(), l]));
+
   /** @type {Map<string, { userId: string, matches: object[], matchIds: object[] }>} */
   const byUser = new Map();
 
@@ -43,7 +52,7 @@ export async function notifyListingMatches({ listingId }) {
     const otherId = isSourceA ? row.listingBId : row.listingAId;
     const otherUserId = isSourceA ? row.listingBUserId : row.listingAUserId;
 
-    const otherListing = await Listing.findById(otherId).lean();
+    const otherListing = listingsMap.get(String(otherId));
     if (!otherListing) continue;
 
     const notifyUserIds = [];

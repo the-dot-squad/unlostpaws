@@ -56,7 +56,7 @@ const cspHeader = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["mongoose", "mongodb", "ioredis", "@qdrant/js-client-rest"],
+  serverExternalPackages: ["mongoose", "mongodb", "@qdrant/js-client-rest"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: mediaHost },

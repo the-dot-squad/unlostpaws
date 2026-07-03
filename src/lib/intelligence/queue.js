@@ -52,7 +52,7 @@ export async function enqueueImageJob(payload) {
       attempt: payload.attempt ?? 0,
     };
 
-    await redis.xadd(IMAGE_QUEUE_STREAM, "*", "payload", JSON.stringify(job));
+    await redis.xadd(IMAGE_QUEUE_STREAM, "*", { payload: JSON.stringify(job) });
     return { ok: true };
   } catch (err) {
     console.error("Enqueue failed:", err.message);

@@ -255,8 +255,8 @@ Ensure the `WEBHOOK_SECRET` environment variable matches between the Next.js app
 
 ### Prerequisites
 *   Node.js (v18.x or above)
-*   Docker (for running Redis locally)
 *   MongoDB Instance
+*   Upstash Redis Account (REST API)
 *   Qdrant Cloud Account
 
 ### 1. Frontend App Setup
@@ -273,12 +273,9 @@ npm install
 cp .env.example .env.local
 ```
 
-Edit your `.env.local` file with your connection strings (MongoDB, Redis, Qdrant, and storage credentials).
+Edit your `.env.local` file with your connection strings (MongoDB, Upstash Redis, Qdrant, and storage credentials).
 
 ```bash
-# Start a local Redis instance via Docker
-docker run -d -p 6379:6379 redis:7-alpine
-
 # Run the development server
 npm run dev
 ```
