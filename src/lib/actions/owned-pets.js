@@ -1,7 +1,6 @@
 /** @file Owned-pet server actions — register, update, archive. */
 "use server";
 
-import { connectDB } from "@/config/db";
 import { authActionError, requireActiveSession } from "@/lib/auth/session";
 import { OwnedPet } from "@/models/owned-pet";
 import { getAppSettings } from "@/lib/services/settings";
@@ -19,20 +18,22 @@ async function checkMicrochipUnique(microchipId, excludeId = null) {
   return !existing;
 }
 
+function mapOwnedPetValidationError(parsed) {
+  if (parsed.ok) return null;
+  if (parsed.error === "invalid_format") return "INVALID_MICROCHIP";
+  if (parsed.error === "required") return "REQUIRED";
+  return "PHOTO_REQUIRED";
+}
+
 /** Register a pet, enforce per-user limits, and enqueue ML embedding. */
 export async function createOwnedPet(data) {
   try {
     const session = await requireActiveSession();
 
     const parsed = validate(ownedPetSchema, data);
-    if (!parsed.ok) {
-      const code =
-        parsed.error === "invalid_format"
-          ? "INVALID_MICROCHIP"
-          : parsed.error === "required"
-            ? "REQUIRED"
-            : "PHOTO_REQUIRED";
-      return { error: code };
+    const validationError = mapOwnedPetValidationError(parsed);
+    if (validationError) {
+      return { error: validationError };
     }
 
     const petData = parsed.data;
@@ -104,14 +105,9 @@ export async function updateOwnedPet(publicId, data) {
     }
 
     const parsed = validate(ownedPetSchema, data);
-    if (!parsed.ok) {
-      const code =
-        parsed.error === "invalid_format"
-          ? "INVALID_MICROCHIP"
-          : parsed.error === "required"
-            ? "REQUIRED"
-            : "PHOTO_REQUIRED";
-      return { error: code };
+    const validationError = mapOwnedPetValidationError(parsed);
+    if (validationError) {
+      return { error: validationError };
     }
 
     const petData = parsed.data;

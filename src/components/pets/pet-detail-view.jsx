@@ -103,7 +103,7 @@ export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel
           )}
           {pet.status === "archived" && (
             <>
-              <RestorePetButton petId={pet.publicId} locale={locale} />
+              <RestorePetButton petId={pet.publicId} />
               <DeletePetButton petId={pet.publicId} locale={locale} />
             </>
           )}

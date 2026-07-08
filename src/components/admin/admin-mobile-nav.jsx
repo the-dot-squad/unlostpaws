@@ -18,9 +18,12 @@ export function AdminMobileNav({ userName, userRole, badges }) {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-60 p-0">
-        <div onClick={() => setOpen(false)}>
-          <AdminSidebar userName={userName} userRole={userRole} badges={badges} />
-        </div>
+        <AdminSidebar
+          userName={userName}
+          userRole={userRole}
+          badges={badges}
+          onNavigate={() => setOpen(false)}
+        />
       </SheetContent>
     </Sheet>
   );

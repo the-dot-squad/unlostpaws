@@ -1,8 +1,7 @@
 /** @file Sitemap data — active listings for search engine discovery. */
 
 import { connectDB } from "@/config/db";
-import { listingPublicId } from "@/models/listing";
-import { Listing } from "@/models/listing";
+import { listingPublicId, Listing } from "@/models/listing";
 
 const MAX_LISTINGS = 10_000;
 

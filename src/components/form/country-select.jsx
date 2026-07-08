@@ -39,7 +39,6 @@ export function CountrySelect({ value, onChange, label, id = "country" }) {
           <Button
             id={id}
             variant="outline"
-            role="combobox"
             aria-expanded={open}
             className="w-full justify-between font-normal"
           >

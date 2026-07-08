@@ -210,7 +210,7 @@
       "notFound": "This alert is no longer available.",
       "selfReport": "You cannot report your own alert.",
       "alreadyReported": "You have already reported this alert.",
-      "reportLimitBanned": "Daily report limit exceeded. Your account has been suspended.",
+      "reportLimitExceeded": "Daily report limit exceeded. Please try again tomorrow.",
       "detailsTooLong": "Details are too long (max 2,000 characters).",
       "generic": "Could not submit your report. Please try again."
     },
@@ -224,6 +224,16 @@
     "createdAt": "Created",
     "updatedAt": "Updated",
     "anonymousPoster": "Community member",
+    "share": "Share",
+    "shareSuccess": "Link copied to clipboard!",
+    "shareFailed": "Could not share link",
+    "shareDialogTitle": "Share this alert",
+    "shareFacebook": "Facebook",
+    "shareTwitter": "X (Twitter)",
+    "shareWhatsApp": "WhatsApp",
+    "shareTelegram": "Telegram",
+    "shareEmail": "Email",
+    "copyLink": "Copy Link",
     "showOnMap": "Show on map",
     "editListing": "Edit alert",
     "saveChanges": "Save changes",
@@ -514,6 +524,9 @@
     "terms": "Terms of service",
     "contact": "Contact us",
     "cookieSettings": "Cookie settings",
+    "gitHub": "GitHub Repo",
+    "donate": "Donate",
+    "project": "Project",
     "copyright": "© {year} {appName}. All rights reserved."
   },
   "consent": {
@@ -708,5 +721,83 @@
     "itemSummary": "{type} {petType} - {color}",
     "breed": "Breed",
     "location": "Location"
+  },
+  "emails": {
+    "common": {
+      "salutation": "Hi {name},",
+      "salutationFallback": "Hi there,",
+      "matchPercentage": "match"
+    },
+    "matchNotification": {
+      "subject": "Possible match for your missing pet — UnLostPaws",
+      "previewText": "Possible matches found for your missing pet: {missingTitle}.",
+      "heading": "Possible Sighting Matches",
+      "salutation": "Hi {ownerName},",
+      "intro": "We found possible matches for your missing pet alert: <strong>{missingTitle}</strong>",
+      "noMatches": "No listings found",
+      "outro": "Please review these alerts — they may help reunite you with your pet.",
+      "ctaLabel": "View All Matches",
+      "textFallback": "Possible matches found for {missingTitle}. Visit {url}"
+    },
+    "corroborationMatch": {
+      "subject": "Possible related pet sighting — UnLostPaws",
+      "previewText": "We found alerts that may show the same animal as yours.",
+      "heading": "Possible Related Sighting",
+      "salutation": "Hi {ownerName},",
+      "intro": "We found pet sighting reports that match the description and image of your animal:",
+      "noMatches": "No listings found",
+      "outro": "Please click below to review these reports and verify if they match your pet.",
+      "ctaLabel": "Review Matches",
+      "textFallback": "Related pet sightings found. Visit {url}"
+    },
+    "moderationOutcome": {
+      "subject": "Update on your pet alert — UnLostPaws",
+      "previewText": "Your listing \"{listingTitle}\" has been reviewed. Action: {action}",
+      "heading": "Listing Moderation Update",
+      "salutation": "Hi {ownerName},",
+      "intro": "Your listing \"<strong>{listingTitle}</strong>\" has been reviewed by our trust & safety team.",
+      "decisionLabel": "Outcome Decision:",
+      "actionApproved": "Approved",
+      "actionRejected": "Rejected",
+      "strikeLine": "This records strike <strong>{strikes}</strong> of <strong>{threshold}</strong> on your account.{isSuspended, select, true { Your account is now suspended.} other {}}",
+      "outro": "UnLostPaws works to maintain a safe, respectful environment. Please follow our community guidelines for future posts.",
+      "ctaLabel": "View Account Status",
+      "textFallback": "Your alert \"{listingTitle}\" — Action: {action}{hasStrikes, select, true { (strike {strikes}/{threshold})} other {}}"
+    },
+    "moderationWarning": {
+      "subject": "Community guidelines warning — UnLostPaws",
+      "previewText": "Warning: community guideline violation on \"{listingTitle}\" ({reason}).",
+      "heading": "Community Guidelines Warning",
+      "intro": "We reviewed reports regarding your listing \"<strong>{listingTitle}</strong>\" and confirmed a guideline violation.",
+      "violationReasonLabel": "Violation Reason:",
+      "moderatorNoteLabel": "Moderator Note:",
+      "strikeLine": "This is strike <strong>{strikes}</strong> of <strong>{threshold}</strong> on your account. {hasRemaining, select, true {Please note that further confirmed violations may result in account suspension (<strong>{remaining}</strong> remaining strikes).} other {Your account is now subject to suspension.}}",
+      "outro": "Please review our community guidelines to avoid future violations.",
+      "ctaLabel": "Read Community Guidelines",
+      "textFallback": "Warning: violation ({reason}) on \"{listingTitle}\". Strike {strikes}/{threshold}.{hasNote, select, true { Note: {note}} other {}}"
+    },
+    "moderationBan": {
+      "subject": "Account suspended — UnLostPaws",
+      "previewText": "Your account has been suspended after {strikes} violations. Latest: \"{listingTitle}\"",
+      "heading": "Account Suspended",
+      "salutation": "Hi {ownerName},",
+      "suspendedNotice": "Your account has been suspended.",
+      "strikeExplanation": "This suspension was issued because your account reached <strong>{strikes}</strong> confirmed community guideline violations (limit: {threshold}).",
+      "latestViolationLabel": "Latest Violation:",
+      "reasonLabel": "Reason:",
+      "moderatorNoteLabel": "Moderator Note:",
+      "outro": "If you believe this decision was made in error, please contact our support team to file an appeal.",
+      "ctaLabel": "Contact Support / Appeal",
+      "textFallback": "Account suspended after {strikes} violations. Latest: \"{listingTitle}\" ({reason})."
+    },
+    "reportReceived": {
+      "subject": "Report received — UnLostPaws",
+      "previewText": "Thank you for your report. Our team will review it shortly.",
+      "heading": "Report Received",
+      "salutation": "Hi {reporterName},",
+      "intro": "Thank you for submitting your report. Our trust & safety team will review the details shortly to ensure all activity complies with our platform guidelines.",
+      "outro": "We appreciate your help in keeping UnLostPaws a safe community for pet reunifications.",
+      "textFallback": "Thank you for your report."
+    }
   }
 }

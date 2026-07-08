@@ -1,9 +1,8 @@
 import { connectDB } from "@/config/db";
-import { Listing } from "@/models/listing";
+import { Listing, attachListingPublicId } from "@/models/listing";
 import { normalizeCountryCode } from "@/config/countries";
 import { kmToMeters, isValidCoordinates } from "@/lib/geo";
-import { attachListingPublicId } from "@/models/listing";
-import { makeVariantInsensitiveRegex } from "../text.js";
+import { makeVariantInsensitiveRegex } from "@/lib/text.js";
 
 /**
  * Build the MongoDB match object shared by geo and non-geo listing searches.

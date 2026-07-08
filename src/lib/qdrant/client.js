@@ -13,6 +13,7 @@ const LISTING_IMAGE_INDEXES = [
   "listingType",
   "embeddingModel",
   "userId",
+  "location",
 ];
 
 const OWNED_PET_INDEXES = ["userId", "status", "petType", "embeddingModel"];
@@ -83,11 +84,6 @@ export function fromPointId(pointId) {
   return raw;
 }
 
-/** Keyword payload value for MongoDB ids stored in Qdrant filters. */
-export function toPayloadId(id) {
-  return String(id);
-}
-
 /** True when Qdrant has no matching point/collection (safe to ignore on delete/status sync). */
 export function isQdrantNotFoundError(err) {
   if (err?.status === 404) {
@@ -141,11 +137,12 @@ async function ensureCollection(name) {
 
 async function ensurePayloadIndex(collection, fieldName) {
   const qdrant = getQdrantClient();
+  const fieldSchema = fieldName === "location" ? "geo" : "keyword";
 
   try {
     await qdrant.createPayloadIndex(collection, {
       field_name: fieldName,
-      field_schema: "keyword",
+      field_schema: fieldSchema,
     });
   } catch (err) {
     const message = err?.message || String(err);
@@ -161,13 +158,11 @@ export async function ensureCollections() {
     return;
   }
 
-  // Check and create both collections in parallel
   await Promise.all([
     ensureCollection(COLLECTIONS.listingImages),
     ensureCollection(COLLECTIONS.ownedPets),
   ]);
 
-  // Create all payload indexes concurrently
   const indexPromises = [
     ...LISTING_IMAGE_INDEXES.map((field) => ensurePayloadIndex(COLLECTIONS.listingImages, field)),
     ...OWNED_PET_INDEXES.map((field) => ensurePayloadIndex(COLLECTIONS.ownedPets, field)),
@@ -178,7 +173,6 @@ export async function ensureCollections() {
   collectionsReady = true;
 }
 
-/** Drop and recreate ML vector collections (used by reset script). */
 export async function truncateMlCollections() {
   const qdrant = getQdrantClient();
 

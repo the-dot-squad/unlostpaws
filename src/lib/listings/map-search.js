@@ -1,6 +1,5 @@
 import { connectDB } from "@/config/db";
-import { Listing } from "@/models/listing";
-import { listingPublicId } from "@/models/listing";
+import { Listing, listingPublicId } from "@/models/listing";
 import { isValidCoordinates } from "@/lib/geo";
 import { MAP_LISTINGS_LIMIT } from "@/config/constants/platform";
 

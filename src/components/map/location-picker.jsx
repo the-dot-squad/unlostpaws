@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { Crosshair, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { reportRecoverableClientError } from "@/lib/observability/client-error";
 import { Button } from "@/components/ui/button";
 import { getBrowserCoordinates, hasSetCoordinates } from "@/lib/geo";
 import {
@@ -112,7 +113,8 @@ export function LocationPicker({
     try {
       const coords = await getBrowserCoordinates();
       handleCoordinatesChange(coords.lat, coords.lng, { source: "geolocate" });
-    } catch {
+    } catch (err) {
+      reportRecoverableClientError(err instanceof Error ? err : new Error(String(err)));
       toast.error(labels.locationDenied);
     } finally {
       setLocating(false);

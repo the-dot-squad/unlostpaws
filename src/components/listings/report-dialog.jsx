@@ -40,7 +40,7 @@ const REPORT_ERROR_KEYS = {
   not_found: "notFound",
   self_report: "selfReport",
   already_reported: "alreadyReported",
-  report_limit_banned: "reportLimitBanned",
+  report_limit_exceeded: "reportLimitExceeded",
   details_too_long: "detailsTooLong",
   invalid_body: "generic",
 };

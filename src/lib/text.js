@@ -40,7 +40,7 @@ export function levenshteinDistance(a, b) {
   if (b.length === 0) return a.length;
 
   let prevRow = Array.from({ length: b.length + 1 }, (_, i) => i);
-  let currRow = new Array(b.length + 1);
+  let currRow = Array.from({ length: b.length + 1 });
 
   for (let i = 1; i <= a.length; i++) {
     currRow[0] = i;

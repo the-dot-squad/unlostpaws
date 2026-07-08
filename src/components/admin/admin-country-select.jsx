@@ -33,7 +33,6 @@ export function AdminCountrySelect({ value, onChange, label = "Country", id = "c
           <Button
             id={id}
             variant="outline"
-            role="combobox"
             aria-expanded={open}
             className="w-full justify-between font-normal"
           >

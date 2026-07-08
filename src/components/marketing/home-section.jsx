@@ -26,17 +26,17 @@ export function HomeSection({ surface = "default", decor = false, className, chi
   );
 }
 
+function BackgroundBlob({ className }) {
+  return (
+    <div aria-hidden className={cn("pointer-events-none absolute rounded-full blur-3xl", className)} />
+  );
+}
+
 function HeroDecor() {
   return (
     <>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -end-32 -top-32 size-96 rounded-full bg-primary/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-32 -start-32 size-80 rounded-full bg-primary/[0.06] blur-3xl"
-      />
+      <BackgroundBlob className="-end-32 -top-32 size-96 bg-primary/10" />
+      <BackgroundBlob className="-bottom-32 -start-32 size-80 bg-primary/[0.06]" />
     </>
   );
 }
@@ -44,14 +44,8 @@ function HeroDecor() {
 function MutedDecor() {
   return (
     <>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -start-20 top-0 size-72 rounded-full bg-primary/[0.05] blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -end-20 bottom-0 size-72 rounded-full bg-primary/[0.05] blur-3xl"
-      />
+      <BackgroundBlob className="-start-20 top-0 size-72 bg-primary/[0.05]" />
+      <BackgroundBlob className="-end-20 bottom-0 size-72 bg-primary/[0.05]" />
     </>
   );
 }

@@ -2,19 +2,27 @@
 
 import { ModerationReport } from "@/models/moderation-report";
 import { getAppSettings } from "@/lib/services/settings";
-import { getAuthUserById, updateAuthUserById } from "@/lib/auth/users";
+import { getAuthUserById, updateAuthUserById, authUserIdFilter } from "@/lib/auth/users";
 import { getClientIp } from "@/lib/request-metadata";
 import { env } from "@/config/env";
 import { hasRedis, ensureRedisConnection } from "@/lib/redis";
 import { checkIpRateLimits } from "./ip";
 import { MAX_LISTING_IMAGES } from "@/config/constants/enums";
+import { getMongoDb } from "@/config/db";
 
 function isSameDay(a, b) {
-  return a.toDateString() === b.toDateString();
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate()
+  );
 }
 
 function isSameMonth(a, b) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth()
+  );
 }
 
 function uploadDayKey(userId, prefix) {
@@ -54,14 +62,58 @@ export async function checkListingRateLimit(userId) {
   return { allowed: true, listingsToday: today, listingsThisMonth: month };
 }
 
-export async function incrementListingCount(userId, listingsToday, listingsThisMonth) {
+export async function incrementListingCount(userId) {
+  const db = await getMongoDb();
+  const filter = authUserIdFilter(userId);
   const now = new Date();
-  await updateAuthUserById(userId, {
-    listingsToday: listingsToday + 1,
-    listingsThisMonth: listingsThisMonth + 1,
-    listingsTodayReset: now,
-    listingsMonthReset: now,
-  });
+  const currentDayString = now.toISOString().slice(0, 10);
+  const currentMonthString = now.toISOString().slice(0, 7);
+
+  await db.collection("user").updateOne(
+    filter,
+    [
+      {
+        $set: {
+          listingsToday: {
+            $cond: {
+              if: {
+                $and: [
+                  { $gt: ["$listingsTodayReset", null] },
+                  {
+                    $eq: [
+                      { $dateToString: { format: "%Y-%m-%d", date: "$listingsTodayReset", timezone: "UTC" } },
+                      currentDayString,
+                    ],
+                  },
+                ],
+              },
+              then: { $add: [{ $ifNull: ["$listingsToday", 0] }, 1] },
+              else: 1,
+            },
+          },
+          listingsThisMonth: {
+            $cond: {
+              if: {
+                $and: [
+                  { $gt: ["$listingsMonthReset", null] },
+                  {
+                    $eq: [
+                      { $dateToString: { format: "%Y-%m", date: "$listingsMonthReset", timezone: "UTC" } },
+                      currentMonthString,
+                    ],
+                  },
+                ],
+              },
+              then: { $add: [{ $ifNull: ["$listingsThisMonth", 0] }, 1] },
+              else: 1,
+            },
+          },
+          listingsTodayReset: now,
+          listingsMonthReset: now,
+        },
+      },
+    ]
+  );
 }
 
 export async function checkReportRateLimit(userId) {
@@ -77,8 +129,7 @@ export async function checkReportRateLimit(userId) {
 
   if (count < limit) return { allowed: true };
 
-  await updateAuthUserById(userId, { banned: true });
-  return { allowed: false, error: "report_limit_banned" };
+  return { allowed: false, error: "report_limit_exceeded" };
 }
 
 export async function enforceUploadRateLimits({ userId, prefix }) {
@@ -95,6 +146,12 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
 
   const listing = await checkListingRateLimit(userId);
   if (!listing.allowed) {
+    if (listing.reason === "banned") {
+      return { allowed: false, error: "user_banned", status: 403 };
+    }
+    if (listing.reason === "user_not_found") {
+      return { allowed: false, error: "user_not_found", status: 404 };
+    }
     return {
       allowed: false,
       error: listing.reason === "monthly" ? "listing_limit_monthly" : "listing_limit_daily",

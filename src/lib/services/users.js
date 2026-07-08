@@ -50,6 +50,9 @@ export async function purgeUserAccount(user) {
   await OwnedPet.deleteMany({ userId: user.id });
 
   await purgeUserReferences(user.id);
+  if (user.image) {
+    await deleteStoredMedia(user.image);
+  }
   await deleteAuthUserById(user.id);
 }
 

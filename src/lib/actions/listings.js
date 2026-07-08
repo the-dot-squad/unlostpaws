@@ -3,7 +3,7 @@
 
 import { connectDB } from "@/config/db";
 import { authActionError, requireActiveSession } from "@/lib/auth/session";
-import { Listing } from "@/models/listing";
+import { Listing, listingPublicId } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkListingRateLimit, incrementListingCount } from "@/lib/rate-limit";
 import { enqueueListingProcessing } from "@/lib/intelligence";
@@ -17,7 +17,6 @@ import {
 } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
-import { listingPublicId } from "@/models/listing";
 import { canUserExtendListing, computeInitialExpiresAt } from "@/lib/listings/expiry";
 import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunion";
 import { revealListingContact } from "@/lib/listings/reveal-contact";

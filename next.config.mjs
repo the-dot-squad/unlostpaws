@@ -43,7 +43,7 @@ const cspHeader = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https: http:",
   "font-src 'self' data:",
-  "connect-src 'self' https://challenges.cloudflare.com https://www.google-analytics.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
+  "connect-src 'self' https://api.github.com https://challenges.cloudflare.com https://www.google-analytics.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
   "wasm-src 'self'",
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",

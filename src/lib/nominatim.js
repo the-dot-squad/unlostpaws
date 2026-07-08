@@ -82,12 +82,15 @@ function parseReverseGeocode(payload) {
  * @returns {Promise<NominatimSuccess | NominatimFailure>}
  */
 export async function reverseGeocode(lat, lng) {
+  // Round coordinates to 4 decimal places to reduce geocoding errors and better caching
+  const roundedLat = Math.round(Number(lat) * 10000) / 10000;
+  const roundedLng = Math.round(Number(lng) * 10000) / 10000;
   const contactEmail = env.nominatim.contactEmail;
 
   const url = new URL(REVERSE_BASE);
   url.searchParams.set("format", "jsonv2");
-  url.searchParams.set("lat", String(lat));
-  url.searchParams.set("lon", String(lng));
+  url.searchParams.set("lat", String(roundedLat));
+  url.searchParams.set("lon", String(roundedLng));
   url.searchParams.set("addressdetails", "1");
   url.searchParams.set("zoom", "18");
   url.searchParams.set("email", contactEmail);

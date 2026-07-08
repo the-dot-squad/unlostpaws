@@ -39,7 +39,7 @@ export async function submitListingReport({ listingId, reason, details }) {
   const reporterId = session.user.id;
 
   // One report per user per listing — regardless of prior resolution status.
-  const existing = await ModerationReport.findOne({ listingId, reporterId });
+  const existing = await ModerationReport.findOne({ listingId: listing._id, reporterId });
   if (existing) {
     return { ok: false, status: 409, error: "already_reported" };
   }
@@ -68,7 +68,10 @@ export async function submitListingReport({ listingId, reason, details }) {
   await maybeAutoReviewListing(listing._id, reason);
 
   if (session.user.email) {
-    const email = reportReceivedEmail({ reporterName: session.user.name });
+    const email = await reportReceivedEmail({
+      reporterName: session.user.name,
+      locale: session.user.locale || "en",
+    });
     await sendEmail({ to: session.user.email, ...email }).catch(() => {});
   }
 

@@ -8,8 +8,7 @@
 import mongoose from "mongoose";
 import { unstable_cache } from "next/cache";
 import { ModerationReport } from "@/models/moderation-report";
-import { Listing } from "@/models/listing";
-import { attachListingPublicId } from "@/models/listing";
+import { Listing, attachListingPublicId } from "@/models/listing";
 import { ADMIN_PAGE_SIZE } from "@/config/constants/platform";
 
 export const MODERATION_CASES_TAG = "moderation-cases";

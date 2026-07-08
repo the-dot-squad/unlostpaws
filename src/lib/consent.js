@@ -1,8 +1,8 @@
 "use client";
 
 import * as CookieConsent from "vanilla-cookieconsent";
-import en from "../../messages/en.json";
-import fa from "../../messages/fa.json";
+import en from "@messages/en.json";
+import fa from "@messages/fa.json";
 import { routing } from "@/i18n/routing";
 
 /** @type {Record<string, typeof en.consent>} */

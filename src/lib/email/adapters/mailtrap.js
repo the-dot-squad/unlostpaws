@@ -1,7 +1,6 @@
 import { env } from "@/config/env";
+import { EMAIL_API_URLS } from "@/config/external-urls";
 import { requireBody } from "./utils.js";
-
-const SANDBOX_API = "https://sandbox.api.mailtrap.io";
 
 /**
  * Mailtrap Email Sandbox — dev-only; messages are captured in Mailtrap, not delivered.
@@ -17,16 +16,12 @@ export const mailtrapAdapter = {
     const from = env.email.from;
 
     if (!token || !sandboxId) {
-      console.log(
-        "[mailtrap-sandbox] skipped — set MAILTRAP_TOKEN and MAILTRAP_SANDBOX_ID to capture emails",
-        { to, subject }
-      );
       return { success: true, skipped: true };
     }
 
     requireBody({ html, text });
 
-    const res = await fetch(`${SANDBOX_API}/api/send/${sandboxId}`, {
+    const res = await fetch(`${EMAIL_API_URLS.mailtrapSandbox}/api/send/${sandboxId}`, {
       method: "POST",
       headers: {
         "Api-Token": token,

@@ -1,12 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { publicEnv } from "@/config/public";
 
 // Custom Github Icon matching Lucide style since Lucide-react doesn't export it in this project
-function GithubIcon(props) {
+export function GithubIcon(props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -24,38 +21,8 @@ function GithubIcon(props) {
   );
 }
 
-export function GithubStarButton() {
-  const [stars, setStars] = useState(null);
-
-  useEffect(() => {
-    const repoUrl = publicEnv.githubRepo;
-    if (!repoUrl) return;
-
-    try {
-      const urlObj = new URL(repoUrl);
-      const pathParts = urlObj.pathname.split("/").filter(Boolean);
-      if (pathParts.length >= 2) {
-        const owner = pathParts[0];
-        const repo = pathParts[1].replace(/\.git$/, "");
-        
-        fetch(`https://api.github.com/repos/${owner}/${repo}`)
-          .then((res) => {
-            if (res.ok) return res.json();
-            throw new Error("Failed to fetch GitHub repository data");
-          })
-          .then((data) => {
-            if (typeof data.stargazers_count === "number") {
-              setStars(data.stargazers_count);
-            }
-          })
-          .catch((err) => {
-            console.error("Error fetching Github stars:", err);
-          });
-      }
-    } catch (e) {
-      console.error("Invalid GitHub repo URL:", e);
-    }
-  }, []);
+export function GithubStarButton({ stars }) {
+  const showStars = typeof stars === "number";
 
   return (
     <Button
@@ -71,7 +38,7 @@ export function GithubStarButton() {
         aria-label="GitHub Repository"
       >
         <GithubIcon className="size-4" />
-        {stars !== null ? (
+        {showStars ? (
           <span className="flex items-center gap-1 text-xs font-semibold">
             <Star className="size-3.5 fill-amber-400 text-amber-400" />
             <span>{stars}</span>

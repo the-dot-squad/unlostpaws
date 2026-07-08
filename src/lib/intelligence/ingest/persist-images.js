@@ -67,6 +67,10 @@ export async function persistListingImages({ listing, images, modelId }) {
           embeddingModel: modelId,
           userId: listing.userId,
           url: img.url,
+          location: listing.location?.coordinates?.length === 2 ? {
+            lat: Number(listing.location.coordinates[1]),
+            lon: Number(listing.location.coordinates[0]),
+          } : undefined,
         },
       });
     }

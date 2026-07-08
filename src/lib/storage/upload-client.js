@@ -50,10 +50,17 @@ async function presignUpload(file, prefix) {
   return presignRes.json();
 }
 
-function uploadWithProgress(uploadUrl, formData, onProgress) {
+function uploadWithProgress(uploadUrl, file, key, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", uploadUrl);
+
+    const isLocal = uploadUrl.startsWith("/");
+    if (isLocal) {
+      xhr.open("POST", uploadUrl);
+    } else {
+      xhr.open("PUT", uploadUrl);
+      xhr.setRequestHeader("Content-Type", file.type);
+    }
 
     xhr.upload.addEventListener("progress", (event) => {
       if (!event.lengthComputable || !onProgress) return;
@@ -62,19 +69,25 @@ function uploadWithProgress(uploadUrl, formData, onProgress) {
 
     xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve(JSON.parse(xhr.responseText));
-        } catch {
-          reject(new Error("Invalid upload response"));
+        if (isLocal) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch {
+            reject(new Error("Invalid upload response"));
+          }
+        } else {
+          resolve({});
         }
         return;
       }
       let message = "Upload failed";
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (data.error) message = data.error;
-      } catch {
-        // ignore
+      if (isLocal) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data.error) message = data.error;
+        } catch {
+          // ignore
+        }
       }
       const error = new Error(message);
       error.code = message;
@@ -84,20 +97,28 @@ function uploadWithProgress(uploadUrl, formData, onProgress) {
     xhr.addEventListener("error", () => reject(new Error("Upload failed")));
     xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
 
-    xhr.send(formData);
+    if (isLocal) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("key", key);
+      xhr.send(formData);
+    } else {
+      xhr.send(file);
+    }
   });
 }
 
 export async function uploadImageFile(file, { prefix = "listings", onProgress } = {}) {
   const { uploadUrl, publicUrl, key } = await presignUpload(file, prefix);
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("key", key);
-
   onProgress?.(0);
-  const result = await uploadWithProgress(uploadUrl, formData, onProgress);
+  await uploadWithProgress(uploadUrl, file, key, onProgress);
   onProgress?.(100);
 
-  return { url: result.publicUrl || publicUrl, s3Key: key };
+  return {
+    url: publicUrl,
+    s3Key: key,
+    bytes: file.size,
+    contentType: file.type || (key.endsWith(".png") ? "image/png" : "image/jpeg"),
+  };
 }

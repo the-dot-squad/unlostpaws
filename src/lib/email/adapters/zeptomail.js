@@ -1,7 +1,6 @@
 import { env } from "@/config/env";
+import { EMAIL_API_URLS } from "@/config/external-urls";
 import { requireBody } from "./utils.js";
-
-const SEND_URL = "https://api.zeptomail.com/v1.1/email";
 
 /**
  * ZeptoMail transactional email API.
@@ -33,7 +32,7 @@ export const zeptomailAdapter = {
       ...(text && { textbody: text }),
     };
 
-    const res = await fetch(SEND_URL, {
+    const res = await fetch(EMAIL_API_URLS.zeptomailSend, {
       method: "POST",
       headers: {
         Accept: "application/json",

@@ -4,23 +4,26 @@ import {
   Bell,
   MapPin,
   PlusCircle,
-  LogIn,
   Info,
   MessageSquare,
   Shield,
   ScrollText,
   CircleHelp,
+  Heart,
+  Star,
 } from "lucide-react";
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
 import { SiteContainer } from "./site-container";
 import { AppLogo } from "./app-logo";
+import { GithubIcon } from "./github-star-button";
+import { publicEnv } from "@/config/public";
+import { getCachedGithubStars } from "@/lib/github";
 
 const EXPLORE_LINKS = [
   { key: "listings", href: "/listings", icon: Bell },
   { key: "map", href: "/map", icon: MapPin },
   { key: "about", href: "/about", icon: Info },
   { key: "createListing", href: "/listings/new", icon: PlusCircle },
-  { key: "signIn", href: "/sign-in", icon: LogIn },
 ];
 
 const SUPPORT_LINKS = [
@@ -30,11 +33,12 @@ const SUPPORT_LINKS = [
   { key: "privacy", href: "/terms/privacy", icon: Shield },
 ];
 
-function FooterLink({ href, icon: Icon, children }) {
+function FooterLink({ href, icon: Icon, children, ...props }) {
   return (
     <Link
       href={href}
       className="group inline-flex items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      {...props}
     >
       <Icon className="size-4 shrink-0 text-primary/70 transition-colors group-hover:text-primary" />
       <span>{children}</span>
@@ -46,6 +50,7 @@ export async function Footer({ locale = "en" }) {
   const t = await getTranslations();
   const prefix = `/${locale}`;
   const year = new Date().getFullYear();
+  const stars = await getCachedGithubStars();
 
   return (
     <footer className="relative mt-auto border-t bg-gradient-to-b from-muted/50 via-muted/30 to-background">
@@ -59,14 +64,12 @@ export async function Footer({ locale = "en" }) {
       />
 
       <SiteContainer className="relative py-12 md:py-14">
-        <div className="grid gap-10 md:grid-cols-3 md:gap-12">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.8fr_1fr_1fr_1fr] lg:gap-8">
           <div className="flex flex-col gap-4 md:pe-4">
             <Link href={prefix} className="inline-flex w-fit items-center gap-2.5 font-semibold">
               <AppLogo size="md" className="rounded-xl" />
               <span className="text-lg">{t("common.appName")}</span>
             </Link>
-
-            <p className="text-sm font-medium leading-snug text-primary">{t("common.tagline")}</p>
 
             <p className="text-sm leading-relaxed text-muted-foreground">{t("footer.description")}</p>
 
@@ -98,6 +101,35 @@ export async function Footer({ locale = "en" }) {
                   </FooterLink>
                 </li>
               ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="mb-4 text-sm font-semibold tracking-wide">{t("footer.project")}</h3>
+            <ul className="space-y-3">
+              <li>
+                <FooterLink
+                  href={publicEnv.githubRepo}
+                  icon={GithubIcon}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>{t("footer.gitHub")}</span>
+                    {typeof stars === "number" && (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                        <Star className="size-3 fill-amber-400 text-amber-400" />
+                        <span>{stars}</span>
+                      </span>
+                    )}
+                  </span>
+                </FooterLink>
+              </li>
+              <li>
+                <FooterLink href={`https://buymeacoffee.com/davod`} icon={Heart}>
+                  {t("footer.donate")}
+                </FooterLink>
+              </li>
               <li>
                 <CookiePreferencesLink label={t("footer.cookieSettings")} />
               </li>

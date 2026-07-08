@@ -7,6 +7,7 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/config/env";
 import { imageContentTypeFromExtension } from "@/lib/storage/images";
 import crypto from "crypto";
@@ -96,10 +97,26 @@ export async function createPresignedUpload({
   const keyPrefix = isS3Storage() || hasS3Backend() ? prefix : "dev";
   const key = `${keyPrefix}/${userId}/${crypto.randomUUID()}.${extension}`;
 
+  if (isS3Storage()) {
+    const client = getS3Client();
+    const command = new PutObjectCommand({
+      Bucket: env.storage.bucket,
+      Key: key,
+      ContentType: contentType,
+    });
+    const uploadUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
+    return {
+      key,
+      uploadUrl,
+      publicUrl: getPublicUrl(key),
+      contentType,
+    };
+  }
+
   return {
     key,
     uploadUrl: UPLOAD_API_PATH,
-    publicUrl: isS3Storage() ? getPublicUrl(key) : `/api/media/${key}`,
+    publicUrl: `/api/media/${key}`,
     contentType,
   };
 }

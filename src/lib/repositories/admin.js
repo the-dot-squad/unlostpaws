@@ -6,11 +6,10 @@
 
 import { getMongoDb } from "@/config/db";
 import { getAuthUserId, normalizeAuthUser } from "@/lib/auth/users";
-import { Listing } from "@/models/listing";
+import { Listing, attachListingPublicId } from "@/models/listing";
 import { OwnedPet } from "@/models/owned-pet";
 import { ModerationReport } from "@/models/moderation-report";
 import { getListingIdsWithOpenReports, getOpenReportStatsByListingIds } from "@/lib/moderation/report-cases";
-import { attachListingPublicId } from "@/models/listing";
 import { ADMIN_PAGE_SIZE } from "@/config/constants/platform";
 
 /** Escape special regex characters in user search input. */
