@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { Crosshair, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { reportRecoverableClientError } from "@/lib/observability/client-error";
 import { getBrowserCoordinates } from "@/lib/geo";
 import { ListingMapPopup } from "@/components/map/listing-map-popup";
 import {
@@ -191,7 +192,8 @@ function LocateMeButton({ mapActionsRef, onLocated, onDenied }) {
       const coords = await actions.centerOnUser();
       onLocated(coords);
       toast.success(t("locationFound"));
-    } catch {
+    } catch (err) {
+      reportRecoverableClientError(err instanceof Error ? err : new Error(String(err)));
       onDenied();
       toast.error(t("locationDenied"));
     } finally {

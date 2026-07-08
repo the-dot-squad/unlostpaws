@@ -9,7 +9,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     : routing.defaultLocale;
 
   // Dynamic import so message file edits are picked up reliably in dev.
-  const messages = (await import(`../../messages/${locale}.json`)).default;
+  const messages = (await import(`@messages/${locale}.json`)).default;
 
   return {
     locale,

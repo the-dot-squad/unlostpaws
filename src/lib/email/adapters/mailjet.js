@@ -1,7 +1,6 @@
 import { env } from "@/config/env";
+import { EMAIL_API_URLS } from "@/config/external-urls";
 import { requireBody } from "./utils.js";
-
-const SEND_URL = "https://api.mailjet.com/v3.1/send";
 
 /**
  * Mailjet Send API v3.1 (detailed per-message feedback).
@@ -30,7 +29,7 @@ export const mailjetAdapter = {
       ...(text && { TextPart: text }),
     };
 
-    const res = await fetch(SEND_URL, {
+    const res = await fetch(EMAIL_API_URLS.mailjetSend, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,

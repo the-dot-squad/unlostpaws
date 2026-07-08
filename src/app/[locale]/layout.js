@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { IntlProvider } from "@/components/providers/intl-provider";
 import { CookieConsentManager } from "@/components/consent/cookie-consent-manager";
 import { Toaster } from "sonner";
-import "../globals.css";
+import "@/app/globals.css";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

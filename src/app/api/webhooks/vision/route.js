@@ -1,7 +1,6 @@
 import { dispatchMlCallback } from "@/lib/intelligence/callbacks/dispatch";
 import { env } from "@/config/env";
 import { rejectInvalidInternalSecret } from "@/lib/request-metadata";
-import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
 

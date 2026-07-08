@@ -3,7 +3,7 @@ import Image from "next/image";
 import { connectDB } from "@/config/db";
 import { requireStaff } from "@/lib/auth/session";
 import { ListingMatch } from "@/models/listing-match";
-import { Listing } from "@/models/listing";
+import { Listing, listingPublicId } from "@/models/listing";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminFilterToolbar } from "@/components/admin/filter-toolbar";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
@@ -19,7 +19,6 @@ import {
 } from "@/components/admin/data-table";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
-import { listingPublicId } from "@/models/listing";
 
 function listingLabel(listing) {
   if (!listing) return "—";

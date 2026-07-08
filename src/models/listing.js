@@ -17,6 +17,8 @@ const imageSchema = new mongoose.Schema(
     url: { type: String, required: true },
     md5: String,
     phash: String,
+    bytes: Number,
+    contentType: String,
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -100,6 +102,9 @@ export function serializeListingImages(images) {
   return (images || []).map((img, index) => ({
     id: img._id?.toString?.() ?? String(index),
     url: resolveImageUrl(img) ?? String(img.url),
+    s3Key: img.s3Key,
+    bytes: img.bytes ?? null,
+    contentType: img.contentType ?? null,
     order: img.order ?? index,
   }));
 }

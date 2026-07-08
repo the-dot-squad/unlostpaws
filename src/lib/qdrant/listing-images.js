@@ -3,7 +3,6 @@ import {
   ensureCollections,
   getQdrantClient,
   normalizeVector,
-  toPayloadId,
   toPointId,
 } from "@/lib/qdrant/client";
 
@@ -18,6 +17,9 @@ function buildListingImageFilter({
   listingType,
   userId,
   excludeListingId,
+  excludeUserId,
+  center,
+  radiusKm,
 }) {
   const must = [
     { key: "listingStatus", match: { value: listingStatus } },
@@ -36,17 +38,37 @@ function buildListingImageFilter({
     must.push({ key: "userId", match: { value: userId } });
   }
 
+  if (excludeUserId) {
+    must.push({
+      key: "userId",
+      match: { except: [excludeUserId] },
+    });
+  }
+
   if (listingIds?.length) {
     must.push({
       key: "listingId",
-      match: { any: listingIds.map((id) => toPayloadId(id)) },
+      match: { any: listingIds.map((id) => String(id)) },
     });
   }
 
   if (excludeListingId) {
     must.push({
       key: "listingId",
-      match: { except: [toPayloadId(excludeListingId)] },
+      match: { except: [String(excludeListingId)] },
+    });
+  }
+
+  if (center && radiusKm) {
+    must.push({
+      key: "location",
+      geo_radius: {
+        center: {
+          lat: Number(center.lat),
+          lon: Number(center.lon),
+        },
+        radius: radiusKm * 1000,
+      },
     });
   }
 
@@ -74,13 +96,14 @@ export async function upsertListingImageVector({ listingImageId, vector, payload
         id: toPointId(listingImageId),
         vector,
         payload: {
-          listingId: toPayloadId(payload.listingId),
+          listingId: String(payload.listingId),
           listingStatus: payload.listingStatus,
           petType: payload.petType,
           listingType: payload.listingType,
           embeddingModel: payload.embeddingModel,
           userId: payload.userId,
           url: payload.url,
+          location: payload.location,
         },
       },
     ],
@@ -99,7 +122,25 @@ export async function updateListingImageStatus(listingId, status) {
     wait: true,
     payload: { listingStatus: status },
     filter: {
-      must: [{ key: "listingId", match: { value: toPayloadId(listingId) } }],
+      must: [{ key: "listingId", match: { value: String(listingId) } }],
+    },
+  });
+}
+
+/**
+ * @param {string[]|import('mongoose').Types.ObjectId[]} listingIds
+ * @param {string} status
+ */
+export async function updateListingImageStatusBulk(listingIds, status) {
+  if (!listingIds?.length) return;
+  await ensureCollections();
+  const qdrant = getQdrantClient();
+
+  await qdrant.setPayload(COLLECTION, {
+    wait: true,
+    payload: { listingStatus: status },
+    filter: {
+      must: [{ key: "listingId", match: { any: listingIds.map(String) } }],
     },
   });
 }
@@ -114,7 +155,7 @@ export async function deleteListingImageVectorsByListingId(listingId) {
   await qdrant.delete(COLLECTION, {
     wait: true,
     filter: {
-      must: [{ key: "listingId", match: { value: toPayloadId(listingId) } }],
+      must: [{ key: "listingId", match: { value: String(listingId) } }],
     },
   });
 }
@@ -126,46 +167,84 @@ export async function searchListingImages({
   vector,
   embeddingModel,
   petType,
+  listingType,
   listingIds,
+  center,
+  radiusKm,
+  excludeListingId,
+  excludeUserId,
   limit = 50,
   scoreThreshold,
 }) {
-  if (!vector?.length || !listingIds?.length) {
+  if (!vector?.length) {
     return [];
   }
 
   await ensureCollections();
   const qdrant = getQdrantClient();
-  const ids = listingIds.map((id) => toPayloadId(id));
-  const results = [];
 
-  for (let i = 0; i < ids.length; i += LISTING_ID_BATCH) {
-    const batchIds = ids.slice(i, i + LISTING_ID_BATCH);
-    const filter = buildListingImageFilter({
-      listingIds: batchIds,
-      petType,
-      embeddingModel,
-    });
+  if (listingIds?.length) {
+    const ids = listingIds.map((id) => String(id));
+    const results = [];
 
-    const batch = await qdrant.search(COLLECTION, {
-      vector,
-      filter,
-      limit,
-      score_threshold: scoreThreshold,
-      with_payload: true,
-    });
-
-    for (const hit of batch) {
-      results.push({
-        listingImageId: String(hit.id),
-        listingId: hit.payload?.listingId,
-        score: hit.score,
-        url: hit.payload?.url || null,
+    for (let i = 0; i < ids.length; i += LISTING_ID_BATCH) {
+      const batchIds = ids.slice(i, i + LISTING_ID_BATCH);
+      const filter = buildListingImageFilter({
+        listingIds: batchIds,
+        petType,
+        embeddingModel,
+        listingType,
+        excludeListingId,
+        excludeUserId,
+        center,
+        radiusKm,
       });
+
+      const batch = await qdrant.search(COLLECTION, {
+        vector,
+        filter,
+        limit,
+        score_threshold: scoreThreshold,
+        with_payload: true,
+      });
+
+      for (const hit of batch) {
+        results.push({
+          listingImageId: String(hit.id),
+          listingId: hit.payload?.listingId,
+          score: hit.score,
+          url: hit.payload?.url || null,
+        });
+      }
     }
+
+    return results;
   }
 
-  return results;
+  const filter = buildListingImageFilter({
+    petType,
+    embeddingModel,
+    listingType,
+    excludeListingId,
+    excludeUserId,
+    center,
+    radiusKm,
+  });
+
+  const hits = await qdrant.search(COLLECTION, {
+    vector,
+    filter,
+    limit,
+    score_threshold: scoreThreshold,
+    with_payload: true,
+  });
+
+  return hits.map((hit) => ({
+    listingImageId: String(hit.id),
+    listingId: hit.payload?.listingId,
+    score: hit.score,
+    url: hit.payload?.url || null,
+  }));
 }
 
 /** Search same user's prior listing images (abuse / repost detection). */
@@ -261,7 +340,7 @@ export async function getListingImageVectors(listingId) {
 
   const { points } = await qdrant.scroll(COLLECTION, {
     filter: {
-      must: [{ key: "listingId", match: { value: toPayloadId(listingId) } }],
+      must: [{ key: "listingId", match: { value: String(listingId) } }],
     },
     limit: 20,
     with_vector: true,

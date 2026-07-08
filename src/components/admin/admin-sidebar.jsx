@@ -37,7 +37,7 @@ function isActive(pathname, href, exact) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminSidebar({ userName, userRole, badges = {} }) {
+export function AdminSidebar({ userName, userRole, badges = {}, onNavigate }) {
   const pathname = usePathname();
   const visibleNav = NAV.filter((item) => !item.adminOnly || userRole === "admin");
 
@@ -69,7 +69,7 @@ export function AdminSidebar({ userName, userRole, badges = {} }) {
               className={cn("w-full justify-start gap-2", active && "font-medium")}
               asChild
             >
-              <Link href={item.href}>
+              <Link href={item.href} onClick={onNavigate}>
                 <item.icon className="size-4 shrink-0" />
                 <span className="flex-1 text-start">{item.label}</span>
                 {badge > 0 ? (

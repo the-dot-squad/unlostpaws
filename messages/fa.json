@@ -210,7 +210,7 @@
       "notFound": "این اعلان دیگر در دسترس نیست.",
       "selfReport": "نمی‌توانید اعلان خود را گزارش دهید.",
       "alreadyReported": "شما قبلاً این اعلان را گزارش کرده‌اید.",
-      "reportLimitBanned": "حد مجاز گزارش روزانه رد شد. حساب شما تعلیق شد.",
+      "reportLimitExceeded": "حد مجاز گزارش روزانه تکمیل شده است. لطفاً فردا دوباره تلاش کنید.",
       "detailsTooLong": "توضیحات بیش از حد مجاز است (حداکثر ۲۰۰۰ کاراکتر).",
       "generic": "ثبت گزارش ممکن نشد. دوباره تلاش کنید."
     },
@@ -224,6 +224,16 @@
     "createdAt": "تاریخ ایجاد",
     "updatedAt": "آخرین به‌روزرسانی",
     "anonymousPoster": "عضو جامعه",
+    "share": "اشتراک‌گذاری",
+    "shareSuccess": "لینک در حافظه کپی شد!",
+    "shareFailed": "اشتراک‌گذاری ناموفق بود",
+    "shareDialogTitle": "اشتراک‌گذاری این اعلان",
+    "shareFacebook": "فیس‌بوک",
+    "shareTwitter": "X (توییتر)",
+    "shareWhatsApp": "واتس‌اپ",
+    "shareTelegram": "تلگرام",
+    "shareEmail": "ایمیل",
+    "copyLink": "کپی لینک",
     "showOnMap": "نمایش روی نقشه",
     "editListing": "ویرایش اعلان",
     "saveChanges": "ذخیره تغییرات",
@@ -504,17 +514,20 @@
   },
   "footer": {
     "description": "هر ردپای پنجه داستانی دارد. ما به همسایگان کمک می‌کنیم حیوانات گم‌شده را ببینند، به اشتراک بگذارند و تطبیق دهند (با اعلان‌های جامعه، نقشه زنده و تطبیق هوشمند عکس) تا بازگشت‌های بیشتری در نزدیکی خانه رخ دهد.",
-    "explore": "Explore",
-    "support": "Support & policies",
-    "contactHint": "Questions, feedback, or a partnership idea? Reach out through our contact form — we're here to help.",
-    "postAlertCta": "Post an alert",
-    "about": "About us",
-    "faq": "FAQ",
-    "privacy": "Privacy policy",
-    "terms": "Terms of service",
-    "contact": "Contact us",
-    "cookieSettings": "Cookie settings",
-    "copyright": "© {year} {appName}. All rights reserved."
+    "explore": "کاوش",
+    "support": "پشتیبانی و قوانین",
+    "contactHint": "سوال، بازخورد یا ایده همکاری دارید؟ از طریق فرم تماس با ما در ارتباط باشید — ما برای کمک اینجا هستیم.",
+    "postAlertCta": "ثبت اعلان",
+    "about": "درباره ما",
+    "faq": "سوالات متداول",
+    "privacy": "سیاست حریم خصوصی",
+    "terms": "شرایط استفاده",
+    "contact": "تماس با ما",
+    "cookieSettings": "تنظیمات کوکی",
+    "gitHub": "مخزن گیت‌هاب",
+    "donate": "حمایت مالی",
+    "project": "پروژه",
+    "copyright": "© {year} {appName}. تمامی حقوق محفوظ است."
   },
   "consent": {
     "consentModal": {
@@ -708,5 +721,82 @@
     "itemSummary": "{type} {petType} - {color}",
     "breed": "نژاد",
     "location": "موقعیت"
+  },
+  "emails": {
+    "common": {
+      "salutation": "سلام {name}،",
+      "salutationFallback": "سلام،",
+      "matchPercentage": "همخوانی"
+    },
+    "matchNotification": {
+      "subject": "همخوانی احتمالی برای حیوان گم‌شده شما — UnLostPaws",
+      "previewText": "همخوانی‌های احتمالی برای اعلان حیوان گم‌شده شما پیدا شد: {missingTitle}.",
+      "heading": "همخوانی‌های احتمالی مشاهده شده",
+      "salutation": "سلام {ownerName}،",
+      "intro": "ما همخوانی‌های احتمالی برای اعلان حیوان گم‌شده شما پیدا کردیم: <strong>{missingTitle}</strong>",
+      "noMatches": "هیچ اعلانی یافت نشد",
+      "outro": "لطفاً این اعلان‌ها را بررسی کنید — ممکن است به بازگرداندن حیوان خانگی شما کمک کنند.",
+      "ctaLabel": "مشاهده همه همخوانی‌ها",
+      "textFallback": "همخوانی‌های احتمالی برای {missingTitle} پیدا شد. مشاهده در: {url}"
+    },
+    "corroborationMatch": {
+      "subject": "گزارش مشاهده مرتبط احتمالی — UnLostPaws",
+      "previewText": "ما اعلان‌هایی پیدا کردیم که ممکن است همان حیوان شما را نشان دهند.",
+      "heading": "مشاهده مرتبط احتمالی",
+      "salutation": "سلام {ownerName}،",
+      "intro": "ما گزارش‌های مشاهده حیوانی پیدا کردیم که با مشخصات و تصویر حیوان شما مطابقت دارد:",
+      "noMatches": "هیچ اعلانی یافت نشد",
+      "outro": "لطفاً برای بررسی این گزارش‌ها و تأیید مطابقت آن‌ها با حیوان خود، روی لینک زیر کلیک کنید.",
+      "ctaLabel": "بررسی همخوانی‌ها",
+      "textFallback": "گزارش‌های مشاهده مرتبط پیدا شد. مشاهده در: {url}"
+    },
+    "moderationOutcome": {
+      "subject": "به‌روزرسانی در مورد اعلان حیوان شما — UnLostPaws",
+      "previewText": "اعلان شما «{listingTitle}» بررسی شد. وضعیت: {action}",
+      "heading": "به‌روزرسانی نظارت بر اعلان",
+      "salutation": "سلام {ownerName}،",
+      "intro": "اعلان شما «<strong>{listingTitle}</strong>» توسط تیم اعتماد و ایمنی ما بررسی شد.",
+      "decisionLabel": "تصمیم نهایی:",
+      "actionApproved": "تایید شده",
+      "actionRejected": "رد شده",
+      "strikeLine": "این تخلف به عنوان اخطار <strong>{strikes}</strong> از <strong>{threshold}</strong> در حساب شما ثبت شد.{isSuspended, select, true { حساب کاربری شما اکنون تعلیق شده است.} other {}}",
+      "outro": "UnLostPaws برای حفظ محیطی امن و محترمانه تلاش می‌کند. لطفاً برای ارسال‌های بعدی قوانین انجمن ما را رعایت کنید.",
+      "ctaLabel": "مشاهده وضعیت حساب کاربری",
+      "textFallback": "اعلان شما «{listingTitle}» — وضعیت: {action}{hasStrikes, select, true { (اخطار {strikes}/{threshold})} other {}}"
+    },
+    "moderationWarning": {
+      "subject": "اخطار قوانین انجمن — UnLostPaws",
+      "previewText": "اخطار: نقض قوانین انجمن در «{listingTitle}» ({reason}).",
+      "heading": "اخطار قوانین انجمن",
+      "intro": "ما گزارش‌های مربوط به اعلان شما «<strong>{listingTitle}</strong>» را بررسی کرده و نقض قوانین را تأیید کردیم.",
+      "violationReasonLabel": "علت نقض قوانین:",
+      "moderatorNoteLabel": "توضیح ناظر:",
+      "strikeLine": "این اخطار <strong>{strikes}</strong> از <strong>{threshold}</strong> برای حساب کاربری شماست. {hasRemaining, select, true {لطفاً توجه داشته باشید که تخلفات بعدی ممکن است منجر به تعلیق حساب کاربری شود ({remaining} اخطار باقی‌مانده).} other {حساب کاربری شما در آستانه تعلیق قرار دارد.}}",
+      "outro": "لطفاً قوانین انجمن ما را مرور کنید تا از تخلفات بعدی جلوگیری شود.",
+      "ctaLabel": "مطالعه قوانین انجمن",
+      "textFallback": "اخطار: نقض قوانین ({reason}) در «{listingTitle}». اخطار {strikes}/{threshold}.{hasNote, select, true { یادداشت: {note}} other {}}"
+    },
+    "moderationBan": {
+      "subject": "حساب کاربری تعلیق شد — UnLostPaws",
+      "previewText": "حساب کاربری شما پس از {strikes} تخلف تعلیق شد. آخرین مورد: «{listingTitle}»",
+      "heading": "حساب کاربری تعلیق شد",
+      "suspendedNotice": "حساب کاربری شما تعلیق شده است.",
+      "strikeExplanation": "این تعلیق به این دلیل صادر شد که حساب کاربری شما به حد مجاز <strong>{strikes}</strong> تخلف تأیید شده قوانین انجمن (حد مجاز: {threshold}) رسید.",
+      "latestViolationLabel": "آخرین تخلف:",
+      "reasonLabel": "علت:",
+      "moderatorNoteLabel": "توضیح ناظر:",
+      "outro": "اگر معتقدید این تصمیم به اشتباه اتخاذ شده است، لطفاً با تیم پشتیبانی ما تماس بگیرید تا درخواست تجدیدنظر ثبت کنید.",
+      "ctaLabel": "تماس با پشتیبانی / تجدیدنظر",
+      "textFallback": "حساب کاربری پس از {strikes} تخلف تعلیق شد. آخرین مورد: «{listingTitle}» ({reason})."
+    },
+    "reportReceived": {
+      "subject": "گزارش دریافت شد — UnLostPaws",
+      "previewText": "از گزارش شما سپاسگزاریم. تیم ما به زودی آن را بررسی خواهد کرد.",
+      "heading": "گزارش دریافت شد",
+      "salutation": "سلام {reporterName}،",
+      "intro": "از ارسال گزارش شما سپاسگزاریم. تیم اعتماد و ایمنی ما به زودی جزئیات را بررسی خواهد کرد تا اطمینان حاصل شود که تمام فعالیت‌ها با قوانین پلتفرم ما مطابقت دارد.",
+      "outro": "از کمک شما برای حفظ امنیت جامعه UnLostPaws جهت بازگرداندن حیوانات خانگی سپاسگزاریم.",
+      "textFallback": "از گزارش شما سپاسگزاریم."
+    }
   }
 }

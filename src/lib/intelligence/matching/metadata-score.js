@@ -1,4 +1,4 @@
-import { levenshteinDistance, normalizePersianArabic } from "../../text.js";
+import { levenshteinDistance, normalizePersianArabic } from "@/lib/text.js";
 
 /**
  * Token overlap scoring for listing metadata (breed, color, description).
@@ -17,7 +17,7 @@ export function tokenize(value) {
 
   return new Set(
     normalizePersianArabic(value)
-      .split(/[\s,/\-]+/)
+      .split(/[\s,/-]+/)
       .map((t) => t.trim())
       .filter(Boolean)
   );

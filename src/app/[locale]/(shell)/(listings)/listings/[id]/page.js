@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { ReportDialog } from "@/components/listings/report-dialog";
 import { ProcessingStatusBadge } from "@/components/listings/processing-status-badge";
 import { ResolveButton } from "@/components/listings/resolve-button";
+import { ShareButton } from "@/components/listings/share-button";
 import { ListingImageGallery } from "@/components/listings/listing-image-gallery";
 import { ListingLocationSection } from "@/components/listings/listing-location-section";
 import { ListingMetadataBox } from "@/components/listings/listing-metadata-box";
@@ -182,6 +183,13 @@ export default async function ListingDetailPage({ params, searchParams }) {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <ShareButton
+            typeLabel={t(`listingTypes.${listing.type}`)}
+            petTypeLabel={petTypeLabel}
+            color={listing.color}
+            breed={listing.breed}
+            locationLabel={locationLabel}
+          />
           {!isOwner && listing.status === "active" && (
             <ReportDialog
               listingId={id}

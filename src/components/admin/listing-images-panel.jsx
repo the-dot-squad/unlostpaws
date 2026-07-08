@@ -42,12 +42,23 @@ function formatImageSubtitle(info, ext) {
 
 /** Single thumbnail — owns its own metadata so parent never loops on setState. */
 function ImageThumbnail({ img, label, onOpen }) {
-  const [info, setInfo] = useState(null);
+  const [info, setInfo] = useState(() => ({
+    width: null,
+    height: null,
+    bytes: img.bytes || null,
+    contentType: img.contentType || null,
+  }));
   const url = img.url;
   const ext = extensionFromImage(img);
 
   useEffect(() => {
     if (!url) return;
+    
+    // Skip client-side HEAD fetch if metadata is already present in DB
+    if (img.bytes && img.contentType) {
+      return;
+    }
+
     let cancelled = false;
     fetchImageMeta(url).then((remote) => {
       if (cancelled || !remote) return;
@@ -72,7 +83,7 @@ function ImageThumbnail({ img, label, onOpen }) {
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, img.bytes, img.contentType]);
 
   function handleLoad(e) {
     const { naturalWidth, naturalHeight } = e.currentTarget;

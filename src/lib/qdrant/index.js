@@ -5,7 +5,6 @@ export {
   normalizeVector,
   toPointId,
   fromPointId,
-  toPayloadId,
   truncateMlCollections,
   isQdrantNotFoundError,
 } from "@/lib/qdrant/client";
@@ -13,6 +12,7 @@ export {
 export {
   upsertListingImageVector,
   updateListingImageStatus,
+  updateListingImageStatusBulk,
   deleteListingImageVectorsByListingId,
   searchListingImages,
 } from "@/lib/qdrant/listing-images";

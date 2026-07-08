@@ -1,7 +1,6 @@
 /** @file Account profile server actions — update profile, delete account. */
 "use server";
 
-import { connectDB } from "@/config/db";
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
 import { authActionError, requireActiveSession } from "@/lib/auth/session";
 import { purgeUserAccount } from "@/lib/services/users";

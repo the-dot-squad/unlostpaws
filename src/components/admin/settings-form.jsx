@@ -11,6 +11,19 @@ import { updateAppSettings } from "@/lib/actions/admin";
 import { toast } from "sonner";
 import { PET_TYPES } from "@/config/constants/enums";
 
+function RateLimitReadonlyField({ label, rateLimitEnv, valueKey }) {
+  const value = rateLimitEnv?.active
+    ? `${rateLimitEnv[valueKey]} / ${rateLimitEnv.windowSeconds}s`
+    : "—";
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input readOnly disabled value={value} />
+    </div>
+  );
+}
+
 /** Two-column settings layout grouped by concern. */
 export function AdminSettingsForm({ settings, rateLimitEnv }) {
   const [form, setForm] = useState({
@@ -125,30 +138,16 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
               <Input type="number" value={form.maxReportsPerDay} onChange={(e) => update("maxReportsPerDay", e.target.value)} />
             </div>
 
-            <div className="space-y-2">
-              <Label>Requests per IP</Label>
-              <Input
-                readOnly
-                disabled
-                value={
-                  rateLimitEnv?.active
-                    ? `${rateLimitEnv.maxRequests} / ${rateLimitEnv.windowSeconds}s`
-                    : "—"
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Upload requests per IP</Label>
-              <Input
-                readOnly
-                disabled
-                value={
-                  rateLimitEnv?.active
-                    ? `${rateLimitEnv.uploadMaxRequests} / ${rateLimitEnv.windowSeconds}s`
-                    : "—"
-                }
-              />
-            </div>
+            <RateLimitReadonlyField
+              label="Requests per IP"
+              rateLimitEnv={rateLimitEnv}
+              valueKey="maxRequests"
+            />
+            <RateLimitReadonlyField
+              label="Upload requests per IP"
+              rateLimitEnv={rateLimitEnv}
+              valueKey="uploadMaxRequests"
+            />
           </CardContent>
         </Card>
 

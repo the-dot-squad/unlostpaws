@@ -33,6 +33,12 @@ export async function recordConfirmedViolation(
     ? `${listing.petType} — ${listing.color}`
     : "your listing";
 
+  async function sendModerationEmail(buildEmail) {
+    if (!owner.email) return;
+    const email = await buildEmail();
+    await sendEmail({ to: owner.email, ...email }).catch(() => {});
+  }
+
   const banned = strikes >= threshold;
   await updateAuthUserById(userId, {
     confirmedViolationCount: strikes,
@@ -40,32 +46,33 @@ export async function recordConfirmedViolation(
   });
 
   if (banned) {
-
-    if (owner.email) {
-      const email = userModerationBanEmail({
+    await sendModerationEmail(() =>
+      userModerationBanEmail({
         ownerName: owner.name,
         listingTitle,
         reason,
         note,
         strikes,
         threshold,
-      });
-      await sendEmail({ to: owner.email, ...email }).catch(() => {});
-    }
+        locale: owner.locale || "en",
+      })
+    );
 
     return { strikes, banned: true, threshold };
   }
 
-  if (!silent && owner.email) {
-    const email = userModerationWarningEmail({
-      ownerName: owner.name,
-      listingTitle,
-      reason,
-      note,
-      strikes,
-      threshold,
-    });
-    await sendEmail({ to: owner.email, ...email }).catch(() => {});
+  if (!silent) {
+    await sendModerationEmail(() =>
+      userModerationWarningEmail({
+        ownerName: owner.name,
+        listingTitle,
+        reason,
+        note,
+        strikes,
+        threshold,
+        locale: owner.locale || "en",
+      })
+    );
   }
 
   return { strikes, banned: false, threshold };

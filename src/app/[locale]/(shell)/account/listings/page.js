@@ -1,9 +1,8 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { requireActiveSessionPage } from "@/lib/auth/session";
 import { connectDB } from "@/config/db";
-import { Listing } from "@/models/listing";
+import { Listing, attachListingPublicId } from "@/models/listing";
 import { ListingCard } from "@/components/listings/listing-card";
-import { attachListingPublicId } from "@/models/listing";
 import { daysUntilExpiry } from "@/lib/listings/expiry";
 
 export default async function MyListingsPage({ params }) {

@@ -1,12 +1,14 @@
 /** Shared Leaflet tile layer config for light/dark themes. */
+import { MAP_TILE_URLS } from "@/config/external-urls";
+
 export const MAP_TILE_LAYERS = {
   light: {
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    url: MAP_TILE_URLS.light,
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
   dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    url: MAP_TILE_URLS.dark,
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },

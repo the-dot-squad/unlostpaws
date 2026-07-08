@@ -29,8 +29,12 @@ export function getRedisConnection() {
     // Decorate client with a compatibility layer for ioredis
     client.status = "ready";
     client.connect = async () => client;
-    client.disconnect = () => {};
-    client.quit = async () => {};
+    client.disconnect = () => {
+      // no-op: Upstash REST client is stateless
+    };
+    client.quit = async () => {
+      // no-op: Upstash REST client is stateless
+    };
 
     sharedConnection = client;
   }
@@ -55,7 +59,7 @@ export async function ensureRedisConnection() {
  * @param {{ timeoutMs?: number }} [options]
  * @returns {Promise<T>}
  */
-export async function withRedisClient(fn, { timeoutMs = 3000 } = {}) {
+export async function withRedisClient(fn, { timeoutMs: _timeoutMs = 3000 } = {}) {
   const client = getRedisConnection();
   return await fn(client);
 }

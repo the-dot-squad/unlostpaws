@@ -4,10 +4,6 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { env, isDev } from "@/config/env";
 
-// ---------------------------------------------------------------------------
-// Client identity
-// ---------------------------------------------------------------------------
-
 /**
  * Resolve client IP from a Headers-like object (NextRequest or next/headers).
  * @param {Headers | { get(name: string): string | null }} headerBag
@@ -41,10 +37,6 @@ export async function getRequestMetadata() {
   const [clientIp, userAgent] = await Promise.all([getClientIp(), getUserAgent()]);
   return { clientIp, userAgent };
 }
-
-// ---------------------------------------------------------------------------
-// Same-origin (browser-facing API routes)
-// ---------------------------------------------------------------------------
 
 function normalizeOrigin(value) {
   if (!value) return null;
@@ -110,10 +102,6 @@ export function rejectCrossSiteRequest(request) {
 
   return null;
 }
-
-// ---------------------------------------------------------------------------
-// Secret verification (cron, ML worker, rate-limit bypass)
-// ---------------------------------------------------------------------------
 
 /** Constant-time string comparison for secrets and tokens. */
 export function safeEqual(a, b) {

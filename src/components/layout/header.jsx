@@ -6,7 +6,6 @@ import { useSession, authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { LocaleSwitcher } from "./locale-switcher";
-import { GithubStarButton } from "./github-star-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,7 +65,6 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1">
-          <GithubStarButton />
           <LocaleSwitcher />
           <ThemeToggle />
 

@@ -5,19 +5,21 @@
 export const isDev = process.env.NODE_ENV === "development";
 export const isProd = process.env.NODE_ENV === "production";
 
-const DEV_AUTH_SECRET = "dev-secret-change-in-production-min-32-chars";
-const DEV_WEBHOOK_SECRET = "dev-webhook-secret";
-const DEV_CRON_SECRET = "dev-cron-secret";
-const DEV_PUBLIC_ID_SALT = "dev-public-id-salt-change-in-production";
-
 const DEFAULT_APP_URL = "http://localhost:3000";
 const DEFAULT_EMAIL_FROM = "noreply@unlostpaws.com";
 const DEFAULT_NOMINATIM_EMAIL = "support@unlostpaws.com";
+
+/** Values documented in .env.example — rejected in production. */
+const INSECURE_VALUE_PREFIX = "dev-";
 
 function requireEnv(name, value) {
   const trimmed = value?.trim();
   if (!trimmed) throw new Error(`${name} is required`);
   return trimmed;
+}
+
+function isInsecureDevDefault(value) {
+  return typeof value === "string" && value.startsWith(INSECURE_VALUE_PREFIX);
 }
 
 function resolveStorageConfig() {
@@ -76,22 +78,30 @@ function assertProductionSecrets() {
   if (!isProd) return;
 
   const missing = [];
-  const authSecret = process.env.BETTER_AUTH_SECRET;
-  const webhookSecret = process.env.WEBHOOK_SECRET;
-  const cronSecret = process.env.CRON_SECRET;
-  const publicIdSalt = process.env.PUBLIC_ID_SALT;
+  const authSecret = process.env.BETTER_AUTH_SECRET?.trim();
+  const webhookSecret = process.env.WEBHOOK_SECRET?.trim();
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const publicIdSalt = process.env.PUBLIC_ID_SALT?.trim();
 
   if (!authSecret) missing.push("BETTER_AUTH_SECRET");
-  else if (authSecret === DEV_AUTH_SECRET) missing.push("BETTER_AUTH_SECRET (dev default)");
+  else if (authSecret.length < 32 || isInsecureDevDefault(authSecret)) {
+    missing.push("BETTER_AUTH_SECRET (insecure dev default)");
+  }
 
   if (!webhookSecret) missing.push("WEBHOOK_SECRET");
-  else if (webhookSecret === DEV_WEBHOOK_SECRET) missing.push("WEBHOOK_SECRET (dev default)");
+  else if (isInsecureDevDefault(webhookSecret)) {
+    missing.push("WEBHOOK_SECRET (insecure dev default)");
+  }
 
   if (!cronSecret) missing.push("CRON_SECRET");
-  else if (cronSecret === DEV_CRON_SECRET) missing.push("CRON_SECRET (dev default)");
+  else if (isInsecureDevDefault(cronSecret)) {
+    missing.push("CRON_SECRET (insecure dev default)");
+  }
 
   if (!publicIdSalt) missing.push("PUBLIC_ID_SALT");
-  else if (publicIdSalt === DEV_PUBLIC_ID_SALT) missing.push("PUBLIC_ID_SALT (dev default)");
+  else if (isInsecureDevDefault(publicIdSalt)) {
+    missing.push("PUBLIC_ID_SALT (insecure dev default)");
+  }
 
   if (missing.length) {
     throw new Error(`Production requires secure env vars: ${missing.join(", ")}`);
@@ -99,6 +109,10 @@ function assertProductionSecrets() {
 }
 
 const databaseUrl = requireEnv("DATABASE_URL", process.env.DATABASE_URL);
+const authSecret = requireEnv("BETTER_AUTH_SECRET", process.env.BETTER_AUTH_SECRET);
+const webhookSecret = requireEnv("WEBHOOK_SECRET", process.env.WEBHOOK_SECRET);
+const cronSecret = requireEnv("CRON_SECRET", process.env.CRON_SECRET);
+const publicIdSalt = requireEnv("PUBLIC_ID_SALT", process.env.PUBLIC_ID_SALT);
 
 const storage = resolveStorageConfig();
 
@@ -124,7 +138,7 @@ export const env = {
   },
 
   auth: {
-    secret: process.env.BETTER_AUTH_SECRET || DEV_AUTH_SECRET,
+    secret: authSecret,
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -158,11 +172,11 @@ export const env = {
   },
 
   webhook: {
-    secret: process.env.WEBHOOK_SECRET || DEV_WEBHOOK_SECRET,
+    secret: webhookSecret,
   },
 
   cron: {
-    secret: process.env.CRON_SECRET || DEV_CRON_SECRET,
+    secret: cronSecret,
   },
 
   qdrant: {
@@ -208,7 +222,7 @@ export const env = {
   },
 
   publicId: {
-    salt: process.env.PUBLIC_ID_SALT || DEV_PUBLIC_ID_SALT,
+    salt: publicIdSalt,
   },
 };
 

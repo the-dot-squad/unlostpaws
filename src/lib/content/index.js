@@ -97,19 +97,24 @@ class Content {
         body = JSON.stringify(params);
       }
 
-      const response = await fetch(url, {
+      const fetchOptions = {
         method,
         headers: {
-          "Authorization": `Bearer ${this.config.apiKey}`,
-          "Accept": "application/json",
+          Authorization: `Bearer ${this.config.apiKey}`,
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body,
         next: {
           revalidate: cacheTTL,
           tags: ["dg-content", `dg-content-${params.slug || params.resource}`],
         },
-      });
+      };
+
+      if (method !== "GET") {
+        fetchOptions.body = body;
+      }
+
+      const response = await fetch(url, fetchOptions);
 
       if (!response.ok) {
         if (response.status === 404) {

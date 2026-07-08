@@ -1,7 +1,6 @@
 /** @file Admin server actions — listings, users, pets, moderation, settings. */
 "use server";
 
-import { connectDB } from "@/config/db";
 import { authActionError, requireAdmin, requireStaff } from "@/lib/auth/session";
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
 import { purgeUserAccount } from "@/lib/services/users";
@@ -14,7 +13,7 @@ import { OwnedPet } from "@/models/owned-pet";
 import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema } from "@/lib/validation";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
-import { listingPublicId } from "@/models/listing";
+import { listingPublicId as toListingPublicId } from "@/models/listing";
 import { MODERATION_CASES_TAG } from "@/lib/moderation/report-cases";
 import { syncOwnedPetStatus } from "@/lib/intelligence/sync-owned-pet-status";
 
@@ -93,7 +92,7 @@ export async function adminUpdateListing(listingPublicId, data) {
     });
 
     revalidateAdmin();
-    revalidatePath(`/admin/listings/${listingPublicId(listing)}`);
+    revalidatePath(`/admin/listings/${toListingPublicId(listing)}`);
     return { success: true };
   } catch (err) {
     const authErr = authActionError(err);
@@ -114,7 +113,7 @@ export async function adminExtendListing(listingPublicId) {
     await extendListingRecord(listing, settings);
 
     revalidateAdmin();
-    revalidatePath(`/admin/listings/${listingPublicId(listing)}`);
+    revalidatePath(`/admin/listings/${toListingPublicId(listing)}`);
     return { success: true, expiresAt: listing.expiresAt.toISOString() };
   } catch (err) {
     const authErr = authActionError(err);

@@ -4,7 +4,6 @@ import { z } from "zod";
 import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
 import {
   LISTING_TYPES,
-  MATCH_STATUSES,
   MAX_LISTING_IMAGES,
   MIN_LISTING_IMAGES,
   PET_TYPES,
@@ -72,6 +71,8 @@ export const microchipSchema = z
 export const imageRefSchema = z.object({
   url: z.string().min(1),
   s3Key: z.string().min(1),
+  bytes: z.number().optional(),
+  contentType: z.string().optional(),
 });
 
 /** Map viewport bounding-box query parameters. */
@@ -111,6 +112,28 @@ export const reverseGeocodeQuerySchema = z.object({
   lng: z.coerce.number().min(-180).max(180),
 });
 
+const invalidZeroCoordinatesRefine = {
+  message: "invalid_coordinates",
+  path: ["lng"],
+  refine: ({ lng, lat }) => !(lng === 0 && lat === 0),
+};
+
+const listingLocationFieldShape = {
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+};
+
+/** @template {z.ZodObject<any>} T */
+function withListingCoordinates(schema) {
+  return schema.refine(invalidZeroCoordinatesRefine.refine, {
+    message: invalidZeroCoordinatesRefine.message,
+    path: invalidZeroCoordinatesRefine.path,
+  });
+}
+
 /** Listing creation payload (server action). */
 export const createListingSchema = z
   .object({
@@ -129,9 +152,9 @@ export const createListingSchema = z
     allowEmail: z.boolean().optional(),
     allowPhone: z.boolean().optional(),
   })
-  .refine(({ lng, lat }) => !(lng === 0 && lat === 0), {
-    message: "invalid_coordinates",
-    path: ["lng"],
+  .refine(invalidZeroCoordinatesRefine.refine, {
+    message: invalidZeroCoordinatesRefine.message,
+    path: invalidZeroCoordinatesRefine.path,
   })
   .refine(({ allowEmail, allowPhone }) => allowEmail || allowPhone, {
     message: "contact_required",
@@ -139,21 +162,14 @@ export const createListingSchema = z
   });
 
 /** Listing update payload — owner may edit details and location only. */
-export const updateListingSchema = z
-  .object({
+export const updateListingSchema = withListingCoordinates(
+  z.object({
     color: z.string().min(1),
     breed: z.string().optional(),
     description: z.string().optional(),
-    lng: z.number().min(-180).max(180),
-    lat: z.number().min(-90).max(90),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
-  })
-  .refine(({ lng, lat }) => !(lng === 0 && lat === 0), {
-    message: "invalid_coordinates",
-    path: ["lng"],
-  });
+    ...listingLocationFieldShape,
+  }),
+);
 
 /** Owned-pet create/update payload (server action). */
 export const ownedPetSchema = z.object({
@@ -175,24 +191,17 @@ export const ownedPetSchema = z.object({
 });
 
 /** Admin listing edit — full field access including status. */
-export const adminListingSchema = z
-  .object({
+export const adminListingSchema = withListingCoordinates(
+  z.object({
     type: z.enum(LISTING_TYPES),
     status: z.enum(["active", "resolved", "expired", "removed", "under_review"]),
     petType: z.enum(PET_TYPES),
     breed: z.string().optional(),
     color: z.string().min(1),
     description: z.string().optional(),
-    lng: z.number().min(-180).max(180),
-    lat: z.number().min(-90).max(90),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
-  })
-  .refine(({ lng, lat }) => !(lng === 0 && lat === 0), {
-    message: "invalid_coordinates",
-    path: ["lng"],
-  });
+    ...listingLocationFieldShape,
+  }),
+);
 
 /** Admin user edit payload. */
 export const adminUserSchema = z.object({

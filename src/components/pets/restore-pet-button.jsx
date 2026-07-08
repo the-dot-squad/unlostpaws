@@ -7,7 +7,7 @@ import { ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { restoreOwnedPet } from "@/lib/actions/owned-pets";
 
-export function RestorePetButton({ petId, locale }) {
+export function RestorePetButton({ petId }) {
   const t = useTranslations("myPets");
   const router = useRouter();
 

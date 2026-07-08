@@ -1,5 +1,5 @@
-import enMessages from "../../../messages/en.json";
-import faMessages from "../../../messages/fa.json";
+import enMessages from "@messages/en.json";
+import faMessages from "@messages/fa.json";
 import { ROUTE_CONTENT_SLUGS } from "@/config/constants/site-routes";
 
 const MESSAGES_BY_LOCALE = { en: enMessages, fa: faMessages };

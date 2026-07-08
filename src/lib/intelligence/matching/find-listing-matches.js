@@ -3,7 +3,6 @@ import { Listing } from "@/models/listing";
 import { ListingImage } from "@/models/listing-image";
 import { ListingMatch } from "@/models/listing-match";
 import { getAppSettings } from "@/lib/services/settings";
-import { findCrossTypeListingsInRadius } from "@/lib/intelligence/geo-filter";
 import { metadataScore } from "@/lib/intelligence/matching/metadata-score";
 import {
   matchTierForTypes,
@@ -12,7 +11,7 @@ import {
   canonicalListingPair,
 } from "@/lib/intelligence/matching/pairs";
 import { searchListingImages } from "@/lib/qdrant/listing-images";
-
+import { LISTING_TYPES } from "@/config/constants/enums";
 
 /**
  * Score and persist cross-type listing matches for a processed listing.
@@ -48,43 +47,14 @@ export async function findListingMatches({
   }
 
   const coords = sourceListing.location?.coordinates;
-  const candidatesInGeo = await findCrossTypeListingsInRadius({
-    coordinates: coords,
-    radiusKm: settings.geoMatchRadiusKm,
-    sourceListingType: listingType,
-    petType,
-    excludeListingId: listingId,
-    excludeUserId: userId,
-  });
+  const crossTypes = LISTING_TYPES.filter((t) => t !== listingType);
+  const center = coords?.length === 2 ? { lat: coords[1], lon: coords[0] } : null;
 
-  if (!candidatesInGeo.length) {
-    return { created: 0 };
-  }
-
-  const candidateIds = candidatesInGeo.map((c) => c._id);
-  const candidateMeta = new Map(candidatesInGeo.map((c) => [c._id.toString(), c]));
   const highThreshold = settings.matchConfidenceHighThreshold ?? 0.9;
 
   // 1. Fetch source listing's image MD5s once outside the loop
   const sourceImages = await ListingImage.find({ listingId }).select("md5").lean();
   const sourceMd5s = new Set(sourceImages.map((img) => img.md5).filter(Boolean));
-
-  // 2. Fetch all candidate images and MD5s in a single query
-  const candidateImages = await ListingImage.find({
-    listingId: { $in: candidateIds },
-  }).select("listingId md5").lean();
-
-  // Group candidate MD5s by listingId in memory
-  const candidateMd5sByListing = new Map();
-  for (const img of candidateImages) {
-    const lid = String(img.listingId);
-    if (!candidateMd5sByListing.has(lid)) {
-      candidateMd5sByListing.set(lid, new Set());
-    }
-    if (img.md5) {
-      candidateMd5sByListing.get(lid).add(img.md5);
-    }
-  }
 
   const bestByListing = new Map();
 
@@ -93,7 +63,11 @@ export async function findListingMatches({
       vector: embeddings[qi],
       embeddingModel,
       petType,
-      listingIds: candidateIds,
+      listingType: crossTypes[0],
+      center,
+      radiusKm: settings.geoMatchRadiusKm,
+      excludeListingId: listingId,
+      excludeUserId: userId,
       limit: 50,
       scoreThreshold: (settings.matchSimilarityThreshold ?? 0.82) * 0.9,
     });
@@ -111,8 +85,32 @@ export async function findListingMatches({
     }
   }
 
-  let created = 0;
+  const matchListingIds = [...bestByListing.keys()];
+  if (!matchListingIds.length) {
+    return { created: 0 };
+  }
 
+  // Fetch the candidate listings' metadata and MD5s in batch queries
+  const [candidates, candidateImages] = await Promise.all([
+    Listing.find({ _id: { $in: matchListingIds }, status: "active" }).lean(),
+    ListingImage.find({ listingId: { $in: matchListingIds } }).select("listingId md5").lean(),
+  ]);
+
+  const candidateMeta = new Map(candidates.map((c) => [c._id.toString(), c]));
+
+  // Group candidate MD5s by listingId in memory
+  const candidateMd5sByListing = new Map();
+  for (const img of candidateImages) {
+    const lid = String(img.listingId);
+    if (!candidateMd5sByListing.has(lid)) {
+      candidateMd5sByListing.set(lid, new Set());
+    }
+    if (img.md5) {
+      candidateMd5sByListing.get(lid).add(img.md5);
+    }
+  }
+
+  const matchCandidates = [];
   for (const match of bestByListing.values()) {
     const candidate = candidateMeta.get(String(match.listingId));
     if (!candidate) continue;
@@ -140,53 +138,77 @@ export async function findListingMatches({
     }
 
     const [listingAId, listingBId] = canonicalListingPair(listingId, match.listingId);
+    matchCandidates.push({
+      match,
+      candidate,
+      listingAId,
+      listingBId,
+      tier,
+      metaScore,
+      finalScore,
+    });
+  }
 
-    const isSourceA = String(listingAId) === String(listingId);
-    const listingAUserId = isSourceA ? userId : candidate.userId;
-    const listingBUserId = isSourceA ? candidate.userId : userId;
-    const listingAType = isSourceA ? listingType : candidate.type;
-    const listingBType = isSourceA ? candidate.type : listingType;
+  if (!matchCandidates.length) {
+    return { created: 0 };
+  }
 
-    const existing = await ListingMatch.findOne({ listingAId, listingBId });
-    if (existing) {
+  const orClauses = matchCandidates.map((c) => ({
+    listingAId: c.listingAId,
+    listingBId: c.listingBId,
+  }));
+  const existingMatches = await ListingMatch.find({ $or: orClauses }).select("listingAId listingBId").lean();
+  const existingMatchesSet = new Set(existingMatches.map((em) => `${em.listingAId}_${em.listingBId}`));
+
+  let created = 0;
+
+  for (const item of matchCandidates) {
+    const key = `${item.listingAId}_${item.listingBId}`;
+    if (existingMatchesSet.has(key)) {
       continue;
     }
+
+    const isSourceA = String(item.listingAId) === String(listingId);
+    const listingAUserId = isSourceA ? userId : item.candidate.userId;
+    const listingBUserId = isSourceA ? item.candidate.userId : userId;
+    const listingAType = isSourceA ? listingType : item.candidate.type;
+    const listingBType = isSourceA ? item.candidate.type : listingType;
 
     const missingListingId =
       listingType === "missing"
         ? listingId
-        : candidate.type === "missing"
-          ? match.listingId
+        : item.candidate.type === "missing"
+          ? item.match.listingId
           : null;
     const counterpartListingId = missingListingId
       ? String(missingListingId) === String(listingId)
-        ? match.listingId
+        ? item.match.listingId
         : listingId
       : null;
 
     await ListingMatch.create({
-      listingAId,
-      listingBId,
+      listingAId: item.listingAId,
+      listingBId: item.listingBId,
       listingAUserId,
       listingBUserId,
       listingAType,
       listingBType,
       missingListingId,
       counterpartListingId,
-      tier,
+      tier: item.tier,
       sourceListingId: listingId,
-      embeddingScore: match.embeddingScore,
-      metadataScore: metaScore,
-      finalScore,
-      confidenceTier: finalScore >= highThreshold ? "high" : "medium",
+      embeddingScore: item.match.embeddingScore,
+      metadataScore: item.metaScore,
+      finalScore: item.finalScore,
+      confidenceTier: item.finalScore >= highThreshold ? "high" : "medium",
       matchedImageAUrl:
-        String(listingAId) === String(listingId)
-          ? match.matchedQueryImageUrl
-          : match.matchedCandidateImageUrl,
+        String(item.listingAId) === String(listingId)
+          ? item.match.matchedQueryImageUrl
+          : item.match.matchedCandidateImageUrl,
       matchedImageBUrl:
-        String(listingBId) === String(listingId)
-          ? match.matchedQueryImageUrl
-          : match.matchedCandidateImageUrl,
+        String(item.listingBId) === String(listingId)
+          ? item.match.matchedQueryImageUrl
+          : item.match.matchedCandidateImageUrl,
       status: "pending",
     });
 

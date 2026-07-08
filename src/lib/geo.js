@@ -1,7 +1,5 @@
 /** @file Coordinate utilities — validation, MongoDB geo queries, and browser geolocation. */
 
-// --- Unit conversion & MongoDB ---
-
 /**
  * @param {number} km
  * @returns {number} Distance in meters.
@@ -33,8 +31,6 @@ export function buildGeoNearPipeline(lng, lat, maxDistanceMeters, extraMatch = {
   ];
 }
 
-// --- Coordinate validation ---
-
 /**
  * @param {number} lng
  * @param {number} lat
@@ -57,8 +53,6 @@ export function isValidCoordinates(lng, lat) {
 export function hasSetCoordinates(lng, lat) {
   return isValidCoordinates(lng, lat) && !(lng === 0 && lat === 0);
 }
-
-// --- Browser geolocation (client-safe — only runs when called) ---
 
 const BROWSER_GEO_OPTIONS = {
   enableHighAccuracy: true,

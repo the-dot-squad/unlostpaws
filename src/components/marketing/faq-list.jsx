@@ -6,9 +6,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { SafeHtml } from "@/components/marketing/safe-html";
 
 /**
- * FAQ accordion — expects server-sanitized `answerHtml` from parseFaqBody().
+ * FAQ accordion — answer HTML is sanitized at parse time and again at render.
  * @param {{ items: { question: string, answerHtml: string }[] }} props
  */
 export function FaqList({ items }) {
@@ -20,9 +21,9 @@ export function FaqList({ items }) {
         <AccordionItem key={`faq-${index}`} value={`faq-${index}`}>
           <AccordionTrigger className="text-base">{item.question}</AccordionTrigger>
           <AccordionContent>
-            <div
+            <SafeHtml
+              html={item.answerHtml}
               className="leading-relaxed [&_a]:text-primary [&_a]:underline"
-              dangerouslySetInnerHTML={{ __html: item.answerHtml }}
             />
           </AccordionContent>
         </AccordionItem>

@@ -66,10 +66,6 @@ export async function findOwnedPetByPublicId(publicId, extraFilter = {}) {
   return OwnedPet.findOne({ publicId, ...extraFilter });
 }
 
-// ---------------------------------------------------------------------------
-// Users (better-auth `user` collection)
-// ---------------------------------------------------------------------------
-
 /** @param {import("mongodb").ObjectId | string} userId */
 export function encodeUserPublicId(userId) {
   return encodePublicId("user", userId);
