@@ -1,8 +1,8 @@
 # 🐾 UnLostPaws
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.9-black?logo=next.js)](https://nextjs.org/)
-[![Python FastAPI](https://img.shields.io/badge/FastAPI-Worker-009688?logo=fastapi)](https://github.com/dot-squad/unlostpaws-worker)
+[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.10-black?logo=next.js)](https://nextjs.org/)
+[![Python FastAPI](https://img.shields.io/badge/FastAPI-Worker-009688?logo=fastapi)](https://github.com/the-dot-squad/unlostpaws-worker)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb)](https://www.mongodb.com/)
 [![Redis](https://img.shields.io/badge/Redis-Queue-DC382D?logo=redis)](https://redis.io/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-D32F2F?logo=qdrant)](https://qdrant.tech/)
@@ -263,7 +263,7 @@ Ensure the `WEBHOOK_SECRET` environment variable matches between the Next.js app
 
 ```bash
 # Clone the repository
-git clone https://github.com/dot-squad/unlostpaws.git
+git clone https://github.com/the-dot-squad/unlostpaws.git
 cd unlostpaws
 
 # Install dependencies
@@ -306,7 +306,7 @@ To run and inspect the Python service directly on your system (Python 3.12+ requ
 
 1. Clone the worker repository:
    ```bash
-   git clone https://github.com/dot-squad/unlostpaws-worker.git
+   git clone https://github.com/the-dot-squad/unlostpaws-worker.git
    cd unlostpaws-worker
    ```
 2. Configure environment variables:
@@ -326,7 +326,7 @@ If you want to run the worker in Docker compiled from source:
 
 1. Clone the worker repository and copy the environment template:
    ```bash
-   git clone https://github.com/dot-squad/unlostpaws-worker.git
+   git clone https://github.com/the-dot-squad/unlostpaws-worker.git
    cd unlostpaws-worker
    cp .env.example .env
    # Edit .env, setting REDIS_URL to point to your Redis instance
