@@ -1,8 +1,11 @@
 import { env } from "@/config/env";
 import { wrapEmail } from "./layout";
 import { createTranslator } from "next-intl";
+import enMessages from "@messages/en.json";
+import faMessages from "@messages/fa.json";
 
 const baseUrl = env.app.url;
+const MESSAGES_BY_LOCALE = { en: enMessages, fa: faMessages };
 
 function localizeReportReason(t, reason) {
   const knownReasons = ["spam", "fake", "inappropriate", "duplicate", "other"];
@@ -42,19 +45,8 @@ async function resolveUserModerationEmailContext(options) {
 
 export async function getTranslator(locale = "en") {
   const normalizedLocale = ["en", "fa"].includes(locale) ? locale : "en";
-  try {
-    const messages = (await import(`@messages/${normalizedLocale}.json`)).default;
-    return createTranslator({ locale: normalizedLocale, messages });
-  } catch (err) {
-    console.error(`Failed to load messages for locale ${normalizedLocale}, falling back to en:`, err);
-    try {
-      const messages = (await import(`@messages/en.json`)).default;
-      return createTranslator({ locale: "en", messages });
-    } catch (fallbackErr) {
-      console.error("Failed to load fallback en messages:", fallbackErr);
-      throw fallbackErr;
-    }
-  }
+  const messages = MESSAGES_BY_LOCALE[normalizedLocale] ?? enMessages;
+  return createTranslator({ locale: normalizedLocale, messages });
 }
 
 export async function matchNotificationEmail({ ownerName, missingTitle, matches, locale = "en" }) {

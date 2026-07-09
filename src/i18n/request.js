@@ -1,6 +1,10 @@
 import { getRequestConfig } from "next-intl/server";
 import { hasLocale } from "next-intl";
 import { routing, timeZone } from "./routing";
+import en from "../../messages/en.json";
+import fa from "../../messages/fa.json";
+
+const messages = { en, fa };
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;
@@ -8,12 +12,9 @@ export default getRequestConfig(async ({ requestLocale }) => {
     ? requested
     : routing.defaultLocale;
 
-  // Dynamic import so message file edits are picked up reliably in dev.
-  const messages = (await import(`@messages/${locale}.json`)).default;
-
   return {
     locale,
-    messages,
+    messages: messages[locale],
     timeZone,
   };
 });

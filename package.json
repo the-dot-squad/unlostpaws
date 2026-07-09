@@ -1,6 +1,6 @@
 {
   "name": "unlostpaws",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "repository": {
     "type": "git",
@@ -8,7 +8,8 @@
   },
   "description": "Lost & Found Pet Platform (https://unlostpaws.com)",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

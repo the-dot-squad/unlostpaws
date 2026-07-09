@@ -276,8 +276,11 @@ cp .env.example .env.local
 Edit your `.env.local` file with your connection strings (MongoDB, Upstash Redis, Qdrant, and storage credentials).
 
 ```bash
-# Run the development server
+# Run the development server (Webpack)
 npm run dev
+
+# Or run with Turbopack
+npm run dev:turbo
 ```
 
 The web client will now be accessible at `http://localhost:3000`.
