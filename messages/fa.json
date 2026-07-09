@@ -56,7 +56,10 @@
     "settings": "تنظیمات",
     "signIn": "ورود",
     "signOut": "خروج",
-    "admin": "مدیریت"
+    "admin": "مدیریت",
+    "openMenu": "باز کردن منو",
+    "menuTitle": "منو",
+    "accountSection": "حساب کاربری"
   },
   "home": {
     "heroTitle": "پیدا کردن حیوانات گم‌شده و پیوند دوباره خانواده‌ها",

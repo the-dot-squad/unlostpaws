@@ -53,7 +53,7 @@ export async function Footer({ locale = "en" }) {
   const stars = await getCachedGithubStars();
 
   return (
-    <footer className="relative mt-auto border-t bg-gradient-to-b from-muted/50 via-muted/30 to-background">
+    <footer className="relative mt-auto overflow-hidden border-t bg-gradient-to-b from-muted/50 via-muted/30 to-background">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
         aria-hidden
@@ -64,8 +64,8 @@ export async function Footer({ locale = "en" }) {
       />
 
       <SiteContainer className="relative py-12 md:py-14">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.8fr_1fr_1fr_1fr] lg:gap-8">
-          <div className="flex flex-col gap-4 md:pe-4">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_1fr] lg:gap-8">
+          <div className="col-span-2 flex flex-col gap-4 md:col-span-1 md:pe-4">
             <Link href={prefix} className="inline-flex w-fit items-center gap-2.5 font-semibold">
               <AppLogo size="md" className="rounded-xl" />
               <span className="text-lg">{t("common.appName")}</span>
@@ -104,7 +104,7 @@ export async function Footer({ locale = "en" }) {
             </ul>
           </div>
 
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <h3 className="mb-4 text-sm font-semibold tracking-wide">{t("footer.project")}</h3>
             <ul className="space-y-3">
               <li>

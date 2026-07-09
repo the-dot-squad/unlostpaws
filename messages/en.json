@@ -56,7 +56,10 @@
     "settings": "Settings",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "admin": "Admin"
+    "admin": "Admin",
+    "openMenu": "Open menu",
+    "menuTitle": "Menu",
+    "accountSection": "Account"
   },
   "home": {
     "heroTitle": "Find lost pets and reunite families.",
