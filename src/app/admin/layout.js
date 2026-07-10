@@ -22,7 +22,8 @@ export default async function AdminLayout({ children }) {
 
   if (!isStaff) {
     const locale = session?.user?.locale || routing.defaultLocale;
-    redirect(`/${locale}/sign-in`);
+    const error = session?.user?.banned ? "user_banned" : undefined;
+    redirect(`/${locale}/sign-in${error ? `?error=${error}` : ""}`);
   }
 
   await connectDB();

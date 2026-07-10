@@ -1,7 +1,9 @@
-/** @file Server-side session helpers built on better-auth. */
+/** @file Server-side session helpers — request guards and session revocation. */
 
+import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getMongoDb } from "@/config/db";
 import { getAuth } from "./index";
 
 export async function getSession() {
@@ -45,7 +47,10 @@ export async function requireAdmin() {
  */
 export async function requireActiveSessionPage(locale) {
   const session = await getSession();
-  if (!session || session.user.banned) {
+  if (session?.user?.banned) {
+    redirect(`/${locale}/sign-in?error=user_banned`);
+  }
+  if (!session) {
     redirect(`/${locale}/sign-in`);
   }
   return session;
@@ -62,4 +67,19 @@ export function authActionError(err) {
   if (err.message === "BANNED") return { error: "banned" };
   if (err.message === "FORBIDDEN") return { error: "forbidden" };
   return null;
+}
+
+/**
+ * Remove every active session for a user.
+ * Called when an account is suspended so existing cookies stop working immediately.
+ *
+ * @param {string} userId - better-auth user id (string or ObjectId-compatible)
+ */
+export async function revokeUserSessions(userId) {
+  const db = await getMongoDb();
+  const userIdClauses = [{ userId }];
+  if (ObjectId.isValid(userId)) {
+    userIdClauses.push({ userId: new ObjectId(userId) });
+  }
+  await db.collection("session").deleteMany({ $or: userIdClauses });
 }

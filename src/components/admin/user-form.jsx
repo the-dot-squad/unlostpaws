@@ -36,6 +36,7 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
     locale: user.locale || "en",
     role: user.role || "user",
     banned: Boolean(user.banned),
+    banReason: "",
   });
 
   function update(key, value) {
@@ -156,6 +157,22 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
                 </div>
                 <Switch checked={form.banned} onCheckedChange={(v) => update("banned", v)} />
               </div>
+
+              {form.banned ? (
+                <div className="space-y-2">
+                  <Label htmlFor="banReason">Ban reason (optional)</Label>
+                  <Input
+                    id="banReason"
+                    value={form.banReason}
+                    onChange={(e) => update("banReason", e.target.value)}
+                    placeholder="Included in the suspension email when banning"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only sent when changing status from active to banned.
+                  </p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 

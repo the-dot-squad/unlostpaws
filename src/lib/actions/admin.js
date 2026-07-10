@@ -2,7 +2,9 @@
 "use server";
 
 import { authActionError, requireAdmin, requireStaff } from "@/lib/auth/session";
+import { getBanGuardError } from "@/lib/auth/ban";
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
+import { notifyManualBanStatusChange } from "@/lib/email/account-status";
 import { purgeUserAccount } from "@/lib/services/users";
 import { deleteListingCompletely } from "@/lib/listings/purge-listing";
 import { setListingStatus } from "@/lib/listings/status";
@@ -174,14 +176,41 @@ export async function updateUserRole(userId, role) {
   }
 }
 
-/** Toggle ban status. Admin-only. */
-export async function banUser(userId, banned) {
+/**
+ * Toggle ban status. Admin-only.
+ *
+ * @param {string} userId
+ * @param {boolean} banned
+ * @param {object} [options]
+ * @param {string} [options.reason] - Optional note for the suspension email
+ */
+export async function banUser(userId, banned, { reason } = {}) {
   try {
     await requireAdmin();
-    await updateAuthUserById(userId, { banned });
     const user = await getAuthUserById(userId);
+    if (!user) return { error: "User not found" };
+
+    const guardError = getBanGuardError({
+      existingRole: user.role,
+      nextRole: user.role,
+      banned,
+    });
+    if (guardError) return { error: guardError };
+
+    const wasBanned = Boolean(user.banned);
+    await updateAuthUserById(userId, { banned: Boolean(banned) });
+
+    await notifyManualBanStatusChange({
+      wasBanned,
+      banned: Boolean(banned),
+      email: user.email,
+      ownerName: user.name,
+      locale: user.locale || "en",
+      reason,
+    });
+
     revalidatePath("/admin/users");
-    if (user?.publicId) revalidatePath(`/admin/users/${user.publicId}`);
+    if (user.publicId) revalidatePath(`/admin/users/${user.publicId}`);
     return { success: true };
   } catch (err) {
     const authErr = authActionError(err);
@@ -198,7 +227,20 @@ export async function adminUpdateUser(userId, data) {
     const parsed = validate(adminUserSchema, data);
     if (!parsed.ok) return { error: "Validation failed" };
 
-    const { name, phone, country, city, locale, role, banned } = parsed.data;
+    const { name, phone, country, city, locale, role, banned, banReason } = parsed.data;
+
+    const existingUser = await getAuthUserById(userId);
+    if (!existingUser) return { error: "User not found" };
+
+    const guardError = getBanGuardError({
+      existingRole: existingUser.role,
+      nextRole: role,
+      banned,
+    });
+    if (guardError) return { error: guardError };
+
+    const wasBanned = Boolean(existingUser.banned);
+    const nextBanned = Boolean(banned);
 
     await updateAuthUserById(userId, {
       name,
@@ -207,7 +249,16 @@ export async function adminUpdateUser(userId, data) {
       city: city || "",
       locale: locale || "en",
       role,
-      banned: Boolean(banned),
+      banned: nextBanned,
+    });
+
+    await notifyManualBanStatusChange({
+      wasBanned,
+      banned: nextBanned,
+      email: existingUser.email,
+      ownerName: name || existingUser.name,
+      locale: locale || existingUser.locale || "en",
+      reason: banReason,
     });
 
     const user = await getAuthUserById(userId);

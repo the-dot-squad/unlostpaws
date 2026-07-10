@@ -1,7 +1,7 @@
-/** @file better-auth server configuration — use {@link ./session} for request guards. */
+/** @file better-auth server singleton — use {@link ./instance} for configuration. */
 
 import { getMongoDb } from "@/config/db";
-import { createAuthInstance } from "./create-auth-instance";
+import { createAuthInstance } from "./instance";
 
 let authInstance = null;
 
