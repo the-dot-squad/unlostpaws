@@ -161,13 +161,19 @@ export const env = {
     mailtrap: {
       token: process.env.MAILTRAP_TOKEN,
       sandboxId: process.env.MAILTRAP_SANDBOX_ID,
+      apiOrigin:
+        process.env.MAILTRAP_API_ORIGIN?.trim() || "https://sandbox.api.mailtrap.io",
     },
     mailjet: {
       apiKey: process.env.MAILJET_API_KEY,
       apiSecret: process.env.MAILJET_API_SECRET,
+      apiOrigin:
+        process.env.MAILJET_API_ORIGIN?.trim() || "https://api.mailjet.com/v3.1/send",
     },
     zeptomail: {
       token: process.env.ZEPTOMAIL_TOKEN,
+      apiOrigin:
+        process.env.ZEPTOMAIL_API_ORIGIN?.trim() || "https://api.zeptomail.com/v1.1/email",
     },
   },
 
@@ -224,13 +230,21 @@ export const env = {
   publicId: {
     salt: publicIdSalt,
   },
+
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN?.trim() || "",
+    channelId: process.env.TELEGRAM_CHANNEL_ID?.trim() || "",
+    get enabled() {
+      return Boolean(this.botToken && this.channelId);
+    },
+  },
 };
 
 /** @returns {"redis" | "memory" | "off"} */
 export function resolveIpRateLimitStore() {
   const { rateLimit, redis } = env;
   if (!rateLimit.enabled) return "off";
-  if (redis.url) return "redis";
+  if (redis.url && redis.token) return "redis";
   if (rateLimit.useMemoryFallback) return "memory";
   return "off";
 }

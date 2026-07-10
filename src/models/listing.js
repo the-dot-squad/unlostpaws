@@ -72,6 +72,10 @@ const listingSchema = new mongoose.Schema(
     /** Set when moderation soft-removes the listing (record kept for owner history). */
     moderationRemovedAt: Date,
     moderationReason: { type: String, default: "" },
+    /** UI locale used when the owner created the alert (for outbound copy). */
+    locale: { type: String, enum: ["en", "fa"] },
+    /** Set after a successful Telegram channel post (idempotency guard). */
+    telegramPostedAt: Date,
   },
   { timestamps: true }
 );

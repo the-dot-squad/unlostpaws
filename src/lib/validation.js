@@ -151,6 +151,7 @@ export const createListingSchema = z
     locationSource: z.enum(["manual", "exif"]).optional(),
     allowEmail: z.boolean().optional(),
     allowPhone: z.boolean().optional(),
+    locale: z.enum(["en", "fa"]).optional().default("en"),
   })
   .refine(invalidZeroCoordinatesRefine.refine, {
     message: invalidZeroCoordinatesRefine.message,
