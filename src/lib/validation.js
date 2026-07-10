@@ -216,7 +216,7 @@ export const adminUserSchema = z.object({
   city: z.string().trim().max(100).optional(),
   locale: z.string().min(2).optional(),
   role: z.enum(["user", "moderator", "admin"]),
-  banned: z.boolean().optional(),
+  status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
   /** Optional note included in the manual ban email (admin edit form). */
   banReason: z.string().trim().max(500).optional(),
 });

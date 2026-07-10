@@ -30,7 +30,7 @@ export async function recordConfirmedViolation(
     return { strikes: 0, banned: false };
   }
 
-  const previousStrikes = owner.confirmedViolationCount ?? 0;
+  const previousStrikes = owner.quota?.violation ?? owner.confirmedViolationCount ?? 0;
   const strikes = previousStrikes + 1;
   const threshold = settings.confirmedViolationBanThreshold ?? 3;
 
@@ -50,8 +50,8 @@ export async function recordConfirmedViolation(
 
   const banned = strikes >= threshold;
   await updateAuthUserById(userId, {
-    confirmedViolationCount: strikes,
-    ...(banned ? { banned: true } : {}),
+    "quota.violation": strikes,
+    ...(banned ? { status: "banned" } : {}),
   });
 
   if (banned) {

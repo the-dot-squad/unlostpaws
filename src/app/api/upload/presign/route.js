@@ -10,7 +10,8 @@ export async function POST(request) {
   if (blocked) return blocked;
 
   const session = await getSession();
-  if (!session || session.user.banned) {
+  const isInactive = session?.user?.status ? session.user.status !== "active" : session?.user?.banned;
+  if (!session || isInactive) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

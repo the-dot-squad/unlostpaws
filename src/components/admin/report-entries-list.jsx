@@ -132,11 +132,15 @@ function ReportEntryDetails({ report, reporter }) {
               {reporter.email ? (
                 <p className="text-xs text-muted-foreground">{reporter.email}</p>
               ) : null}
-              {reporter.banned ? (
-                <Badge variant="destructive" className="text-xs">
-                  Banned
-                </Badge>
-              ) : null}
+              {(() => {
+                const status = reporter.status || (reporter.banned ? "banned" : "active");
+                if (status === "active") return null;
+                return (
+                  <Badge variant={status === "banned" ? "destructive" : "secondary"} className="text-xs capitalize">
+                    {status}
+                  </Badge>
+                );
+              })()}
             </div>
           ) : (
             <p className="mt-1.5 break-all font-mono text-xs">{report.reporterId}</p>

@@ -20,8 +20,9 @@ export function isStaffRole(role) {
  * @param {boolean | undefined} params.banned - Intended ban flag
  * @returns {string | null} Error message when the ban must be rejected, otherwise null
  */
-export function getBanGuardError({ existingRole, nextRole, banned }) {
-  if (!banned) return null;
+export function getBanGuardError({ existingRole, nextRole, status, banned }) {
+  const isBanning = status === "banned" || banned === true;
+  if (!isBanning) return null;
   if (isStaffRole(existingRole) || isStaffRole(nextRole)) {
     return "Staff accounts (admin or moderator) cannot be banned";
   }

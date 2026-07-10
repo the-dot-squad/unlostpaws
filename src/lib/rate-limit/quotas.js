@@ -77,15 +77,17 @@ export async function checkListingRateLimit(userId) {
   const user = await getAuthUserById(userId);
 
   if (!user) return { allowed: false, reason: "user_not_found" };
-  if (user.banned) return { allowed: false, reason: "banned" };
+  const status = user.status || (user.banned ? "banned" : "active");
+  if (status !== "active") return { allowed: false, reason: status === "banned" ? "banned" : "inactive" };
   if (user.listingLimitOverride != null) return { allowed: true };
 
   const now = new Date();
-  let today = user.listingsToday || 0;
-  let month = user.listingsThisMonth || 0;
+  const listingQuota = user.quota?.listing || {};
+  let today = listingQuota.today || 0;
+  let month = listingQuota.thisMonth || 0;
 
-  if (!user.listingsTodayReset || !isSameDay(new Date(user.listingsTodayReset), now)) today = 0;
-  if (!user.listingsMonthReset || !isSameMonth(new Date(user.listingsMonthReset), now)) month = 0;
+  if (!listingQuota.todayReset || !isSameDay(new Date(listingQuota.todayReset), now)) today = 0;
+  if (!listingQuota.monthReset || !isSameMonth(new Date(listingQuota.monthReset), now)) month = 0;
 
   if (today >= settings.maxListingsPerDay) return { allowed: false, reason: "daily" };
   if (month >= settings.maxListingsPerMonth) return { allowed: false, reason: "monthly" };
@@ -105,20 +107,20 @@ export async function incrementListingCount(userId) {
     [
       {
         $set: {
-          listingsToday: listingCountIncrementCond(
-            "listingsTodayReset",
-            "listingsToday",
+          "quota.listing.today": listingCountIncrementCond(
+            "quota.listing.todayReset",
+            "quota.listing.today",
             "%Y-%m-%d",
             currentDayString
           ),
-          listingsThisMonth: listingCountIncrementCond(
-            "listingsMonthReset",
-            "listingsThisMonth",
+          "quota.listing.thisMonth": listingCountIncrementCond(
+            "quota.listing.monthReset",
+            "quota.listing.thisMonth",
             "%Y-%m",
             currentMonthString
           ),
-          listingsTodayReset: now,
-          listingsMonthReset: now,
+          "quota.listing.todayReset": now,
+          "quota.listing.monthReset": now,
         },
       },
     ]
@@ -157,6 +159,11 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
   if (!listing.allowed) {
     if (listing.reason === "banned") {
       return { allowed: false, error: "user_banned", status: 403 };
+    }
+    if (listing.reason === "inactive") {
+      const u = await getAuthUserById(userId);
+      const status = u?.status || "inactive";
+      return { allowed: false, error: `user_${status}`, status: 403 };
     }
     if (listing.reason === "user_not_found") {
       return { allowed: false, error: "user_not_found", status: 404 };

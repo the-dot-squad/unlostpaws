@@ -18,7 +18,8 @@ export async function generateMetadata({ params }) {
   const t = await getTranslations({ locale, namespace: "seo" });
 
   const user = await getUserForPage(id);
-  if (!user || user.banned) return {};
+  const isInactive = user?.status ? user.status !== "active" : user?.banned;
+  if (!user || isInactive) return {};
 
   const name = user.name || "Member";
 
@@ -37,7 +38,8 @@ export default async function UserProfilePage({ params }) {
   const prefix = `/${locale}`;
 
   const user = await getUserForPage(id);
-  if (!user || user.banned) notFound();
+  const isInactive = user?.status ? user.status !== "active" : user?.banned;
+  if (!user || isInactive) notFound();
 
   await connectDB();
   const listings = (

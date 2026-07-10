@@ -15,14 +15,15 @@ export const metadata = noIndexMetadata("Admin");
 
 export default async function AdminLayout({ children }) {
   const session = await getSession();
+  const status = session?.user?.status || (session?.user?.banned ? "banned" : "active");
   const isStaff =
     session &&
-    !session.user.banned &&
+    status === "active" &&
     (session.user.role === "admin" || session.user.role === "moderator");
 
   if (!isStaff) {
     const locale = session?.user?.locale || routing.defaultLocale;
-    const error = session?.user?.banned ? "user_banned" : undefined;
+    const error = status !== "active" ? `user_${status}` : undefined;
     redirect(`/${locale}/sign-in${error ? `?error=${error}` : ""}`);
   }
 

@@ -35,7 +35,7 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
     city: user.city || "",
     locale: user.locale || "en",
     role: user.role || "user",
-    banned: Boolean(user.banned),
+    status: user.status || (user.banned ? "banned" : "active"),
     banReason: "",
   });
 
@@ -150,15 +150,23 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <Label>Banned</Label>
-                  <p className="text-xs text-muted-foreground">Banned users cannot sign in or post.</p>
-                </div>
-                <Switch checked={form.banned} onCheckedChange={(v) => update("banned", v)} />
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => update("status", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="banned">Banned</SelectItem>
+                    <SelectItem value="deactivated">Deactivated</SelectItem>
+                    <SelectItem value="deleted">Deleted (Soft Deleted)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Banned, deactivated, or deleted users cannot sign in or post.
+                </p>
               </div>
 
-              {form.banned ? (
+              {form.status === "banned" ? (
                 <div className="space-y-2">
                   <Label htmlFor="banReason">Ban reason (optional)</Label>
                   <Input
@@ -169,7 +177,7 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
                     maxLength={500}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Only sent when changing status from active to banned.
+                    Only sent when changing status to banned.
                   </p>
                 </div>
               ) : null}
@@ -215,15 +223,15 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-muted-foreground">Listings today</p>
-                <p className="mt-1 font-medium">{user.listingsToday ?? 0}</p>
+                <p className="mt-1 font-medium">{user.quota?.listing?.today ?? user.listingsToday ?? 0}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-muted-foreground">Listings this month</p>
-                <p className="mt-1 font-medium">{user.listingsThisMonth ?? 0}</p>
+                <p className="mt-1 font-medium">{user.quota?.listing?.thisMonth ?? user.listingsThisMonth ?? 0}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-muted-foreground">Confirmed violations</p>
-                <p className="mt-1 font-medium">{user.confirmedViolationCount ?? 0}</p>
+                <p className="mt-1 font-medium">{user.quota?.violation ?? user.confirmedViolationCount ?? 0}</p>
               </div>
               <div>
                 <p className="text-xs font-medium uppercase text-muted-foreground">Joined</p>

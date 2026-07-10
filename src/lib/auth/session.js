@@ -17,8 +17,12 @@ export async function requireActiveSession() {
   if (!session) {
     throw new Error("UNAUTHORIZED");
   }
-  if (session.user.banned) {
-    throw new Error("BANNED");
+  const status = session.user.status || (session.user.banned ? "banned" : "active");
+  if (status !== "active") {
+    if (status === "banned") throw new Error("BANNED");
+    if (status === "deactivated") throw new Error("DEACTIVATED");
+    if (status === "deleted") throw new Error("DELETED");
+    throw new Error("INACTIVE");
   }
   return session;
 }
@@ -47,8 +51,11 @@ export async function requireAdmin() {
  */
 export async function requireActiveSessionPage(locale) {
   const session = await getSession();
-  if (session?.user?.banned) {
-    redirect(`/${locale}/sign-in?error=user_banned`);
+  if (session?.user) {
+    const status = session.user.status || (session.user.banned ? "banned" : "active");
+    if (status !== "active") {
+      redirect(`/${locale}/sign-in?error=user_${status}`);
+    }
   }
   if (!session) {
     redirect(`/${locale}/sign-in`);
@@ -65,6 +72,8 @@ export function authActionError(err) {
   if (!(err instanceof Error)) return null;
   if (err.message === "UNAUTHORIZED") return { error: "unauthorized" };
   if (err.message === "BANNED") return { error: "banned" };
+  if (err.message === "DEACTIVATED") return { error: "deactivated" };
+  if (err.message === "DELETED") return { error: "deleted" };
   if (err.message === "FORBIDDEN") return { error: "forbidden" };
   return null;
 }

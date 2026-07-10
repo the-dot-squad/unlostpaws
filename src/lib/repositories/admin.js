@@ -85,8 +85,17 @@ export function buildReportFilter(sp) {
 export function buildUserFilter(sp) {
   const filter = {};
   if (sp.role) filter.role = sp.role;
-  if (sp.banned === "yes") filter.banned = true;
-  if (sp.banned === "no") filter.banned = { $ne: true };
+  if (sp.status) {
+    if (sp.status === "active") {
+      filter.status = { $in: ["active", null, undefined] };
+    } else {
+      filter.status = sp.status;
+    }
+  } else if (sp.banned === "yes") {
+    filter.status = "banned";
+  } else if (sp.banned === "no") {
+    filter.status = { $nin: ["banned", "deactivated", "deleted"] };
+  }
 
   const trimmed = sp.q?.trim();
   if (trimmed) {

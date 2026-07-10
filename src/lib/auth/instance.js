@@ -44,18 +44,9 @@ export function createAuthInstance(db) {
         city: { type: "string", required: false, input: true },
         role: { type: "string", required: false, defaultValue: "user", input: false },
         locale: { type: "string", required: false, defaultValue: "en", input: true },
-        listingsToday: { type: "number", required: false, defaultValue: 0, input: false },
-        listingsThisMonth: { type: "number", required: false, defaultValue: 0, input: false },
-        listingsTodayReset: { type: "date", required: false, input: false },
-        listingsMonthReset: { type: "date", required: false, input: false },
         listingLimitOverride: { type: "number", required: false, input: false },
-        banned: { type: "boolean", required: false, defaultValue: false, input: false },
-        confirmedViolationCount: {
-          type: "number",
-          required: false,
-          defaultValue: 0,
-          input: false,
-        },
+        status: { type: "string", required: false, defaultValue: "active", input: false },
+        quota: { type: "json", required: false, input: false },
         publicId: { type: "string", required: false, input: false },
       },
     },
@@ -75,7 +66,16 @@ export function createAuthInstance(db) {
                 _id,
                 id: _id.toString(),
                 role: "user",
-                banned: false,
+                status: "active",
+                quota: {
+                  listing: {
+                    today: 0,
+                    thisMonth: 0,
+                    todayReset: null,
+                    monthReset: null,
+                  },
+                  violation: 0,
+                },
                 publicId: user.publicId || encodeUserPublicId(_id),
               },
             };
@@ -98,7 +98,8 @@ export function createAuthInstance(db) {
        */
       after: createAuthMiddleware(async (ctx) => {
         const newSession = ctx.context.newSession;
-        if (!newSession?.user?.banned) return;
+        const status = newSession?.user?.status || (newSession?.user?.banned ? "banned" : "active");
+        if (status === "active") return;
 
         const userId = newSession.user.id;
         if (userId) {
@@ -107,7 +108,7 @@ export function createAuthInstance(db) {
         }
 
         const locale = newSession.user.locale || defaultLocale;
-        redirectToSignIn(ctx, "user_banned", locale);
+        redirectToSignIn(ctx, `user_${status}`, locale);
       }),
     },
     experimental: { joins: true },

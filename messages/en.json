@@ -444,6 +444,8 @@
       "session_expired": "Your session has expired. Please try signing in again.",
       "unauthorized": "You are not authorized to access this page.",
       "user_banned": "Your account has been suspended due to violations of our policies.",
+      "user_deactivated": "Your account has been deactivated.",
+      "user_deleted": "Your account has been deleted.",
       "generic": "An unexpected authentication error occurred. Please try again."
     }
   },
