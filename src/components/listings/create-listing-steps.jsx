@@ -79,7 +79,7 @@ export function CreateListingDetailsStep({ form, update, t }) {
   );
 }
 
-export function CreateListingPhotosStep({ form, update, t, onGpsFound }) {
+export function CreateListingPhotosStep({ form, update, t, onGpsFound, onUploadBlockedChange }) {
   return (
     <div className="space-y-6">
       <ImageUploader
@@ -87,6 +87,7 @@ export function CreateListingPhotosStep({ form, update, t, onGpsFound }) {
         onChange={(imgs) => update("images", imgs)}
         hint={t("listings.imagesHint")}
         onGpsFound={onGpsFound}
+        onBlockedChange={onUploadBlockedChange}
       />
 
       <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
@@ -162,7 +163,7 @@ export function CreateListingLocationStep({
 }
 
 export function CreateListingStepActions(options) {
-  const { step, stepCount, loading, t, onBack, onNext, onSubmit } = options;
+  const { step, stepCount, loading, disabled = false, t, onBack, onNext, onSubmit } = options;
   return (
     <div className="mt-auto flex justify-between border-t pt-4">
       {step > 0 ? (
@@ -173,11 +174,11 @@ export function CreateListingStepActions(options) {
         <div />
       )}
       {step < stepCount - 1 ? (
-        <Button type="button" onClick={onNext} disabled={loading}>
+        <Button type="button" onClick={onNext} disabled={loading || disabled}>
           {t("common.next")}
         </Button>
       ) : (
-        <Button type="button" onClick={onSubmit} disabled={loading}>
+        <Button type="button" onClick={onSubmit} disabled={loading || disabled}>
           {loading ? t("common.loading") : t("common.submit")}
         </Button>
       )}
