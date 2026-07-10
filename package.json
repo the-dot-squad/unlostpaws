@@ -13,7 +13,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "cp node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm public/dotlottie-player.wasm",
+    "postinstall": "cp node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm public/dotlottie-player.wasm && patch-package",
     "ml:reset": "node --env-file=.env.local scripts/reset-ml-data.mjs",
     "ml:reprocess": "node --env-file=.env.local scripts/reprocess-all.mjs",
     "ml:reset-intelligence": "node --env-file=.env.local scripts/reset-intelligence-data.mjs"
@@ -69,6 +69,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.10",
+    "patch-package": "^8.0.1",
     "tailwindcss": "^4"
   }
 }
