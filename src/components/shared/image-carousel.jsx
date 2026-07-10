@@ -75,6 +75,11 @@ export function ImageCarousel({ images, index, onIndexChange, className }) {
 
   if (!images.length) return null;
 
+  // Dialog is max-w-5xl; chevron columns are w-11 (sm:w-12) each when hasMultiple.
+  const imageSizes = hasMultiple
+    ? "(max-width: 640px) calc(100vw - 5.5rem), min(928px, calc(100vw - 6rem))"
+    : "(max-width: 640px) 100vw, 1024px";
+
   const navButtonClassName = cn(
     "inline-flex size-10 shrink-0 items-center justify-center rounded-full",
     "border border-white/25 bg-white/10 text-white shadow-lg transition-colors",
@@ -83,7 +88,9 @@ export function ImageCarousel({ images, index, onIndexChange, className }) {
   );
 
   return (
-    <div className={cn("relative bg-black", className)}>
+    // Image order is sequential, not reading-directional — keep LTR so scrollLeft
+    // math and prev/next placement stay correct inside RTL pages (e.g. fa).
+    <div dir="ltr" className={cn("relative bg-black", className)}>
       <div className="flex items-center bg-black">
         {hasMultiple && (
           <div className="flex w-11 shrink-0 items-center justify-center bg-black sm:w-12">
@@ -106,7 +113,7 @@ export function ImageCarousel({ images, index, onIndexChange, className }) {
                   alt={img.alt || ""}
                   fill
                   className="object-contain"
-                  sizes="100vw"
+                  sizes={imageSizes}
                   preload={i === 0}
                   loading={i === 0 ? "eager" : "lazy"}
                   unoptimized={img.url.startsWith("/api/media")}

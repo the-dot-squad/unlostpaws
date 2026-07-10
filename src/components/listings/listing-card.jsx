@@ -25,6 +25,7 @@ export function ListingCard({
   const slug = listing.publicId ?? listingPublicId(listing);
   const thumb = listing.images?.[0]?.url;
   const countryLabel = getCountryName(listing.location?.country, locale);
+  const locationLine = [listing.location?.city, countryLabel].filter(Boolean).join(", ");
 
   const card = (
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
@@ -59,11 +60,10 @@ export function ListingCard({
           {petTypeLabel} · {listing.color}
         </p>
         {listing.breed ? <p className="text-sm text-muted-foreground">{listing.breed}</p> : null}
-        {listing.location?.city ? (
+        {locationLine ? (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="size-3" />
-            {listing.location.city}
-            {countryLabel ? `, ${countryLabel}` : ""}
+            {locationLine}
           </p>
         ) : null}
         {listing.distance != null ? (
