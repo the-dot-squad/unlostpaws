@@ -19,17 +19,24 @@
   - [1. Content Safety & Quality Checks](#1-content-safety--quality-checks)
   - [2. Abuse & Duplicate Prevention](#2-abuse--duplicate-prevention)
   - [3. Vector Persistence & Cross-Type Matching](#3-vector-persistence--cross-type-matching)
-- [Key Technical Implementations](#-key-technical-implementations)
-  - [Persian & Arabic Unicode Normalization](#persian--arabic-unicode-normalization)
-  - [Orphan Uploads Cleanup Cron](#orphan-uploads-cleanup-cron)
+  - [4. Automated Telegram Channel Alerts](#4-automated-telegram-channel-alerts)
+- [Key Technical & Operational Implementations](#-key-technical--operational-implementations)
+  - [1. Fuzzy Text Normalization & Search Matching](#1-fuzzy-text-normalization-&-search-matching)
+  - [2. Automated Cron & Housekeeping Services](#2-automated-cron-&-housekeeping-services)
+  - [3. Asynchronous Multi-Stage Image Intelligence Pipeline](#3-asynchronous-multi-stage-image-intelligence-pipeline)
+  - [4. Dynamic Social Profiles & Share Intents](#4-dynamic-social-profiles-&-share-intents)
+  - [5. Multi-Provider Modular Mailer](#5-multi-provider-modular-mailer)
+  - [6. Security, Session Revocation, and Quotas](#6-security-session-revocation-and-quotas)
 - [Tech Stack](#-tech-stack)
 - [Qdrant Collection Configuration](#-qdrant-collection-configuration)
-- [Webhook & Internal API Authentication](#-webhook--internal-api-authentication)
+- [Webhook & Internal API Authentication](#-webhook-&-internal-api-authentication)
+- [Email Provider Configuration](#-email-provider-configuration)
+- [Telegram Bot Integration](#-telegram-bot-integration)
 - [Quick Start Guide](#-quick-start-guide)
   - [Prerequisites](#prerequisites)
   - [1. Frontend App Setup](#1-frontend-app-setup)
   - [2. Vision Worker Setup](#2-vision-worker-setup)
-- [Admin Dashboard & Moderation](#-admin-dashboard--moderation)
+- [Admin Dashboard & Moderation](#-admin-dashboard-&-moderation)
 - [Development Utilities](#-development-utilities)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -41,6 +48,9 @@
 *   **AI-Driven Vision Matching:** Utilizes **SigLIP2** embeddings for visual similarity matching and image indexing via Qdrant Cloud.
 *   **Geospatial Searches:** MongoDB geo-indexing coordinates the proximity searches to alert owners when a matching pet is found nearby.
 *   **Automated Content Safety:** Image inspection checks for NSFW content (using **Falconsai**) and ensures images contain pets with minimum resolution/quality requirements.
+*   **Telegram Channel Alerts:** Auto-post approved pet alerts (missing/surrender listings) directly to a Telegram channel with photo arrays, localized text, and geo-navigation coordinates.
+*   **Dynamic Social Settings:** Administrator-manageable platform social media configurations rendering dynamically in layout components (footers, menus).
+*   **Granular User Quotas & Account Rules:** Strict nested quota tracking for uploads and listings, paired with automated session revocation and staff guards on account ban.
 *   **Persian & Arabic Text Normalization:** Multi-dialect character normalization ensures high fuzzy matching accuracy across language variations (breed, color).
 *   **Storage Optimization:** Automatic cron cleanup purges uploaded images that are not associated with any listings or active profiles.
 *   **Advanced Admin Management:** Custom settings dashboard to tune thresholds, review moderation queues, and oversee reports.
@@ -69,7 +79,7 @@ graph TD
     S3["📦 S3/R2 Buckets"]:::storage
     Mongo["🍃 MongoDB"]:::db
     Qdrant["🔍 Qdrant Cloud"]:::db
-    Redis["📥 Redis Stream"]:::queue
+    Redis["📥 Upstash Redis Stream"]:::queue
     Worker["🧠 Python Vision Worker"]:::worker
 
     %% Define connections
@@ -90,7 +100,7 @@ graph TD
 
 1.  **Listing Creation:** A user creates a listing (e.g. Lost Pet) in the **Web Browser**. Next.js registers it in **MongoDB** with `processingStatus: "processing"`.
 2.  **Presigned Upload:** Next.js generates presigned upload parameters; the browser uploads the image directly to **S3/R2 Buckets**.
-3.  **Queue Enqueuing:** Next.js enqueues a job payload containing the image URLs, listing ID, and a secure webhook callback URL into the **Redis Stream**.
+3.  **Queue Enqueuing:** Next.js enqueues a job payload containing the image URLs, listing ID, and a secure webhook callback URL into the **Upstash Redis REST Stream**.
 4.  **Worker Pull:** The **Python Vision Worker** consumes the job from the Redis Stream via `XREADGROUP`.
 5.  **ML Pipeline Execution:** The worker downloads the images from S3/R2 and processes them:
     *   *Laplacian Blur:* Computes image sharpness/resolution.
@@ -103,6 +113,7 @@ graph TD
 8.  **Geo-Candidate Matching (MongoDB):** Next.js queries MongoDB to find active cross-type listings (e.g., matching a Lost listing against Found/Spotted listings) within a configured geographical radius.
 9.  **Visual ANN Search (Qdrant Cloud):** Next.js performs an Approximate Nearest Neighbor (ANN) vector search in Qdrant Cloud using the listing's SigLIP2 embeddings, **filtered strictly to the candidate MongoDB listing IDs** found in Step 8.
 10. **Hybrid Scoring & Persistence:** Next.js fuses Qdrant's visual similarity score ($75\%$ weight) with a text metadata fuzzy similarity score ($25\%$ weight, based on breed/color). Matches passing the confidence threshold are saved as `ListingMatch` documents in MongoDB and notified to users.
+11. **Telegram Channel Broadcast:** If eligible (active, missing or surrender listings with images), the listing is formatted and broadcast to the Telegram channel using the Bot API.
 
 The system comprises two primary components:
 1.  **Frontend Web App (Next.js 16):** Handles client interactions, geo queries, authentication, state management, and the admin system.
@@ -114,7 +125,7 @@ The system comprises two primary components:
 
 When a listing is created or updated, the images are pushed as a processing job to a Redis Stream (`IMAGE_QUEUE_STREAM`). The **Vision Worker** consumes the job, analyzes the image, and sends the payload to `/api/webhooks/vision`. 
 
-The web application then runs the ingestion pipeline in three sequential phases:
+The web application then runs the ingestion pipeline in four sequential phases:
 
 ### 1. Content Safety & Quality Checks
 Before any listing goes live, the webhook runs an automated safety evaluation against administrative thresholds:
@@ -135,6 +146,12 @@ If the listing passes safety and spam gates:
     *   **Visual Similarity (60% weight):** Distance metrics between SigLIP2 embeddings.
     *   **Metadata Fuzzy Match (40% weight):** A Jaccard similarity index calculated over tokenized breed and color fields.
 *   If a match is found above the system confidence threshold, a notification is queued.
+
+### 4. Automated Telegram Channel Alerts
+If the listing is approved and successfully active:
+*   **Eligibility Filters:** Alerts are posted to the channel for active listings of type `missing` or `surrender` containing one or more images.
+*   **Idempotence Engine:** Utilizes atomic MongoDB updates (`telegramPostedAt` timestamp check) to ensure each listing is posted exactly once, even in concurrent runs or reprocessing.
+*   **Custom Localized Captions:** Translates and structures markdown descriptions, embedding details like pet type, breed, location (with a Google Maps link), and localized contact links in English or Persian depending on user preference.
 
 ---
 
@@ -164,6 +181,22 @@ The system splits heavy computation into localized FastAPI worker tasks, running
 *   **Relevance & Pet Verification:** Checks zero-shot SigLIP2 classification scores to verify the uploaded image actually contains a pet corresponding to the listing details.
 *   **Cryptographic & Perceptual Fingerprinting:** Generates MD5 signatures and pHashes to quickly flag duplicate uploads, preventing spam and system abuse.
 
+### 4. Dynamic Social Profiles & Share Intents
+Instead of hardcoding URLs, the platform features admin-manageable social link registers:
+*   **Custom Social Intents:** A unified social sharing intent builder (`src/lib/share/social-intents.js`) handles native popup dimensions and clean parameter escaping for Facebook, Telegram, WhatsApp, and X (formerly Twitter).
+*   **Configurable Footer Profiles:** Supports dynamic additions, sanitization, and rendering of platform-wide social handles stored as part of the system configuration.
+
+### 5. Multi-Provider Modular Mailer
+The communication layer is refactored into a provider-agnostic modular system:
+*   **Supported Adapters:** Integrated support for **Mailtrap**, **Mailjet**, and **ZeptoMail**.
+*   **Dynamic API Origins:** Allows custom API origin overrides (e.g., `MAILTRAP_API_ORIGIN`, `MAILJET_API_ORIGIN`, `ZEPTOMAIL_API_ORIGIN`) for compliance, proxying, or sandboxed dev networks.
+*   **Modular Templates:** Categorized into transactional files (`account`, `contact`, `matches`, `moderation`, `reports`) for easy customization and translations.
+
+### 6. Security, Session Revocation, and Quotas
+Security is built directly into the account lifecycle:
+*   **Immediate Revocation:** Banned user status is checked dynamically during request authentication, instantly revoking active sessions and rejecting form/upload operations.
+*   **Rate Limits and Quotas:** Nested quota tracking inside the MongoDB User schema limits daily/monthly listings and reports, protecting database and compute costs.
+
 ---
 
 ## 💻 Tech Stack
@@ -172,8 +205,9 @@ The system splits heavy computation into localized FastAPI worker tasks, running
 *   **Styling:** CSS Variables + TailwindCSS
 *   **Database:** MongoDB via Mongoose (Geospatial indexing & core document models)
 *   **Vector Search:** Qdrant Cloud (Embedding indices and similarity lookups)
-*   **State / Queues:** Redis (Streams & pub/sub connectivity)
+*   **State / Queues:** Upstash Redis (Stateless HTTP REST Client for streams, rate limiting, and jobs)
 *   **Auth:** `better-auth` integration
+*   **Email Delivery:** Mailtrap, Mailjet, or ZeptoMail (modular client adapters)
 *   **Storage:** S3/Cloudflare R2 (production) & local directory storage (development)
 *   **Machine Learning Worker:** Python FastAPI, SigLIP2, Falconsai NSFW, pHash
 
@@ -249,6 +283,39 @@ The ML vision worker and cron jobs authenticate via shared secrets. The platform
 ### Worker Configuration
 
 Ensure the `WEBHOOK_SECRET` environment variable matches between the Next.js app (`.env.local`) and the vision worker (`.env`). The worker posts results to the webhook callback URL included in each Redis stream job payload.
+
+---
+
+## 📧 Email Provider Configuration
+
+The platform supports multiple email providers using a modular adapter interface. Configure the `EMAIL_PROVIDER` environment variable along with the credentials corresponding to your chosen provider:
+
+- **`mailtrap`** (Default for development)
+  - `MAILTRAP_TOKEN`: API token
+  - `MAILTRAP_SANDBOX_ID`: Sandbox ID (for testing)
+  - `MAILTRAP_API_ORIGIN` (Optional override, defaults to `https://sandbox.api.mailtrap.io`)
+- **`mailjet`**
+  - `MAILJET_API_KEY`: API public key
+  - `MAILJET_API_SECRET`: API private key
+  - `MAILJET_API_ORIGIN` (Optional override, defaults to `https://api.mailjet.com/v3.1/send`)
+- **`zeptomail`**
+  - `ZEPTOMAIL_TOKEN`: Authorization Token
+  - `ZEPTOMAIL_API_ORIGIN` (Optional override, defaults to `https://api.zeptomail.com/v1.1/email`)
+
+*Note: In development mode, if the chosen provider's environment variables are missing, the platform automatically logs the outbound email content to the server terminal console (`console fallback`).*
+
+---
+
+## 📢 Telegram Bot Integration
+
+UnLostPaws can automatically post active pet alerts (listings of type `missing` or `surrender` containing at least one image) to a designated Telegram channel.
+
+### Configuration
+Configure the following variables in your `.env.local` file:
+- `TELEGRAM_BOT_TOKEN`: The API token of your Telegram bot (created via @BotFather).
+- `TELEGRAM_CHANNEL_ID`: Username of your public channel (e.g., `@mychannel`) or the chat ID of your private channel (typically starting with `-100`).
+
+*Note: Both variables are required to enable posting. The bot must be added to the channel as an Administrator with permission to post messages.*
 
 
 ## 🚀 Quick Start Guide

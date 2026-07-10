@@ -31,7 +31,15 @@ export async function createListing(data) {
 
     const rateCheck = await checkListingRateLimit(session.user.id);
     if (!rateCheck.allowed) {
-      return { error: `Rate limit exceeded (${rateCheck.reason})` };
+      if (rateCheck.reason === "banned") return { error: "user_banned" };
+      if (rateCheck.reason === "inactive") {
+        const u = await getAuthUserById(session.user.id);
+        const status = u?.status || "inactive";
+        return { error: `user_${status}` };
+      }
+      if (rateCheck.reason === "monthly") return { error: "listing_limit_monthly" };
+      if (rateCheck.reason === "daily") return { error: "listing_limit_daily" };
+      return { error: "create_failed" };
     }
 
     const parsed = validate(createListingSchema, data);
@@ -71,6 +79,7 @@ export async function createListing(data) {
       expiresAt,
       status: "active",
       processingStatus: "pending",
+      locale: listingData.locale || "en",
     });
 
     await incrementListingCount(

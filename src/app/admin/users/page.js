@@ -44,11 +44,13 @@ export default async function AdminUsersPage({ searchParams }) {
             options: USER_ROLES.map((r) => ({ value: r, label: r })),
           },
           {
-            key: "banned",
-            label: "Ban status",
+            key: "status",
+            label: "Status",
             options: [
-              { value: "yes", label: "Banned" },
-              { value: "no", label: "Active" },
+              { value: "active", label: "Active" },
+              { value: "banned", label: "Banned" },
+              { value: "deactivated", label: "Deactivated" },
+              { value: "deleted", label: "Deleted" },
             ],
           },
         ]}
@@ -81,7 +83,11 @@ export default async function AdminUsersPage({ searchParams }) {
                   <AdminStatusBadge value={u.role || "user"} />
                 </AdminTableTd>
                 <AdminTableTd>
-                  {u.banned ? <Badge variant="destructive">Banned</Badge> : <Badge variant="outline">Active</Badge>}
+                  {u.status === "banned" && <Badge variant="destructive">Banned</Badge>}
+                  {u.status === "deactivated" && <Badge variant="secondary">Deactivated</Badge>}
+                  {u.status === "deleted" && <Badge variant="secondary">Deleted</Badge>}
+                  {(!u.status || u.status === "active") && !u.banned && <Badge variant="outline">Active</Badge>}
+                  {(!u.status || u.status === "active") && u.banned && <Badge variant="destructive">Banned</Badge>}
                 </AdminTableTd>
                 <AdminTableTd className="text-xs text-muted-foreground">
                   {u.createdAt ? formatDate(u.createdAt) : "—"}

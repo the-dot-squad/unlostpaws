@@ -151,6 +151,7 @@ export const createListingSchema = z
     locationSource: z.enum(["manual", "exif"]).optional(),
     allowEmail: z.boolean().optional(),
     allowPhone: z.boolean().optional(),
+    locale: z.enum(["en", "fa"]).optional().default("en"),
   })
   .refine(invalidZeroCoordinatesRefine.refine, {
     message: invalidZeroCoordinatesRefine.message,
@@ -215,7 +216,9 @@ export const adminUserSchema = z.object({
   city: z.string().trim().max(100).optional(),
   locale: z.string().min(2).optional(),
   role: z.enum(["user", "moderator", "admin"]),
-  banned: z.boolean().optional(),
+  status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
+  /** Optional note included in the manual ban email (admin edit form). */
+  banReason: z.string().trim().max(500).optional(),
 });
 
 /** Admin owned-pet edit payload. */
@@ -322,4 +325,16 @@ export const appSettingsSchema = z.object({
   safetyMinImageHeight: positiveInt.max(10_000),
   safetyMaxBlurScore: threshold,
   supportedPetTypes: z.array(z.enum(PET_TYPES)).min(1),
+  socialLinks: z
+    .array(
+      z.object({
+        platform: z
+          .string()
+          .min(1)
+          .regex(/^[a-zA-Z0-9_-]+$/)
+          .transform((value) => value.trim().toLowerCase()),
+        url: z.string().trim().url({ message: "invalid_url" }),
+      }),
+    )
+    .default([]),
 });

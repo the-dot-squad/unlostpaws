@@ -7,6 +7,7 @@ import { persistListingImages } from "@/lib/intelligence/ingest/persist-images";
 import { findListingMatches } from "@/lib/intelligence/matching/find-listing-matches";
 import { notifyListingMatches } from "@/lib/intelligence/matching/notify";
 import { commitStatusSync } from "@/lib/listings/status";
+import { tryPostListingToTelegram } from "@/lib/telegram";
 
 /**
  * Post-worker ingest for listings.
@@ -106,6 +107,8 @@ export async function ingestProcessedListing({
     : "";
   await listing.save();
   await commitStatusSync(listing);
+
+  await tryPostListingToTelegram(listing);
 
   const queryImages = images
     .filter((i) => i.embedding?.length)

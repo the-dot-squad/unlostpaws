@@ -41,7 +41,14 @@
     "invalidExtension": "Only JPG and PNG files are allowed.",
     "invalidType": "Only JPEG and PNG images are allowed.",
     "formatsHint": "JPG or PNG only",
-    "addPhotos": "Add photos"
+    "addPhotos": "Add photos",
+    "imagesRemaining": "{count, plural, one {# more photo required} other {# more photos required}}",
+    "listingLimitDaily": "You've reached your daily limit for posting alerts. Try again tomorrow.",
+    "listingLimitMonthly": "You've reached your monthly limit for posting alerts.",
+    "uploadDailyLimit": "You've uploaded too many photos today. Try again tomorrow.",
+    "rateLimitExceeded": "Too many requests. Please wait a moment and try again.",
+    "rateLimitUnavailable": "Uploads are temporarily unavailable. Please try again later.",
+    "userBanned": "Your account cannot post alerts."
   },
   "nav": {
     "home": "Home",
@@ -286,6 +293,11 @@
       "contactRequired": "Enable at least one contact method — email or phone.",
       "imagesRequired": "Upload at least 2 clear photos.",
       "uploadLimit": "Photo limit reached for this session. Go back and verify again to continue.",
+      "listingLimitDaily": "You've reached your daily limit for posting alerts. Try again tomorrow.",
+      "listingLimitMonthly": "You've reached your monthly limit for posting alerts.",
+      "uploadDailyLimit": "You've uploaded too many photos today. Try again tomorrow.",
+      "rateLimitExceeded": "Too many requests. Please wait a moment and try again.",
+      "userBanned": "Your account cannot post alerts.",
       "createFailed": "Could not create the listing. Please try again."
     },
     "country": "Country",
@@ -432,6 +444,8 @@
       "session_expired": "Your session has expired. Please try signing in again.",
       "unauthorized": "You are not authorized to access this page.",
       "user_banned": "Your account has been suspended due to violations of our policies.",
+      "user_deactivated": "Your account has been deactivated.",
+      "user_deleted": "Your account has been deleted.",
       "generic": "An unexpected authentication error occurred. Please try again."
     }
   },
@@ -725,18 +739,25 @@
     "breed": "Breed",
     "location": "Location"
   },
+  "telegram": {
+    "viewListing": "🔗 View on UnLostPaws",
+    "openInMaps": "🗺️ Open in Google Maps",
+    "breed": "🏷️ Breed",
+    "location": "📍 Location"
+  },
   "emails": {
     "common": {
       "salutation": "Hi {name},",
       "salutationFallback": "Hi there,",
-      "matchPercentage": "match"
+      "matchPercentage": "match",
+      "strikeOf": "of"
     },
     "matchNotification": {
       "subject": "Possible match for your missing pet — UnLostPaws",
       "previewText": "Possible matches found for your missing pet: {missingTitle}.",
       "heading": "Possible Sighting Matches",
       "salutation": "Hi {ownerName},",
-      "intro": "We found possible matches for your missing pet alert: <strong>{missingTitle}</strong>",
+      "introLead": "We found possible matches for your missing pet alert:",
       "noMatches": "No listings found",
       "outro": "Please review these alerts — they may help reunite you with your pet.",
       "ctaLabel": "View All Matches",
@@ -758,11 +779,14 @@
       "previewText": "Your listing \"{listingTitle}\" has been reviewed. Action: {action}",
       "heading": "Listing Moderation Update",
       "salutation": "Hi {ownerName},",
-      "intro": "Your listing \"<strong>{listingTitle}</strong>\" has been reviewed by our trust & safety team.",
+      "introLead": "Your listing \"",
+      "introTrail": "\" has been reviewed by our trust & safety team.",
       "decisionLabel": "Outcome Decision:",
       "actionApproved": "Approved",
       "actionRejected": "Rejected",
-      "strikeLine": "This records strike <strong>{strikes}</strong> of <strong>{threshold}</strong> on your account.{isSuspended, select, true { Your account is now suspended.} other {}}",
+      "strikeLinePrefix": "This records strike",
+      "strikeLineAccountSuffix": "on your account.",
+      "strikeSuspendedSuffix": " Your account is now suspended.",
       "outro": "UnLostPaws works to maintain a safe, respectful environment. Please follow our community guidelines for future posts.",
       "ctaLabel": "View Account Status",
       "textFallback": "Your alert \"{listingTitle}\" — Action: {action}{hasStrikes, select, true { (strike {strikes}/{threshold})} other {}}"
@@ -771,10 +795,15 @@
       "subject": "Community guidelines warning — UnLostPaws",
       "previewText": "Warning: community guideline violation on \"{listingTitle}\" ({reason}).",
       "heading": "Community Guidelines Warning",
-      "intro": "We reviewed reports regarding your listing \"<strong>{listingTitle}</strong>\" and confirmed a guideline violation.",
+      "introLead": "We reviewed reports regarding your listing \"",
+      "introTrail": "\" and confirmed a guideline violation.",
       "violationReasonLabel": "Violation Reason:",
       "moderatorNoteLabel": "Moderator Note:",
-      "strikeLine": "This is strike <strong>{strikes}</strong> of <strong>{threshold}</strong> on your account. {hasRemaining, select, true {Please note that further confirmed violations may result in account suspension (<strong>{remaining}</strong> remaining strikes).} other {Your account is now subject to suspension.}}",
+      "strikeLinePrefix": "This is strike",
+      "strikeLineAccountSuffix": "on your account.",
+      "strikeRemainingLead": "Please note that further confirmed violations may result in account suspension (",
+      "strikeRemainingTrail": " remaining strikes).",
+      "strikeSuspended": "Your account is now subject to suspension.",
       "outro": "Please review our community guidelines to avoid future violations.",
       "ctaLabel": "Read Community Guidelines",
       "textFallback": "Warning: violation ({reason}) on \"{listingTitle}\". Strike {strikes}/{threshold}.{hasNote, select, true { Note: {note}} other {}}"
@@ -785,13 +814,33 @@
       "heading": "Account Suspended",
       "salutation": "Hi {ownerName},",
       "suspendedNotice": "Your account has been suspended.",
-      "strikeExplanation": "This suspension was issued because your account reached <strong>{strikes}</strong> confirmed community guideline violations (limit: {threshold}).",
+      "strikeExplanationLead": "This suspension was issued because your account reached",
+      "strikeExplanationTrail": "confirmed community guideline violations (limit: {threshold}).",
       "latestViolationLabel": "Latest Violation:",
       "reasonLabel": "Reason:",
       "moderatorNoteLabel": "Moderator Note:",
       "outro": "If you believe this decision was made in error, please contact our support team to file an appeal.",
       "ctaLabel": "Contact Support / Appeal",
       "textFallback": "Account suspended after {strikes} violations. Latest: \"{listingTitle}\" ({reason})."
+    },
+    "manualBan": {
+      "subject": "Account suspended — UnLostPaws",
+      "previewText": "Your account has been suspended by an administrator.",
+      "heading": "Account Suspended",
+      "suspendedNotice": "Your account has been suspended by an administrator.",
+      "reasonLabel": "Reason:",
+      "outro": "If you believe this decision was made in error, please contact our support team to file an appeal.",
+      "ctaLabel": "Contact Support / Appeal",
+      "textFallback": "Your account has been suspended by an administrator."
+    },
+    "manualUnban": {
+      "subject": "Account restored — UnLostPaws",
+      "previewText": "Your account suspension has been lifted. You can sign in again.",
+      "heading": "Account Restored",
+      "restoredNotice": "Your account suspension has been lifted by an administrator.",
+      "outro": "You can sign in again and continue using UnLostPaws.",
+      "ctaLabel": "Sign In",
+      "textFallback": "Your account suspension has been lifted. You can sign in again at UnLostPaws."
     },
     "reportReceived": {
       "subject": "Report received — UnLostPaws",

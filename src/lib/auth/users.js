@@ -3,6 +3,7 @@
 import { ObjectId } from "mongodb";
 import { getMongoDb } from "@/config/db";
 import { getAuth } from "./index";
+import { revokeUserSessions } from "./session";
 
 const PROVIDER_LABELS = {
   google: "Google",
@@ -80,8 +81,9 @@ export async function getAuthUsersByIds(userIds) {
       publicId: 1,
       name: 1,
       email: 1,
+      status: 1,
       banned: 1,
-      confirmedViolationCount: 1,
+      quota: 1,
     })
     .toArray();
 
@@ -97,12 +99,29 @@ export async function getAuthUsersByIds(userIds) {
 
 /**
  * Update a user by ID via better-auth internal adapter.
+ * Revokes active sessions only when `banned` transitions from false → true.
  */
 export async function updateAuthUserById(userId, data) {
   const auth = await getAuth();
   const ctx = await auth.$context;
-  return ctx.internalAdapter.updateUser(userId, data);
+
+  let wasBanned;
+  const isBanning = data.status === "banned" || data.banned === true;
+  if (isBanning) {
+    const existing = await ctx.internalAdapter.findUserById(userId);
+    const existingStatus = existing?.status || (existing?.banned ? "banned" : "active");
+    wasBanned = existingStatus === "banned";
+  }
+
+  const result = await ctx.internalAdapter.updateUser(userId, data);
+
+  if (isBanning && !wasBanned) {
+    await revokeUserSessions(userId);
+  }
+
+  return result;
 }
+
 
 /** Delete auth user plus linked sessions and OAuth accounts. */
 export async function deleteAuthUserById(userId) {

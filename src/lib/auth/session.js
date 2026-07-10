@@ -1,7 +1,9 @@
-/** @file Server-side session helpers built on better-auth. */
+/** @file Server-side session helpers — request guards and session revocation. */
 
+import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getMongoDb } from "@/config/db";
 import { getAuth } from "./index";
 
 export async function getSession() {
@@ -15,8 +17,12 @@ export async function requireActiveSession() {
   if (!session) {
     throw new Error("UNAUTHORIZED");
   }
-  if (session.user.banned) {
-    throw new Error("BANNED");
+  const status = session.user.status || (session.user.banned ? "banned" : "active");
+  if (status !== "active") {
+    if (status === "banned") throw new Error("BANNED");
+    if (status === "deactivated") throw new Error("DEACTIVATED");
+    if (status === "deleted") throw new Error("DELETED");
+    throw new Error("INACTIVE");
   }
   return session;
 }
@@ -45,7 +51,13 @@ export async function requireAdmin() {
  */
 export async function requireActiveSessionPage(locale) {
   const session = await getSession();
-  if (!session || session.user.banned) {
+  if (session?.user) {
+    const status = session.user.status || (session.user.banned ? "banned" : "active");
+    if (status !== "active") {
+      redirect(`/${locale}/sign-in?error=user_${status}`);
+    }
+  }
+  if (!session) {
     redirect(`/${locale}/sign-in`);
   }
   return session;
@@ -60,6 +72,23 @@ export function authActionError(err) {
   if (!(err instanceof Error)) return null;
   if (err.message === "UNAUTHORIZED") return { error: "unauthorized" };
   if (err.message === "BANNED") return { error: "banned" };
+  if (err.message === "DEACTIVATED") return { error: "deactivated" };
+  if (err.message === "DELETED") return { error: "deleted" };
   if (err.message === "FORBIDDEN") return { error: "forbidden" };
   return null;
+}
+
+/**
+ * Remove every active session for a user.
+ * Called when an account is suspended so existing cookies stop working immediately.
+ *
+ * @param {string} userId - better-auth user id (string or ObjectId-compatible)
+ */
+export async function revokeUserSessions(userId) {
+  const db = await getMongoDb();
+  const userIdClauses = [{ userId }];
+  if (ObjectId.isValid(userId)) {
+    userIdClauses.push({ userId: new ObjectId(userId) });
+  }
+  await db.collection("session").deleteMany({ $or: userIdClauses });
 }

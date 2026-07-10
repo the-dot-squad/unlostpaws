@@ -35,7 +35,7 @@ export async function collectionStats(db, name) {
   }
 }
 
-/** Parse a flat XINFO GROUPS entry — ioredis returns [key, value, key, value, ...]. */
+/** Parse a flat XINFO GROUPS entry — Upstash returns [key, value, key, value, ...]. */
 export function parseXinfoGroupEntry(entry) {
   const parsed = {};
   for (let i = 0; i < entry.length; i += 2) {

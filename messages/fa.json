@@ -41,7 +41,14 @@
     "invalidExtension": "فقط فایل‌های JPG و PNG مجاز هستند.",
     "invalidType": "فقط تصاویر JPEG و PNG مجاز هستند.",
     "formatsHint": "فقط JPG یا PNG",
-    "addPhotos": "افزودن عکس"
+    "addPhotos": "افزودن عکس",
+    "imagesRemaining": "{count, plural, one {# عکس دیگر لازم است} other {# عکس دیگر لازم است}}",
+    "listingLimitDaily": "به سقف روزانه ثبت اعلان رسیده‌اید. فردا دوباره تلاش کنید.",
+    "listingLimitMonthly": "به سقف ماهانه ثبت اعلان رسیده‌اید.",
+    "uploadDailyLimit": "امروز عکس‌های زیادی آپلود کرده‌اید. فردا دوباره تلاش کنید.",
+    "rateLimitExceeded": "درخواست‌های زیاد. لطفاً کمی صبر کنید و دوباره تلاش کنید.",
+    "rateLimitUnavailable": "آپلود موقتاً در دسترس نیست. لطفاً بعداً دوباره تلاش کنید.",
+    "userBanned": "حساب شما نمی‌تواند اعلان ثبت کند."
   },
   "nav": {
     "home": "خانه",
@@ -286,6 +293,11 @@
       "contactRequired": "حداقل یک روش تماس — ایمیل یا تلفن — را فعال کنید.",
       "imagesRequired": "حداقل ۲ عکس واضح آپلود کنید.",
       "uploadLimit": "حد مجاز عکس برای این جلسه پر شد. برای ادامه به مرحله قبل برگردید و دوباره تأیید کنید.",
+      "listingLimitDaily": "به سقف روزانه ثبت اعلان رسیده‌اید. فردا دوباره تلاش کنید.",
+      "listingLimitMonthly": "به سقف ماهانه ثبت اعلان رسیده‌اید.",
+      "uploadDailyLimit": "امروز عکس‌های زیادی آپلود کرده‌اید. فردا دوباره تلاش کنید.",
+      "rateLimitExceeded": "درخواست‌های زیاد. لطفاً کمی صبر کنید و دوباره تلاش کنید.",
+      "userBanned": "حساب شما نمی‌تواند اعلان ثبت کند.",
       "createFailed": "ثبت آگهی انجام نشد. لطفاً دوباره تلاش کنید."
     },
     "country": "کشور",
@@ -432,6 +444,8 @@
       "session_expired": "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.",
       "unauthorized": "شما مجاز به دسترسی به این صفحه نیستید.",
       "user_banned": "حساب کاربری شما به دلیل نقض قوانین معلق شده است.",
+      "user_deactivated": "حساب کاربری شما غیرفعال شده است.",
+      "user_deleted": "حساب کاربری شما حذف شده است.",
       "generic": "خطای غیرمنتظره‌ای در احراز هویت رخ داد. لطفاً دوباره تلاش کنید."
     }
   },
@@ -725,18 +739,25 @@
     "breed": "نژاد",
     "location": "موقعیت"
   },
+  "telegram": {
+    "viewListing": "🔗 مشاهده در UnLostPaws",
+    "openInMaps": "🗺️ باز کردن در Google Maps",
+    "breed": "🏷️ نژاد",
+    "location": "📍 موقعیت"
+  },
   "emails": {
     "common": {
       "salutation": "سلام {name}،",
       "salutationFallback": "سلام،",
-      "matchPercentage": "همخوانی"
+      "matchPercentage": "همخوانی",
+      "strikeOf": "از"
     },
     "matchNotification": {
       "subject": "همخوانی احتمالی برای حیوان گم‌شده شما — UnLostPaws",
       "previewText": "همخوانی‌های احتمالی برای اعلان حیوان گم‌شده شما پیدا شد: {missingTitle}.",
       "heading": "همخوانی‌های احتمالی مشاهده شده",
       "salutation": "سلام {ownerName}،",
-      "intro": "ما همخوانی‌های احتمالی برای اعلان حیوان گم‌شده شما پیدا کردیم: <strong>{missingTitle}</strong>",
+      "introLead": "ما همخوانی‌های احتمالی برای اعلان حیوان گم‌شده شما پیدا کردیم:",
       "noMatches": "هیچ اعلانی یافت نشد",
       "outro": "لطفاً این اعلان‌ها را بررسی کنید — ممکن است به بازگرداندن حیوان خانگی شما کمک کنند.",
       "ctaLabel": "مشاهده همه همخوانی‌ها",
@@ -758,11 +779,14 @@
       "previewText": "اعلان شما «{listingTitle}» بررسی شد. وضعیت: {action}",
       "heading": "به‌روزرسانی نظارت بر اعلان",
       "salutation": "سلام {ownerName}،",
-      "intro": "اعلان شما «<strong>{listingTitle}</strong>» توسط تیم اعتماد و ایمنی ما بررسی شد.",
+      "introLead": "اعلان شما «",
+      "introTrail": "» توسط تیم اعتماد و ایمنی ما بررسی شد.",
       "decisionLabel": "تصمیم نهایی:",
       "actionApproved": "تایید شده",
       "actionRejected": "رد شده",
-      "strikeLine": "این تخلف به عنوان اخطار <strong>{strikes}</strong> از <strong>{threshold}</strong> در حساب شما ثبت شد.{isSuspended, select, true { حساب کاربری شما اکنون تعلیق شده است.} other {}}",
+      "strikeLinePrefix": "این تخلف به عنوان اخطار",
+      "strikeLineAccountSuffix": "در حساب شما ثبت شد.",
+      "strikeSuspendedSuffix": " حساب کاربری شما اکنون تعلیق شده است.",
       "outro": "UnLostPaws برای حفظ محیطی امن و محترمانه تلاش می‌کند. لطفاً برای ارسال‌های بعدی قوانین انجمن ما را رعایت کنید.",
       "ctaLabel": "مشاهده وضعیت حساب کاربری",
       "textFallback": "اعلان شما «{listingTitle}» — وضعیت: {action}{hasStrikes, select, true { (اخطار {strikes}/{threshold})} other {}}"
@@ -771,10 +795,15 @@
       "subject": "اخطار قوانین انجمن — UnLostPaws",
       "previewText": "اخطار: نقض قوانین انجمن در «{listingTitle}» ({reason}).",
       "heading": "اخطار قوانین انجمن",
-      "intro": "ما گزارش‌های مربوط به اعلان شما «<strong>{listingTitle}</strong>» را بررسی کرده و نقض قوانین را تأیید کردیم.",
+      "introLead": "ما گزارش‌های مربوط به اعلان شما «",
+      "introTrail": "» را بررسی کرده و نقض قوانین را تأیید کردیم.",
       "violationReasonLabel": "علت نقض قوانین:",
       "moderatorNoteLabel": "توضیح ناظر:",
-      "strikeLine": "این اخطار <strong>{strikes}</strong> از <strong>{threshold}</strong> برای حساب کاربری شماست. {hasRemaining, select, true {لطفاً توجه داشته باشید که تخلفات بعدی ممکن است منجر به تعلیق حساب کاربری شود ({remaining} اخطار باقی‌مانده).} other {حساب کاربری شما در آستانه تعلیق قرار دارد.}}",
+      "strikeLinePrefix": "این اخطار",
+      "strikeLineAccountSuffix": "برای حساب کاربری شماست.",
+      "strikeRemainingLead": "لطفاً توجه داشته باشید که تخلفات بعدی ممکن است منجر به تعلیق حساب کاربری شود (",
+      "strikeRemainingTrail": " اخطار باقی‌مانده).",
+      "strikeSuspended": "حساب کاربری شما در آستانه تعلیق قرار دارد.",
       "outro": "لطفاً قوانین انجمن ما را مرور کنید تا از تخلفات بعدی جلوگیری شود.",
       "ctaLabel": "مطالعه قوانین انجمن",
       "textFallback": "اخطار: نقض قوانین ({reason}) در «{listingTitle}». اخطار {strikes}/{threshold}.{hasNote, select, true { یادداشت: {note}} other {}}"
@@ -784,13 +813,33 @@
       "previewText": "حساب کاربری شما پس از {strikes} تخلف تعلیق شد. آخرین مورد: «{listingTitle}»",
       "heading": "حساب کاربری تعلیق شد",
       "suspendedNotice": "حساب کاربری شما تعلیق شده است.",
-      "strikeExplanation": "این تعلیق به این دلیل صادر شد که حساب کاربری شما به حد مجاز <strong>{strikes}</strong> تخلف تأیید شده قوانین انجمن (حد مجاز: {threshold}) رسید.",
+      "strikeExplanationLead": "این تعلیق به این دلیل صادر شد که حساب کاربری شما به حد مجاز",
+      "strikeExplanationTrail": "تخلف تأیید شده قوانین انجمن (حد مجاز: {threshold}) رسید.",
       "latestViolationLabel": "آخرین تخلف:",
       "reasonLabel": "علت:",
       "moderatorNoteLabel": "توضیح ناظر:",
       "outro": "اگر معتقدید این تصمیم به اشتباه اتخاذ شده است، لطفاً با تیم پشتیبانی ما تماس بگیرید تا درخواست تجدیدنظر ثبت کنید.",
       "ctaLabel": "تماس با پشتیبانی / تجدیدنظر",
       "textFallback": "حساب کاربری پس از {strikes} تخلف تعلیق شد. آخرین مورد: «{listingTitle}» ({reason})."
+    },
+    "manualBan": {
+      "subject": "حساب کاربری تعلیق شد — UnLostPaws",
+      "previewText": "حساب کاربری شما توسط مدیر سیستم تعلیق شده است.",
+      "heading": "حساب کاربری تعلیق شد",
+      "suspendedNotice": "حساب کاربری شما توسط مدیر سیستم تعلیق شده است.",
+      "reasonLabel": "علت:",
+      "outro": "اگر معتقدید این تصمیم به اشتباه اتخاذ شده است، لطفاً با تیم پشتیبانی ما تماس بگیرید تا درخواست تجدیدنظر ثبت کنید.",
+      "ctaLabel": "تماس با پشتیبانی / تجدیدنظر",
+      "textFallback": "حساب کاربری شما توسط مدیر سیستم تعلیق شده است."
+    },
+    "manualUnban": {
+      "subject": "حساب کاربری بازیابی شد — UnLostPaws",
+      "previewText": "تعلیق حساب کاربری شما لغو شد. می‌توانید دوباره وارد شوید.",
+      "heading": "حساب کاربری بازیابی شد",
+      "restoredNotice": "تعلیق حساب کاربری شما توسط مدیر سیستم لغو شده است.",
+      "outro": "می‌توانید دوباره وارد شوید و از UnLostPaws استفاده کنید.",
+      "ctaLabel": "ورود",
+      "textFallback": "تعلیق حساب کاربری شما لغو شد. می‌توانید دوباره در UnLostPaws وارد شوید."
     },
     "reportReceived": {
       "subject": "گزارش دریافت شد — UnLostPaws",

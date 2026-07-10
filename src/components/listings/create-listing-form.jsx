@@ -26,6 +26,11 @@ const CREATE_ERROR_KEYS = {
   images_required: "imagesRequired",
   invalid_coordinates: "locationRequired",
   create_failed: "createFailed",
+  listing_limit_daily: "listingLimitDaily",
+  listing_limit_monthly: "listingLimitMonthly",
+  upload_daily_limit: "uploadDailyLimit",
+  rate_limit_exceeded: "rateLimitExceeded",
+  user_banned: "userBanned",
 };
 
 export function CreateListingForm({ locale, defaultType }) {
@@ -33,6 +38,7 @@ export function CreateListingForm({ locale, defaultType }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [uploadBlocked, setUploadBlocked] = useState(false);
   const submittingRef = useRef(false);
   const [form, setForm] = useState({
     type: defaultType || "missing",
@@ -109,8 +115,9 @@ export function CreateListingForm({ locale, defaultType }) {
         }
         return true;
       case 1:
+        if (uploadBlocked) return false;
         if (form.images.length < MIN_LISTING_IMAGES) {
-          toast.error(t("listings.imagesHint"));
+          toast.error(t("listings.createErrors.imagesRequired"));
           return false;
         }
         if (!form.allowEmail && !form.allowPhone) {
@@ -129,7 +136,15 @@ export function CreateListingForm({ locale, defaultType }) {
     }
   }
 
+  function handleUploadBlocked(blocked, info) {
+    setUploadBlocked(blocked);
+    if (blocked && info?.message) {
+      toast.error(info.message);
+    }
+  }
+
   function goNext() {
+    if (uploadBlocked) return;
     if (!validateStep(step)) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
@@ -139,7 +154,7 @@ export function CreateListingForm({ locale, defaultType }) {
   }
 
   async function handleSubmit() {
-    if (submittingRef.current || loading) return;
+    if (submittingRef.current || loading || uploadBlocked) return;
     if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
       return;
     }
@@ -148,16 +163,20 @@ export function CreateListingForm({ locale, defaultType }) {
     setLoading(true);
 
     try {
-      const result = await createListing(form);
+      const result = await createListing({ ...form, locale });
 
       if (result.error) {
         const key = CREATE_ERROR_KEYS[result.error];
         toast.error(key ? t(`listings.createErrors.${key}`) : result.error);
+        submittingRef.current = false;
+        setLoading(false);
         return;
       }
 
       if (!result.id) {
         toast.error(t("listings.createErrors.createFailed"));
+        submittingRef.current = false;
+        setLoading(false);
         return;
       }
 
@@ -174,7 +193,9 @@ export function CreateListingForm({ locale, defaultType }) {
 
       router.push(`/${locale}/listings/${result.id}`);
       router.refresh();
-    } finally {
+    } catch (err) {
+      console.error(err);
+      toast.error(t("listings.createErrors.createFailed"));
       submittingRef.current = false;
       setLoading(false);
     }
@@ -195,6 +216,7 @@ export function CreateListingForm({ locale, defaultType }) {
               update={update}
               t={t}
               onGpsFound={handleGpsFromPhoto}
+              onUploadBlockedChange={handleUploadBlocked}
             />
           )}
           {step === 2 && (
@@ -212,6 +234,7 @@ export function CreateListingForm({ locale, defaultType }) {
             step={step}
             stepCount={STEPS.length}
             loading={loading}
+            disabled={uploadBlocked}
             t={t}
             onBack={goBack}
             onNext={goNext}

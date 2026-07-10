@@ -31,7 +31,7 @@ export function ServiceStatusGrid({ services }) {
     },
     {
       name: "Redis",
-      detail: services.redis.configured ? "Job queue" : "REDIS_URL not set",
+      detail: services.redis.configured ? "Job queue" : "Upstash Redis not configured",
       state: !services.redis.configured ? "skipped" : services.redis.ok ? "ok" : "error",
       note: services.redis.error,
     },

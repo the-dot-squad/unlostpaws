@@ -4,7 +4,7 @@
 import { getTranslations } from "next-intl/server";
 import { env } from "@/config/env";
 import { sendEmail } from "@/lib/email";
-import { contactFormEmail } from "@/lib/email/templates";
+import { buildContactFormEmail } from "@/lib/email/templates";
 import { contactFormSchema, validate } from "@/lib/validation";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { verifyListingTurnstile } from "@/lib/turnstile";
@@ -36,7 +36,7 @@ export async function submitContactForm({ name, topic, message, token }) {
 
   try {
     const t = await getTranslations("pages.contact.emailTemplate");
-    const email = contactFormEmail({
+    const email = buildContactFormEmail({
       name: safeName,
       topic: safeTopic,
       message: safeMessage,

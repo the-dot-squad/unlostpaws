@@ -5,8 +5,9 @@
  */
 
 import { getAuthUserById, updateAuthUserById } from "@/lib/auth/users";
-import { sendEmail } from "@/lib/email";
-import { userModerationBanEmail, userModerationWarningEmail } from "@/lib/email/templates";
+import { isStaffRole } from "@/lib/auth/ban";
+import { sendTransactionalEmail } from "@/lib/email";
+import { buildModerationBanEmail, buildModerationWarningEmail } from "@/lib/email/templates";
 
 /**
  * Record a confirmed violation against a listing owner and escalate if needed.
@@ -25,7 +26,11 @@ export async function recordConfirmedViolation(
   const owner = await getAuthUserById(userId);
   if (!owner) return { strikes: 0, banned: false };
 
-  const previousStrikes = owner.confirmedViolationCount ?? 0;
+  if (isStaffRole(owner.role)) {
+    return { strikes: 0, banned: false };
+  }
+
+  const previousStrikes = owner.quota?.violation ?? owner.confirmedViolationCount ?? 0;
   const strikes = previousStrikes + 1;
   const threshold = settings.confirmedViolationBanThreshold ?? 3;
 
@@ -33,46 +38,38 @@ export async function recordConfirmedViolation(
     ? `${listing.petType} — ${listing.color}`
     : "your listing";
 
-  async function sendModerationEmail(buildEmail) {
-    if (!owner.email) return;
-    const email = await buildEmail();
-    await sendEmail({ to: owner.email, ...email }).catch(() => {});
-  }
+  const emailParams = {
+    ownerName: owner.name,
+    listingTitle,
+    reason,
+    note,
+    strikes,
+    threshold,
+    locale: owner.locale || "en",
+  };
 
   const banned = strikes >= threshold;
   await updateAuthUserById(userId, {
-    confirmedViolationCount: strikes,
-    ...(banned ? { banned: true } : {}),
+    "quota.violation": strikes,
+    ...(banned ? { status: "banned" } : {}),
   });
 
   if (banned) {
-    await sendModerationEmail(() =>
-      userModerationBanEmail({
-        ownerName: owner.name,
-        listingTitle,
-        reason,
-        note,
-        strikes,
-        threshold,
-        locale: owner.locale || "en",
-      })
-    );
+    await sendTransactionalEmail({
+      to: owner.email,
+      logTag: "moderation",
+      build: () => buildModerationBanEmail(emailParams),
+    });
 
     return { strikes, banned: true, threshold };
   }
 
   if (!silent) {
-    await sendModerationEmail(() =>
-      userModerationWarningEmail({
-        ownerName: owner.name,
-        listingTitle,
-        reason,
-        note,
-        strikes,
-        threshold,
-        locale: owner.locale || "en",
-      })
-    );
+    await sendTransactionalEmail({
+      to: owner.email,
+      logTag: "moderation",
+      build: () => buildModerationWarningEmail(emailParams),
+    });
   }
 
   return { strikes, banned: false, threshold };

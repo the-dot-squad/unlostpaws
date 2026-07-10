@@ -57,6 +57,16 @@ const cspHeader = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["mongoose", "mongodb", "@qdrant/js-client-rest"],
+  webpack: (config) => {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      {
+        module: /next-intl[\\/].*extractor/,
+        message: /Parsing of .* for build dependencies failed/,
+      },
+    ];
+    return config;
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: mediaHost },

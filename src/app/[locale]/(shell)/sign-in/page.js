@@ -26,7 +26,8 @@ export default async function SignInPage({ params, searchParams }) {
   const sp = await searchParams;
   setRequestLocale(locale);
   const session = await getSession();
-  if (session && !session.user.banned) redirect(`/${locale}/account`);
+  const status = session?.user?.status || (session?.user?.banned ? "banned" : "active");
+  if (session && status === "active") redirect(`/${locale}/account`);
 
   const t = await getTranslations();
   const providerIds = getConfiguredOAuthProviderIds();

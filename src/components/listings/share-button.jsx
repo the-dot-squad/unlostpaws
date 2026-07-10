@@ -13,6 +13,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  buildFacebookShareUrl,
+  buildTelegramShareUrl,
+  buildWhatsAppShareUrl,
+  buildXShareUrl,
+  openSharePopup,
+} from "@/lib/share/social-intents";
 
 export function ShareButton({
   typeLabel,
@@ -84,34 +91,24 @@ export function ShareButton({
     }
   };
 
-  // Social sharing helpers
   const shareWhatsApp = () => {
-    const url = getShareUrl();
-    const text = `${shareText}\n\n${url}`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+    const pageUrl = getShareUrl();
+    const text = `${shareText}\n\n${pageUrl}`;
+    openSharePopup(buildWhatsAppShareUrl({ text }));
   };
 
   const shareTelegram = () => {
-    const url = getShareUrl();
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`,
-      "_blank",
-      "noopener,noreferrer"
+    openSharePopup(
+      buildTelegramShareUrl({ url: getShareUrl(), text: shareText })
     );
   };
 
   const shareFacebook = () => {
-    const url = getShareUrl();
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
+    openSharePopup(buildFacebookShareUrl({ url: getShareUrl() }));
   };
 
-  const shareTwitter = () => {
-    const url = getShareUrl();
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`,
-      "_blank",
-      "noopener,noreferrer"
-    );
+  const shareX = () => {
+    openSharePopup(buildXShareUrl({ url: getShareUrl(), text: shareText }));
   };
 
   const shareEmail = () => {
@@ -179,7 +176,7 @@ export function ShareButton({
         </DropdownMenuItem>
 
         {/* Twitter */}
-        <DropdownMenuItem onClick={shareTwitter} className="cursor-pointer">
+        <DropdownMenuItem onClick={shareX} className="cursor-pointer">
           <svg className="me-2 size-4 shrink-0 fill-current" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
           </svg>

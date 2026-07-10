@@ -44,7 +44,7 @@ export default async function AdminReportCasePage({ params }) {
   ];
   const userMap = await getAuthUsersByIds(lookupIds);
   const owner = listing?.userId ? userMap[listing.userId] ?? null : null;
-  const ownerStrikes = owner?.confirmedViolationCount ?? 0;
+  const ownerStrikes = owner?.quota?.violation ?? owner?.confirmedViolationCount ?? 0;
   const banThreshold = settings.confirmedViolationBanThreshold ?? 3;
   const publicLocale = owner?.locale || routing.defaultLocale;
 
@@ -126,9 +126,15 @@ export default async function AdminReportCasePage({ params }) {
                 <p className="mt-2">
                   <span className="font-medium">Confirmed violations:</span>{" "}
                   {ownerStrikes} / {banThreshold}
-                  {owner.banned ? (
-                    <Badge variant="destructive" className="ml-2">banned</Badge>
-                  ) : null}
+                  {(() => {
+                    const status = owner.status || (owner.banned ? "banned" : "active");
+                    if (status === "active") return null;
+                    return (
+                      <Badge variant={status === "banned" ? "destructive" : "secondary"} className="ml-2 capitalize">
+                        {status}
+                      </Badge>
+                    );
+                  })()}
                 </p>
                 <Link
                   href={`/admin/users/${owner.publicId}`}

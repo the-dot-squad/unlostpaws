@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { useSession, authClient } from "@/lib/auth/client";
@@ -27,9 +28,13 @@ export function Header() {
   const t = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
   const prefix = `/${locale}`;
 
+  useEffect(() => setMounted(true), []);
+
   const desktopNavLinks = [...MAIN_NAV_LINKS, CREATE_LISTING_LINK];
+  const showSessionMenu = mounted && session;
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -52,7 +57,7 @@ export function Header() {
             <LocaleSwitcher />
             <ThemeToggle />
 
-            {session ? (
+            {showSessionMenu ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -94,7 +99,7 @@ export function Header() {
             )}
           </div>
 
-          <MobileNavSheet session={session} />
+          <MobileNavSheet session={showSessionMenu ? session : null} />
         </div>
       </SiteContainer>
     </header>

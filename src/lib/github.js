@@ -1,13 +1,11 @@
-import { publicEnv } from "@/config/public";
-
 /**
  * Fetch and cache the stargazers count of the platform repository from GitHub.
  * Caches the response for 1 hour (3600 seconds) using Next.js fetch cache.
  * 
+ * @param {string} [repoUrl]
  * @returns {Promise<number|null>}
  */
-export async function getCachedGithubStars() {
-  const repoUrl = publicEnv.githubRepo;
+export async function getCachedGithubStars(repoUrl) {
   if (!repoUrl) return null;
 
   try {

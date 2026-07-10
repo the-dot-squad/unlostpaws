@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { X, Upload } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { X, Upload, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { uploadImageFile, ALLOWED_IMAGE_ACCEPT } from "@/lib/storage/upload-client";
 import { ALLOWED_IMAGE_EXTENSIONS } from "@/lib/storage/images";
@@ -11,12 +12,23 @@ import { extractGpsFromImageFile } from "@/lib/exif-gps";
 import { UploadProgressOverlay } from "@/components/shared/upload-progress";
 import { MAX_LISTING_IMAGES, MIN_LISTING_IMAGES } from "@/config/constants/enums";
 
-export function ImageUploader({ images, onChange, hint, onGpsFound }) {
+const BLOCKING_ERROR_CODES = new Set([
+  "listing_limit_daily",
+  "listing_limit_monthly",
+  "upload_daily_limit",
+  "rate_limit_exceeded",
+  "rate_limit_unavailable",
+  "user_banned",
+]);
+
+export function ImageUploader({ images, onChange, hint, onGpsFound, onBlockedChange }) {
   const t = useTranslations("upload");
   const [pending, setPending] = useState([]);
+  const [blocked, setBlocked] = useState(null);
   const previewsRef = useRef(new Set());
   const imagesRef = useRef(images);
   const pendingRef = useRef(pending);
+  const blockedRef = useRef(blocked);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -25,6 +37,10 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
   useEffect(() => {
     pendingRef.current = pending;
   }, [pending]);
+
+  useEffect(() => {
+    blockedRef.current = blocked;
+  }, [blocked]);
 
   useEffect(() => {
     const previews = previewsRef.current;
@@ -61,13 +77,58 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
     });
   }
 
+  function clearPending() {
+    setPending((items) => {
+      for (const item of items) {
+        releasePreview(item.preview);
+      }
+      pendingRef.current = [];
+      return [];
+    });
+  }
+
   function appendUploaded(uploaded) {
     const next = [...imagesRef.current, uploaded];
     imagesRef.current = next;
     onChange(next);
   }
 
+  function resolveErrorMessage(code) {
+    switch (code) {
+      case "invalid_image_extension":
+        return t("invalidExtension");
+      case "invalid_image_type":
+        return t("invalidType");
+      case "listing_limit_daily":
+        return t("listingLimitDaily");
+      case "listing_limit_monthly":
+        return t("listingLimitMonthly");
+      case "upload_daily_limit":
+        return t("uploadDailyLimit");
+      case "rate_limit_exceeded":
+        return t("rateLimitExceeded");
+      case "rate_limit_unavailable":
+        return t("rateLimitUnavailable");
+      case "user_banned":
+        return t("userBanned");
+      default:
+        return t("failed");
+    }
+  }
+
+  function applyBlockingError(code) {
+    if (blockedRef.current) return;
+    const message = resolveErrorMessage(code);
+    const next = { code, message };
+    blockedRef.current = next;
+    setBlocked(next);
+    onBlockedChange?.(true, next);
+    clearPending();
+  }
+
   async function uploadOne(upload) {
+    if (blockedRef.current) return;
+
     try {
       const uploaded = await uploadImageFile(upload.file, {
         onProgress: (progress) => updatePending(upload.id, { progress, error: null }),
@@ -77,18 +138,19 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
       appendUploaded(uploaded);
     } catch (err) {
       console.error(err);
-      const message =
-        err.code === "invalid_image_extension"
-          ? t("invalidExtension")
-          : err.code === "invalid_image_type"
-            ? t("invalidType")
-            : t("failed");
-      updatePending(upload.id, { error: message, progress: 0 });
+      const code = err.code || "";
+
+      if (BLOCKING_ERROR_CODES.has(code)) {
+        applyBlockingError(code);
+        return;
+      }
+
+      updatePending(upload.id, { error: resolveErrorMessage(code), progress: 0 });
     }
   }
 
   function handleFiles(fileList) {
-    if (!fileList?.length) return;
+    if (!fileList?.length || blockedRef.current) return;
 
     const uploads = [];
 
@@ -121,6 +183,7 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
   }
 
   function removeImage(index) {
+    if (blocked) return;
     const next = images.filter((_, i) => i !== index);
     imagesRef.current = next;
     onChange(next);
@@ -129,9 +192,17 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
   const isUploading = pending.some((item) => !item.error);
   const slotsUsed = images.length + pending.length;
   const atCapacity = slotsUsed >= MAX_LISTING_IMAGES;
+  const uploadsLocked = Boolean(blocked);
 
   return (
     <div className="space-y-3">
+      {blocked && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{blocked.message}</AlertDescription>
+        </Alert>
+      )}
+
       <p className="text-sm text-muted-foreground">{hint}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {images.map((img, i) => (
@@ -145,15 +216,17 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
               priority={i === 0}
               unoptimized={img.url.startsWith("/api/media")}
             />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute end-1 top-1 size-6"
-              onClick={() => removeImage(i)}
-            >
-              <X className="size-3" />
-            </Button>
+            {!uploadsLocked && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute end-1 top-1 size-6"
+                onClick={() => removeImage(i)}
+              >
+                <X className="size-3" />
+              </Button>
+            )}
           </div>
         ))}
 
@@ -180,7 +253,7 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
           </div>
         ))}
 
-        {!atCapacity && (
+        {!atCapacity && !uploadsLocked && (
           <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed transition-colors hover:bg-muted/50">
             <Upload className="size-6 text-muted-foreground" />
             <span className="px-2 text-center text-xs text-muted-foreground">{t("addPhotos")}</span>
@@ -203,9 +276,9 @@ export function ImageUploader({ images, onChange, hint, onGpsFound }) {
         <p className="text-sm text-muted-foreground">{t("uploading")}</p>
       )}
 
-      {images.length < MIN_LISTING_IMAGES && !isUploading && (
+      {!uploadsLocked && images.length < MIN_LISTING_IMAGES && !isUploading && (
         <p className="text-sm text-destructive">
-          {MIN_LISTING_IMAGES - images.length} more image(s) required
+          {t("imagesRemaining", { count: MIN_LISTING_IMAGES - images.length })}
         </p>
       )}
     </div>
