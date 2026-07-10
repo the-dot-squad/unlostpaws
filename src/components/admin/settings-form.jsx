@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { updateAppSettings } from "@/lib/actions/admin";
 import { toast } from "sonner";
 import { PET_TYPES } from "@/config/constants/enums";
+import { prepareSocialLinksForSave } from "@/lib/socials";
 
 function RateLimitReadonlyField({ label, rateLimitEnv, valueKey }) {
   const value = rateLimitEnv?.active
@@ -27,21 +29,21 @@ function RateLimitReadonlyField({ label, rateLimitEnv, valueKey }) {
 /** Two-column settings layout grouped by concern. */
 export function AdminSettingsForm({ settings, rateLimitEnv }) {
   const [form, setForm] = useState({
-    maxListingsPerDay: settings.maxListingsPerDay,
-    maxListingsPerMonth: settings.maxListingsPerMonth,
+    maxListingsPerDay: settings.maxListingsPerDay ?? 3,
+    maxListingsPerMonth: settings.maxListingsPerMonth ?? 15,
     maxOwnedPetsPerUser: settings.maxOwnedPetsPerUser ?? 10,
     maxReportsPerDay: settings.maxReportsPerDay ?? 50,
-    listingExpiryDays: settings.listingExpiryDays,
+    listingExpiryDays: settings.listingExpiryDays ?? 90,
     listingExtensionEnabled: settings.listingExtensionEnabled ?? true,
     listingExtensionDays: settings.listingExtensionDays ?? 30,
     listingExtensionFromDay: settings.listingExtensionFromDay ?? 14,
     reportAutoReviewWindowHours: settings.reportAutoReviewWindowHours ?? 168,
     reportAutoReviewMinReports: settings.reportAutoReviewMinReports ?? 3,
     confirmedViolationBanThreshold: settings.confirmedViolationBanThreshold ?? 3,
-    imageMatchingEnabled: settings.imageMatchingEnabled,
-    matchSimilarityThreshold: settings.matchSimilarityThreshold,
+    imageMatchingEnabled: settings.imageMatchingEnabled ?? true,
+    matchSimilarityThreshold: settings.matchSimilarityThreshold ?? 0.82,
     matchConfidenceHighThreshold: settings.matchConfidenceHighThreshold ?? 0.9,
-    geoMatchRadiusKm: settings.geoMatchRadiusKm,
+    geoMatchRadiusKm: settings.geoMatchRadiusKm ?? 100,
     dedupLookbackDays: settings.dedupLookbackDays ?? 365,
     reverseSearchMaxListings: settings.reverseSearchMaxListings ?? 500,
     abuseReportThreshold: settings.abuseReportThreshold ?? 0.7,
@@ -58,16 +60,29 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
     safetyMinImageHeight: settings.safetyMinImageHeight ?? 400,
     safetyMaxBlurScore: settings.safetyMaxBlurScore ?? 0.85,
     supportedPetTypes: settings.supportedPetTypes ?? PET_TYPES,
+    socialLinks: Array.isArray(settings.socialLinks) ? settings.socialLinks : [],
   });
   const [loading, setLoading] = useState(false);
+  const [newPlatformName, setNewPlatformName] = useState("");
+  const [newPlatformUrl, setNewPlatformUrl] = useState("");
 
   function update(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
   async function handleSave() {
+    const socialsResult = prepareSocialLinksForSave(
+      form.socialLinks,
+      newPlatformName,
+      newPlatformUrl,
+    );
+    if (!socialsResult.ok) {
+      toast.error(socialsResult.error);
+      return;
+    }
+
     setLoading(true);
-    await updateAppSettings({
+    const res = await updateAppSettings({
       ...form,
       maxListingsPerDay: Number(form.maxListingsPerDay),
       maxListingsPerMonth: Number(form.maxListingsPerMonth),
@@ -96,9 +111,33 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
       safetyMinImageWidth: Number(form.safetyMinImageWidth),
       safetyMinImageHeight: Number(form.safetyMinImageHeight),
       safetyMaxBlurScore: Number(form.safetyMaxBlurScore),
+      socialLinks: socialsResult.socialLinks,
     });
     setLoading(false);
-    toast.success("Settings saved");
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      update("socialLinks", socialsResult.socialLinks);
+      setNewPlatformName("");
+      setNewPlatformUrl("");
+      toast.success("Settings saved successfully");
+    }
+  }
+
+  function updateSocialLink(index, field, value) {
+    setForm((f) => ({
+      ...f,
+      socialLinks: f.socialLinks.map((link, i) =>
+        i === index ? { ...link, [field]: value } : link,
+      ),
+    }));
+  }
+
+  function removeSocialLink(index) {
+    setForm((f) => ({
+      ...f,
+      socialLinks: f.socialLinks.filter((_, i) => i !== index),
+    }));
   }
 
   return (
@@ -363,6 +402,67 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
             <div className="space-y-2">
               <Label>Dedup lookback (days)</Label>
               <Input type="number" value={form.dedupLookbackDays} onChange={(e) => update("dedupLookbackDays", e.target.value)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Social media accounts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Social media accounts</CardTitle>
+            <CardDescription>
+              Profile links shown in the footer. New platforms below are saved with Save settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              {form.socialLinks.map((link, index) => (
+                <div key={`${link.platform}-${index}`} className="flex items-center gap-3">
+                  <Input
+                    type="text"
+                    placeholder="Platform (e.g. instagram)"
+                    value={link.platform}
+                    onChange={(e) => updateSocialLink(index, "platform", e.target.value)}
+                    className="w-1/3"
+                  />
+                  <Input
+                    type="url"
+                    placeholder="https://..."
+                    value={link.url}
+                    onChange={(e) => updateSocialLink(index, "url", e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeSocialLink(index)}
+                    className="text-destructive hover:bg-destructive/10 shrink-0"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t pt-4 space-y-3">
+              <Label className="text-xs text-muted-foreground">Add platform</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Platform (e.g. instagram)"
+                  value={newPlatformName}
+                  onChange={(e) => setNewPlatformName(e.target.value)}
+                  className="w-1/3"
+                />
+                <Input
+                  type="url"
+                  placeholder="https://..."
+                  value={newPlatformUrl}
+                  onChange={(e) => setNewPlatformUrl(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

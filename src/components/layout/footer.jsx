@@ -15,9 +15,10 @@ import {
 import { CookiePreferencesLink } from "@/components/consent/cookie-preferences-link";
 import { SiteContainer } from "./site-container";
 import { AppLogo } from "./app-logo";
-import { GithubIcon } from "./github-star-button";
-import { publicEnv } from "@/config/public";
+import { GithubIcon, SocialLinks } from "./social-links";
 import { getCachedGithubStars } from "@/lib/github";
+import { getAppSettings } from "@/lib/services/settings";
+import { getGithubRepoUrl, normalizeSocialLinkArray } from "@/lib/socials";
 
 const EXPLORE_LINKS = [
   { key: "listings", href: "/listings", icon: Bell },
@@ -50,7 +51,12 @@ export async function Footer({ locale = "en" }) {
   const t = await getTranslations();
   const prefix = `/${locale}`;
   const year = new Date().getFullYear();
-  const stars = await getCachedGithubStars();
+
+  const settings = await getAppSettings();
+  const socialLinks = normalizeSocialLinkArray(settings.socialLinks);
+  const githubUrl = getGithubRepoUrl(socialLinks);
+
+  const stars = await getCachedGithubStars(githubUrl);
 
   return (
     <footer className="relative mt-auto overflow-hidden border-t bg-gradient-to-b from-muted/50 via-muted/30 to-background">
@@ -109,7 +115,7 @@ export async function Footer({ locale = "en" }) {
             <ul className="space-y-3">
               <li>
                 <FooterLink
-                  href={publicEnv.githubRepo}
+                  href={githubUrl}
                   icon={GithubIcon}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -133,6 +139,7 @@ export async function Footer({ locale = "en" }) {
               <li>
                 <CookiePreferencesLink label={t("footer.cookieSettings")} />
               </li>
+              <SocialLinks links={socialLinks} />
             </ul>
           </div>
         </div>

@@ -301,6 +301,7 @@ export async function updateAppSettings(data) {
     if (result.error) return { error: result.error };
 
     revalidatePath("/admin/settings");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {
     const authErr = authActionError(err);

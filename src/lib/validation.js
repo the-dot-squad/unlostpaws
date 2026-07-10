@@ -325,4 +325,16 @@ export const appSettingsSchema = z.object({
   safetyMinImageHeight: positiveInt.max(10_000),
   safetyMaxBlurScore: threshold,
   supportedPetTypes: z.array(z.enum(PET_TYPES)).min(1),
+  socialLinks: z
+    .array(
+      z.object({
+        platform: z
+          .string()
+          .min(1)
+          .regex(/^[a-zA-Z0-9_-]+$/)
+          .transform((value) => value.trim().toLowerCase()),
+        url: z.string().trim().url({ message: "invalid_url" }),
+      }),
+    )
+    .default([]),
 });

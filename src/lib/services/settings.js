@@ -3,6 +3,7 @@
 import { connectDB } from "@/config/db";
 import { AppSettings } from "@/models/app-settings";
 import { appSettingsSchema, validate } from "@/lib/validation";
+import { normalizeSocialLinkArray } from "@/lib/socials";
 
 const CACHE_TTL_MS = 60_000;
 
@@ -33,6 +34,8 @@ export async function getAppSettings() {
     { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
   );
 
+  settings.socialLinks = normalizeSocialLinkArray(settings.socialLinks);
+
   cache.doc = settings;
   cache.expiresAt = now + CACHE_TTL_MS;
   return settings;
@@ -44,9 +47,14 @@ export async function getAppSettings() {
  * @returns {Promise<{ success: true } | { error: string }>}
  */
 export async function updateAppSettings(data) {
+  if (data && typeof data === "object" && "socialLinks" in data) {
+    data.socialLinks = normalizeSocialLinkArray(data.socialLinks);
+  }
+
   const parsed = validate(appSettingsSchema, data);
   if (!parsed.ok) {
-    return { error: "Validation failed" };
+    const detail = parsed.field ? `${parsed.field} (${parsed.error})` : parsed.error;
+    return { error: `Validation failed: ${detail}` };
   }
 
   await connectDB();

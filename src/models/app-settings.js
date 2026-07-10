@@ -54,9 +54,23 @@ const appSettingsSchema = new mongoose.Schema(
     safetyMinImageHeight: { type: Number, default: 400 },
     /** Blur score above this fails quality check (0–1, higher = blurrier). */
     safetyMaxBlurScore: { type: Number, default: 0.85 },
+    /** External profile URLs — empty until set in admin. */
+    socialLinks: {
+      type: [
+        {
+          platform: { type: String, required: true },
+          url: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );
 
-export const AppSettings =
-  mongoose.models.AppSettings || mongoose.model("AppSettings", appSettingsSchema);
+// Re-register when the schema changes (Next.js dev hot reload keeps a stale model).
+if (mongoose.models.AppSettings) {
+  delete mongoose.models.AppSettings;
+}
+
+export const AppSettings = mongoose.model("AppSettings", appSettingsSchema);
