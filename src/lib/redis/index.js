@@ -1,65 +1,50 @@
-/** @file Shared Redis connection for server-side job enqueueing and health probes. */
+/** @file Shared Upstash Redis client for job enqueueing, rate limits, and health probes. */
 
 import { Redis } from "@upstash/redis";
 import { env } from "@/config/env";
 
-/** @returns {boolean} Whether Upstash Redis is configured. */
+/** @returns {boolean} Whether Upstash Redis REST credentials are configured. */
 export function hasRedis() {
   return Boolean(env.redis.url && env.redis.token);
 }
 
 let sharedConnection = null;
 
-/**
- * Lazy singleton Upstash Redis client.
- * Returns a client wrapped with ioredis compatibility layer.
- * @returns {Redis & { status: string, connect: Function, disconnect: Function, quit: Function }}
- */
+/** Lazy singleton `@upstash/redis` client (stateless HTTP — no connect/disconnect lifecycle). */
 export function getRedisConnection() {
   if (!env.redis.url || !env.redis.token) {
     throw new Error("Upstash Redis is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN");
   }
 
   if (!sharedConnection) {
-    const client = new Redis({
+    sharedConnection = new Redis({
       url: env.redis.url,
       token: env.redis.token,
     });
-
-    // Decorate client with a compatibility layer for ioredis
-    client.status = "ready";
-    client.connect = async () => client;
-    client.disconnect = () => {
-      // no-op: Upstash REST client is stateless
-    };
-    client.quit = async () => {
-      // no-op: Upstash REST client is stateless
-    };
-
-    sharedConnection = client;
   }
 
   return sharedConnection;
 }
 
-/**
- * Connect the shared client before issuing commands (compatibility wrapper).
- * @returns {Promise<Redis>}
- */
+/** @returns {Promise<Redis>} */
 export async function ensureRedisConnection() {
   return getRedisConnection();
 }
 
 /**
- * Run commands on a short-lived Redis connection (compatibility wrapper).
- * Since Upstash Redis uses HTTP and is stateless, this uses the singleton client directly.
- *
+ * Upstash `XINFO GROUPS` — not `xinfo("GROUPS", key)` (ioredis argument order).
+ * @param {string} stream
+ */
+export async function xinfoGroups(stream) {
+  const redis = getRedisConnection();
+  return redis.xinfo(stream, { type: "GROUPS" });
+}
+
+/**
  * @template T
  * @param {(client: Redis) => Promise<T>} fn
- * @param {{ timeoutMs?: number }} [options]
  * @returns {Promise<T>}
  */
-export async function withRedisClient(fn, { timeoutMs: _timeoutMs = 3000 } = {}) {
-  const client = getRedisConnection();
-  return await fn(client);
+export async function withRedisClient(fn) {
+  return fn(getRedisConnection());
 }

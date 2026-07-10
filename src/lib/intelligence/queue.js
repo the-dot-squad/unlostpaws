@@ -21,7 +21,7 @@ import { env } from "@/config/env";
  */
 export async function enqueueImageJob(payload) {
   if (!hasRedis()) {
-    console.error("REDIS_URL is required to enqueue image processing jobs");
+    console.error("Upstash Redis is required to enqueue image processing jobs (UPSTASH_REDIS_REST_URL/TOKEN)");
     return { ok: false, error: "REDIS_UNAVAILABLE" };
   }
 

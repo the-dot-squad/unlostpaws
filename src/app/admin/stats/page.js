@@ -142,7 +142,7 @@ export default async function AdminStatsPage() {
                   ? redis.connected
                     ? "Vision processing stream consumed by the vision-worker"
                     : `Configured but unreachable${redis.error ? ` — ${redis.error}` : ""}`
-                  : "Not configured — set REDIS_URL to enable ML processing"}
+                  : "Not configured — set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN"}
               </CardDescription>
             </div>
           </div>

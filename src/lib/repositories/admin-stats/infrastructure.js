@@ -1,6 +1,6 @@
 import { connectDB, getMongoDb } from "@/config/db";
 import { env } from "@/config/env";
-import { hasRedis, withRedisClient } from "@/lib/redis";
+import { hasRedis, withRedisClient, xinfoGroups } from "@/lib/redis";
 import { COLLECTIONS, getQdrantClient } from "@/lib/qdrant/client";
 import { Listing } from "@/models/listing";
 import { OwnedPet } from "@/models/owned-pet";
@@ -82,7 +82,7 @@ async function getRedisStats() {
       const [queueLength, dlqLength, groups] = await Promise.all([
         redis.xlen(IMAGE_QUEUE_STREAM),
         redis.xlen(IMAGE_QUEUE_DLQ_STREAM),
-        redis.xinfo("GROUPS", IMAGE_QUEUE_STREAM).catch(() => []),
+        xinfoGroups(IMAGE_QUEUE_STREAM).catch(() => []),
       ]);
       return { queueLength, dlqLength, groups };
     });

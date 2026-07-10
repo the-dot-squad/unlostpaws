@@ -1,4 +1,4 @@
-/** @file IP rate limiting — proxy and Redis-backed API checks via REDIS_URL. */
+/** @file IP rate limiting — proxy and Upstash Redis-backed API checks. */
 
 import { NextResponse } from "next/server";
 import { env, resolveIpRateLimitStore } from "@/config/env";
@@ -50,14 +50,11 @@ async function redisCount(key, windowStart, now, windowSec) {
   const results = await redis
     .multi()
     .zremrangebyscore(key, 0, windowStart)
-    .zadd(key, now, member)
+    .zadd(key, { score: now, member })
     .zcard(key)
     .expire(key, windowSec)
     .exec();
-  const card = results?.[2];
-  // @upstash/redis returns raw command results directly as elements in the response array
-  // (e.g. results[2] is the number directly). ioredis returns them nested: [null, number].
-  return (Array.isArray(card) ? Number(card[1]) : Number(card)) || 0;
+  return Number(results?.[2]) || 0;
 }
 
 async function countHit(store, key, windowStart, now, windowSec) {
@@ -102,7 +99,7 @@ export function getServerRateLimitStore() {
   return resolveIpRateLimitStore();
 }
 
-/** IP limits for upload API routes — Redis (REDIS_URL) or in-memory (dev). */
+/** IP limits for upload API routes — Upstash Redis or in-memory (dev). */
 export async function checkIpRateLimits(ip, includeUpload = false) {
   const store = getServerRateLimitStore();
   if (store === "off") {
