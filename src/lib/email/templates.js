@@ -1,6 +1,7 @@
 import { env } from "@/config/env";
 import { wrapEmail } from "./layout";
 import { createTranslator } from "next-intl";
+import { emailBold, escapeHtml } from "./format";
 import enMessages from "@messages/en.json";
 import faMessages from "@messages/fa.json";
 
@@ -16,6 +17,28 @@ function moderationSalutation(t, ownerName) {
   return ownerName
     ? t("emails.common.salutation", { name: ownerName })
     : t("emails.common.salutationFallback");
+}
+
+function moderationListingIntro(t, leadKey, trailKey, listingTitle) {
+  return `<p>${t(leadKey)}${emailBold(listingTitle)}${t(trailKey)}</p>`;
+}
+
+function moderationWarningStrikeLine(t, { strikes, threshold, hasRemaining, remaining }) {
+  let html = `${t("emails.moderationWarning.strikeLinePrefix")} ${emailBold(strikes)} ${t("emails.common.strikeOf")} ${emailBold(threshold)} ${t("emails.moderationWarning.strikeLineAccountSuffix")}`;
+  if (hasRemaining) {
+    html += ` ${t("emails.moderationWarning.strikeRemainingLead")}${emailBold(remaining)}${t("emails.moderationWarning.strikeRemainingTrail")}`;
+  } else {
+    html += ` ${t("emails.moderationWarning.strikeSuspended")}`;
+  }
+  return html;
+}
+
+function moderationOutcomeStrikeLine(t, { strikes, threshold, isSuspended }) {
+  let html = `${t("emails.moderationOutcome.strikeLinePrefix")} ${emailBold(strikes)} ${t("emails.common.strikeOf")} ${emailBold(threshold)} ${t("emails.moderationOutcome.strikeLineAccountSuffix")}`;
+  if (isSuspended) {
+    html += t("emails.moderationOutcome.strikeSuspendedSuffix");
+  }
+  return html;
 }
 
 async function resolveUserModerationEmailContext(options) {
@@ -63,7 +86,7 @@ export async function matchNotificationEmail({ ownerName, missingTitle, matches,
 
   const contentHtml = `
     <p>${name}</p>
-    <p>${t("emails.matchNotification.intro", { missingTitle })}</p>
+    <p>${t("emails.matchNotification.introLead")} ${emailBold(missingTitle)}</p>
     <div class="callout-box">
       <ul style="margin: 0; padding-left: 20px;">
         ${matchLinks || `<li>${t("emails.matchNotification.noMatches")}</li>`}
@@ -152,21 +175,17 @@ export async function moderationOutcomeEmail(options) {
 
   let strikeLine = "";
   if (strikes && threshold) {
-    strikeLine = `<p style="margin-top: 16px;">${t("emails.moderationOutcome.strikeLine", {
-      strikes,
-      threshold,
-      isSuspended,
-    })}</p>`;
+    strikeLine = `<p style="margin-top: 16px;">${moderationOutcomeStrikeLine(t, { strikes, threshold, isSuspended })}</p>`;
   }
 
   const name = ownerName ? t("emails.common.salutation", { name: ownerName }) : t("emails.common.salutationFallback");
 
   const contentHtml = `
     <p>${name}</p>
-    <p>${t("emails.moderationOutcome.intro", { listingTitle })}</p>
+    ${moderationListingIntro(t, "emails.moderationOutcome.introLead", "emails.moderationOutcome.introTrail", listingTitle)}
     <div class="callout-box">
       <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationOutcome.decisionLabel")}</strong> <span style="color: ${actionColor}; font-weight: 600;">${localizedAction}</span></p>
-      ${note ? `<p style="margin: 10px 0 0 0; font-style: italic; color: #4b5563;">"${note}"</p>` : ""}
+      ${note ? `<p style="margin: 10px 0 0 0; font-style: italic; color: #4b5563;">"${escapeHtml(note)}"</p>` : ""}
       ${strikeLine}
     </div>
     <p>${t("emails.moderationOutcome.outro")}</p>
@@ -207,17 +226,12 @@ export async function userModerationWarningEmail(options) {
 
   const contentHtml = `
     <p>${name}</p>
-    <p>${t("emails.moderationWarning.intro", { listingTitle })}</p>
+    ${moderationListingIntro(t, "emails.moderationWarning.introLead", "emails.moderationWarning.introTrail", listingTitle)}
     <div class="callout-box">
-      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationWarning.violationReasonLabel")}</strong> <strong>${localizedReason}</strong></p>
-      ${note ? `<p style="margin: 10px 0 0 0; color: #4b5563;"><strong>${t("emails.moderationWarning.moderatorNoteLabel")}</strong> ${note}</p>` : ""}
+      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationWarning.violationReasonLabel")}</strong> <strong>${escapeHtml(localizedReason)}</strong></p>
+      ${note ? `<p style="margin: 10px 0 0 0; color: #4b5563;"><strong>${t("emails.moderationWarning.moderatorNoteLabel")}</strong> ${escapeHtml(note)}</p>` : ""}
     </div>
-    <p>${t("emails.moderationWarning.strikeLine", {
-      strikes,
-      threshold,
-      hasRemaining,
-      remaining,
-    })}</p>
+    <p>${moderationWarningStrikeLine(t, { strikes, threshold, hasRemaining, remaining })}</p>
     <p>${t("emails.moderationWarning.outro")}</p>
   `;
 
@@ -255,11 +269,11 @@ export async function userModerationBanEmail(options) {
   const contentHtml = `
     <p>${name}</p>
     <p style="color: #dc2626; font-weight: 600;">${t("emails.moderationBan.suspendedNotice")}</p>
-    <p>${t("emails.moderationBan.strikeExplanation", { strikes, threshold })}</p>
+    <p>${t("emails.moderationBan.strikeExplanationLead")} ${emailBold(strikes)} ${t("emails.moderationBan.strikeExplanationTrail", { threshold })}</p>
     <div class="callout-box">
-      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationBan.latestViolationLabel")}</strong> "${listingTitle}"</p>
-      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationBan.reasonLabel")}</strong> ${localizedReason}</p>
-      ${note ? `<p style="margin: 10px 0 0 0; color: #4b5563;"><strong>${t("emails.moderationBan.moderatorNoteLabel")}</strong> ${note}</p>` : ""}
+      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationBan.latestViolationLabel")}</strong> "${escapeHtml(listingTitle)}"</p>
+      <p style="margin: 0 0 10px 0;"><strong>${t("emails.moderationBan.reasonLabel")}</strong> ${escapeHtml(localizedReason)}</p>
+      ${note ? `<p style="margin: 10px 0 0 0; color: #4b5563;"><strong>${t("emails.moderationBan.moderatorNoteLabel")}</strong> ${escapeHtml(note)}</p>` : ""}
     </div>
     <p>${t("emails.moderationBan.outro")}</p>
   `;

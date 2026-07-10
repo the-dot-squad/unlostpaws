@@ -1,5 +1,4 @@
 import { env } from "@/config/env";
-import { EMAIL_API_URLS } from "@/config/external-urls";
 import { requireBody } from "./utils.js";
 
 /**
@@ -29,7 +28,7 @@ export const mailjetAdapter = {
       ...(text && { TextPart: text }),
     };
 
-    const res = await fetch(EMAIL_API_URLS.mailjetSend, {
+    const res = await fetch(env.email.mailjet.apiOrigin, {
       method: "POST",
       headers: {
         Authorization: `Basic ${auth}`,

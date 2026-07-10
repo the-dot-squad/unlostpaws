@@ -1,5 +1,4 @@
 import { env } from "@/config/env";
-import { EMAIL_API_URLS } from "@/config/external-urls";
 import { requireBody } from "./utils.js";
 
 /**
@@ -21,7 +20,7 @@ export const mailtrapAdapter = {
 
     requireBody({ html, text });
 
-    const res = await fetch(`${EMAIL_API_URLS.mailtrapSandbox}/api/send/${sandboxId}`, {
+    const res = await fetch(`${env.email.mailtrap.apiOrigin}/api/send/${sandboxId}`, {
       method: "POST",
       headers: {
         "Api-Token": token,
