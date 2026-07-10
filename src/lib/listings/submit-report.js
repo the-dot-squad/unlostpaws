@@ -5,8 +5,8 @@ import { findListingByPublicId } from "@/lib/public-id";
 import { requireActiveSession } from "@/lib/auth/session";
 import { getRequestMetadata } from "@/lib/request-metadata";
 import { checkReportRateLimit } from "@/lib/rate-limit";
-import { sendEmail } from "@/lib/email";
-import { reportReceivedEmail } from "@/lib/email/templates";
+import { sendTransactionalEmail } from "@/lib/email";
+import { buildReportReceivedEmail } from "@/lib/email/templates";
 import { maybeAutoReviewListing } from "@/lib/moderation/auto-review";
 
 /**
@@ -68,11 +68,15 @@ export async function submitListingReport({ listingId, reason, details }) {
   await maybeAutoReviewListing(listing._id, reason);
 
   if (session.user.email) {
-    const email = await reportReceivedEmail({
-      reporterName: session.user.name,
-      locale: session.user.locale || "en",
+    await sendTransactionalEmail({
+      to: session.user.email,
+      logTag: "reports",
+      build: () =>
+        buildReportReceivedEmail({
+          reporterName: session.user.name,
+          locale: session.user.locale || "en",
+        }),
     });
-    await sendEmail({ to: session.user.email, ...email }).catch(() => {});
   }
 
   return { ok: true };

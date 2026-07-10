@@ -821,6 +821,25 @@
       "ctaLabel": "Contact Support / Appeal",
       "textFallback": "Account suspended after {strikes} violations. Latest: \"{listingTitle}\" ({reason})."
     },
+    "manualBan": {
+      "subject": "Account suspended — UnLostPaws",
+      "previewText": "Your account has been suspended by an administrator.",
+      "heading": "Account Suspended",
+      "suspendedNotice": "Your account has been suspended by an administrator.",
+      "reasonLabel": "Reason:",
+      "outro": "If you believe this decision was made in error, please contact our support team to file an appeal.",
+      "ctaLabel": "Contact Support / Appeal",
+      "textFallback": "Your account has been suspended by an administrator."
+    },
+    "manualUnban": {
+      "subject": "Account restored — UnLostPaws",
+      "previewText": "Your account suspension has been lifted. You can sign in again.",
+      "heading": "Account Restored",
+      "restoredNotice": "Your account suspension has been lifted by an administrator.",
+      "outro": "You can sign in again and continue using UnLostPaws.",
+      "ctaLabel": "Sign In",
+      "textFallback": "Your account suspension has been lifted. You can sign in again at UnLostPaws."
+    },
     "reportReceived": {
       "subject": "Report received — UnLostPaws",
       "previewText": "Thank you for your report. Our team will review it shortly.",

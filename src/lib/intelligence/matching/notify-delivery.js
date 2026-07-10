@@ -1,6 +1,6 @@
 import { Listing, listingPublicId } from "@/models/listing";
-import { sendEmail } from "@/lib/email";
-import { matchNotificationEmail, corroborationMatchEmail } from "@/lib/email/templates";
+import { sendTransactionalEmail } from "@/lib/email";
+import { buildCorroborationMatchEmail, buildMatchNotificationEmail } from "@/lib/email/templates";
 import { ListingMatch } from "@/models/listing-match";
 
 /**
@@ -82,34 +82,32 @@ export async function deliverMatchNotifications({ byUser, sourceListing, pending
               _id: { $in: pending.map((p) => p.listingAId).concat(pending.map((p) => p.listingBId)) },
             }).lean();
 
-      const email = await matchNotificationEmail({
-        ownerName: owner.name,
-        missingTitle: missingListing
-          ? `${missingListing.petType} — ${missingListing.color}`
-          : "your pet alert",
-        matches: reunification,
-        locale: owner.locale || "en",
+      await sendTransactionalEmail({
+        to: owner.email,
+        logTag: "matches",
+        build: () =>
+          buildMatchNotificationEmail({
+            ownerName: owner.name,
+            missingTitle: missingListing
+              ? `${missingListing.petType} — ${missingListing.color}`
+              : "your pet alert",
+            matches: reunification,
+            locale: owner.locale || "en",
+          }),
       });
-
-      try {
-        await sendEmail({ to: owner.email, ...email });
-      } catch (err) {
-        console.error("Reunification match email failed:", err.message);
-      }
     }
 
     if (corroboration.length) {
-      const email = await corroborationMatchEmail({
-        ownerName: owner.name,
-        matches: corroboration,
-        locale: owner.locale || "en",
+      await sendTransactionalEmail({
+        to: owner.email,
+        logTag: "matches",
+        build: () =>
+          buildCorroborationMatchEmail({
+            ownerName: owner.name,
+            matches: corroboration,
+            locale: owner.locale || "en",
+          }),
       });
-
-      try {
-        await sendEmail({ to: owner.email, ...email });
-      } catch (err) {
-        console.error("Corroboration match email failed:", err.message);
-      }
     }
 
     await ListingMatch.updateMany(
