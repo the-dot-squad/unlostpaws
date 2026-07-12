@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { getSession } from "@/lib/auth/session";
+import { requireActiveSessionPage } from "@/lib/auth/session";
 import { filterMatches, getMatchFilterCounts, getMatchesForListing } from "@/lib/intelligence/matching/reads";
 import { MatchCard } from "@/components/account/match-card";
 import { MatchFilterBar } from "@/components/account/match-filter-bar";
@@ -18,7 +18,7 @@ export default async function ListingMatchesPage({ params, searchParams }) {
   const { filter: filterParam } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await getSession();
+  const session = await requireActiveSessionPage(locale);
 
   const data = await getMatchesForListing(session.user.id, listingId);
   if (!data) notFound();

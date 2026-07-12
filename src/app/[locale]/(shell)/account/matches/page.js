@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { getSession } from "@/lib/auth/session";
+import { requireActiveSessionPage } from "@/lib/auth/session";
 import { getMatchGroupsForUser } from "@/lib/intelligence/matching/reads";
 import { MatchListingSummary } from "@/components/account/match-listing-summary";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ export default async function MatchesPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await getSession();
+  const session = await requireActiveSessionPage(locale);
 
   const matchGroups = await getMatchGroupsForUser(session.user.id);
 

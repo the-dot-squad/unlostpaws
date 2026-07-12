@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { getSession } from "@/lib/auth/session";
+import { requireActiveSessionPage } from "@/lib/auth/session";
 import { getAccountDashboardData } from "@/lib/intelligence/matching/reads";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ export default async function AccountPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await getSession();
+  const session = await requireActiveSessionPage(locale);
   const prefix = `/${locale}`;
   const accountPrefix = `${prefix}/account`;
 
