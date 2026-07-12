@@ -6,6 +6,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   ListObjectsV2Command,
+  DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/config/env";
@@ -182,6 +183,52 @@ export async function deleteObject(key) {
     await unlink(filePath);
   } catch {
     // Local dev file may not exist when using remote storage only.
+  }
+
+  try {
+    const { Upload } = await import("@/models/upload");
+    await Upload.deleteOne({ key });
+  } catch {
+    // ignore
+  }
+}
+
+export async function deleteObjects(keys) {
+  if (!keys || !keys.length) return;
+
+  if (hasS3Backend()) {
+    const client = getS3Client();
+    const objects = keys.map((key) => ({ Key: key }));
+
+    const chunkSize = 1000;
+    for (let i = 0; i < objects.length; i += chunkSize) {
+      const batch = objects.slice(i, i + chunkSize);
+      await client.send(
+        new DeleteObjectsCommand({
+          Bucket: env.storage.bucket,
+          Delete: {
+            Objects: batch,
+            Quiet: true,
+          },
+        })
+      );
+    }
+  }
+
+  for (const key of keys) {
+    try {
+      const filePath = path.join(process.cwd(), "public", "uploads", path.basename(key));
+      await unlink(filePath);
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    const { Upload } = await import("@/models/upload");
+    await Upload.deleteMany({ key: { $in: keys } });
+  } catch {
+    // ignore
   }
 }
 

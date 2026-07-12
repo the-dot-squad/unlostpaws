@@ -1,8 +1,3 @@
-/**
- * @file Transactional emails for manual account suspension and restoration.
- * Used by admin server actions — moderation auto-bans use templates in ./templates/.
- */
-
 import { sendTransactionalEmail } from "./send";
 import { buildManualBanEmail, buildManualUnbanEmail } from "./templates";
 

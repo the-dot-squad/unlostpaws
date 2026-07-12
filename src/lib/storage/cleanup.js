@@ -1,41 +1,49 @@
 /** @file Cleanup service to identify and delete unattached/orphan media files. */
 
-import { connectDB, getMongoDb } from "@/config/db";
-import { deleteObject } from "@/lib/storage/s3";
-import {
-  collectReferencedMediaKeys,
-  deleteUnreferencedMediaFiles,
-  extractKeyFromImageOrUrl,
-  listStoredMediaFiles,
-} from "@/lib/storage/cleanup-helpers";
+import { connectDB } from "@/config/db";
+import { deleteObjects } from "@/lib/storage/s3";
+import { Upload } from "@/models/upload";
+import { extractKeyFromImageOrUrl } from "@/lib/storage/cleanup-helpers";
 
 export { extractKeyFromImageOrUrl };
 
 /**
- * Scan database records and storage buckets to identify and delete orphan media files.
+ * Scan the indexed Upload collection to identify and bulk-delete orphan media files.
  *
  * @param {object} [options]
  * @param {number} [options.maxAgeHours] File age in hours before deletion (default: 24).
  */
 export async function pruneOrphanUploads({ maxAgeHours = 24 } = {}) {
   await connectDB();
-  const db = await getMongoDb();
 
-  const { referencedKeys, referencedBasenames } = await collectReferencedMediaKeys(db);
-  const allStoredFiles = await listStoredMediaFiles();
-  const { deletedCount, deletedBytes, deletedKeys } = await deleteUnreferencedMediaFiles({
-    allStoredFiles,
-    referencedKeys,
-    referencedBasenames,
-    maxAgeHours,
-    deleteObjectFn: deleteObject,
-  });
+  const cutoffTime = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
+
+  // Find pending uploads older than cutoffTime
+  const orphans = await Upload.find({
+    status: "pending",
+    createdAt: { $lt: cutoffTime },
+  }).lean();
+
+  if (!orphans.length) {
+    return {
+      success: true,
+      scanned: 0,
+      deleted: 0,
+      freedBytes: 0,
+      deletedKeys: [],
+    };
+  }
+
+  const orphanKeys = orphans.map((o) => o.key);
+
+  // Bulk delete from S3/R2 and local dev storage, and remove tracking documents
+  await deleteObjects(orphanKeys);
 
   return {
     success: true,
-    scanned: allStoredFiles.length,
-    deleted: deletedCount,
-    freedBytes: deletedBytes,
-    deletedKeys,
+    scanned: orphans.length,
+    deleted: orphanKeys.length,
+    freedBytes: 0,
+    deletedKeys: orphanKeys,
   };
 }

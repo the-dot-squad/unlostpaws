@@ -183,6 +183,7 @@ export const env = {
 
   cron: {
     secret: cronSecret,
+    matchReprocessLimit: Math.max(1, Number(process.env.CRON_MATCH_REPROCESS_LIMIT || 15)),
   },
 
   qdrant: {
