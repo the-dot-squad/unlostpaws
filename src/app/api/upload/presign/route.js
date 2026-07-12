@@ -4,10 +4,13 @@ import { createPresignedUpload } from "@/lib/storage/s3";
 import { validate, presignUploadSchema } from "@/lib/validation";
 import { enforceUploadRateLimits, recordListingUploadPresign } from "@/lib/rate-limit";
 import { rejectCrossSiteRequest } from "@/lib/request-metadata";
+import { connectDB } from "@/config/db";
 
 export async function POST(request) {
   const blocked = rejectCrossSiteRequest(request);
   if (blocked) return blocked;
+
+  await connectDB();
 
   const session = await getSession();
   const isInactive = session?.user?.status ? session.user.status !== "active" : session?.user?.banned;
@@ -38,6 +41,19 @@ export async function POST(request) {
     extension,
     prefix,
   });
+
+  try {
+    const { Upload } = await import("@/models/upload");
+    await Upload.create({
+      key: result.key,
+      url: result.publicUrl,
+      userId: session.user.id,
+      prefix,
+      status: "pending",
+    });
+  } catch (err) {
+    console.error("Failed to track presigned upload in DB:", err);
+  }
 
   await recordListingUploadPresign(session.user.id, prefix);
 

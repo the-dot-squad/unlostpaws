@@ -71,6 +71,12 @@ export async function createOwnedPet(data) {
     pet.publicId = encodeOwnedPetPublicId(pet._id);
     await pet.save();
 
+    const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
+    if (s3Keys.length) {
+      const { Upload } = await import("@/models/upload");
+      await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
+    }
+
     const enqueueResult = await enqueueOwnedPetProcessing({
       ownedPetId: pet._id.toString(),
       imageUrl: petData.photo.url,
@@ -146,6 +152,13 @@ export async function updateOwnedPet(publicId, data) {
     }
 
     await pet.save();
+
+    const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
+    if (s3Keys.length) {
+      const { Upload } = await import("@/models/upload");
+      await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
+    }
+
     revalidatePath("/");
     return { success: true };
   } catch (err) {

@@ -28,6 +28,11 @@ export async function ingestProcessedListing({
   images,
   errors = [],
   embeddingModel,
+  workerVersion,
+  runtime,
+  executionProvider,
+  modelPrecision,
+  safetyModel,
 }) {
   await connectDB();
 
@@ -35,6 +40,17 @@ export async function ingestProcessedListing({
   if (!listing) {
     return { error: "Listing not found", status: 404 };
   }
+
+  // Populate ML worker execution details for logging and auditability
+  const modelId = embeddingModel || listing.embeddingModel || "";
+  listing.embeddingModel = modelId;
+  listing.worker = {
+    version: workerVersion || "",
+    runtime: runtime || "",
+    executionProvider: executionProvider || "",
+    precision: modelPrecision || "",
+    safetyModel: safetyModel || "",
+  };
 
   if (!images?.length && errors.length) {
     listing.processingStatus = "failed";
@@ -64,7 +80,6 @@ export async function ingestProcessedListing({
     };
   }
 
-  const modelId = embeddingModel || listing.embeddingModel || "";
   const risk = await assessAbuseRisk({ listing, images, embeddingModel: modelId });
 
   const moderation = await applyModeration({
@@ -100,7 +115,6 @@ export async function ingestProcessedListing({
   });
 
   listing.images = updatedImages;
-  listing.embeddingModel = modelId;
   listing.processingStatus = "ready";
   listing.processingError = errors.length
     ? errors.map((e) => `${e.url}: ${e.error}`).join("; ")

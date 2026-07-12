@@ -33,6 +33,15 @@ export async function updateProfile({ name, phone, locale, country, city, image 
 
     await updateAuthUserById(session.user.id, updates);
 
+    if (parsed.data.image) {
+      const { extractKeyFromImageOrUrl } = await import("@/lib/storage/cleanup-helpers");
+      const key = extractKeyFromImageOrUrl(parsed.data.image);
+      if (key) {
+        const { Upload } = await import("@/models/upload");
+        await Upload.updateMany({ key }, { $set: { status: "attached" } });
+      }
+    }
+
     revalidatePath("/");
     return { success: true, locale: parsed.data.locale };
   } catch (err) {

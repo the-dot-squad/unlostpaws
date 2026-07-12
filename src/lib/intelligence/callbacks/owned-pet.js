@@ -4,11 +4,29 @@ import { OwnedPet } from "@/models/owned-pet";
 import { upsertOwnedPetVector } from "@/lib/qdrant";
 import { assessOwnedPetSafety } from "@/lib/intelligence/safety/assess-content-safety";
 
+async function handleProcessingFailure(ownedPetId, error, telemetry) {
+  await OwnedPet.findByIdAndUpdate(ownedPetId, {
+    processingStatus: "failed",
+    processingError: error,
+    ...telemetry,
+  });
+}
+
 /**
  * @param {object} body
  */
 export async function processOwnedPetCallback(body) {
-  const { ownedPetId, images, embeddingModel, errors = [] } = body;
+  const {
+    ownedPetId,
+    images,
+    embeddingModel,
+    workerVersion,
+    runtime,
+    executionProvider,
+    modelPrecision,
+    safetyModel,
+    errors = [],
+  } = body;
 
   if (!ownedPetId) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -16,29 +34,33 @@ export async function processOwnedPetCallback(body) {
 
   await connectDB();
 
+  // Common metadata to store on all result paths
+  const telemetry = {
+    worker: {
+      version: workerVersion || "",
+      runtime: runtime || "",
+      executionProvider: executionProvider || "",
+      precision: modelPrecision || "",
+      safetyModel: safetyModel || "",
+    },
+  };
+
+  const errorMessage = errors.map((e) => e.error).join("; ");
+
   if (!images?.length) {
-    await OwnedPet.findByIdAndUpdate(ownedPetId, {
-      processingStatus: "failed",
-      processingError: errors.map((e) => e.error).join("; ") || "Processing failed",
-    });
+    await handleProcessingFailure(ownedPetId, errorMessage || "Processing failed", telemetry);
     return NextResponse.json({ success: false, failed: true });
   }
 
   const safety = await assessOwnedPetSafety(images);
   if (!safety.ok) {
-    await OwnedPet.findByIdAndUpdate(ownedPetId, {
-      processingStatus: "failed",
-      processingError: safety.error || "Content safety check failed",
-    });
+    await handleProcessingFailure(ownedPetId, safety.error || "Content safety check failed", telemetry);
     return NextResponse.json({ success: false, failed: true, contentBlocked: true });
   }
 
   const img = images[0];
   if (!img?.embedding?.length) {
-    await OwnedPet.findByIdAndUpdate(ownedPetId, {
-      processingStatus: "failed",
-      processingError: errors.map((e) => e.error).join("; ") || "No embedding produced",
-    });
+    await handleProcessingFailure(ownedPetId, errorMessage || "No embedding produced", telemetry);
     return NextResponse.json({ success: false, failed: true });
   }
 
@@ -66,6 +88,7 @@ export async function processOwnedPetCallback(body) {
     hasEmbedding: true,
     processingStatus: "ready",
     processingError: errors.length ? errors.map((e) => `${e.url}: ${e.error}`).join("; ") : "",
+    ...telemetry,
   });
 
   return NextResponse.json({

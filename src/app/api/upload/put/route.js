@@ -4,10 +4,13 @@ import { uploadObject } from "@/lib/storage/s3";
 import { ALLOWED_IMAGE_MIMES, validateImageBuffer } from "@/lib/storage/images";
 import { enforceUploadRateLimits } from "@/lib/rate-limit";
 import { rejectCrossSiteRequest } from "@/lib/request-metadata";
+import { connectDB } from "@/config/db";
 
 export async function POST(request) {
   const blocked = rejectCrossSiteRequest(request);
   if (blocked) return blocked;
+
+  await connectDB();
 
   const session = await getSession();
   const isInactive = session?.user?.status ? session.user.status !== "active" : session?.user?.banned;
@@ -52,6 +55,23 @@ export async function POST(request) {
     body: buffer,
     contentType: mimeCheck.mime,
   });
+
+  try {
+    const { Upload } = await import("@/models/upload");
+    await Upload.findOneAndUpdate(
+      { key },
+      {
+        key,
+        url: publicUrl,
+        userId: session.user.id,
+        prefix,
+        status: "pending",
+      },
+      { upsert: true, new: true }
+    );
+  } catch (err) {
+    console.error("Failed to track direct upload in DB:", err);
+  }
 
   return NextResponse.json({ publicUrl, key });
 }

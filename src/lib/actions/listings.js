@@ -17,6 +17,7 @@ import {
 } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
+import { getAuthUserById } from "@/lib/auth/users";
 import { canUserExtendListing, computeInitialExpiresAt } from "@/lib/listings/expiry";
 import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunion";
 import { revealListingContact } from "@/lib/listings/reveal-contact";
@@ -24,63 +25,87 @@ import { submitListingReport } from "@/lib/listings/submit-report";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { verifyListingTurnstile } from "@/lib/turnstile";
 
+/**
+ * Checks if a user is allowed to create a new listing based on rate limits.
+ * Resolves user status details on failure.
+ * @param {string} userId
+ */
+async function checkListingLimitsAndStatus(userId) {
+  const rateCheck = await checkListingRateLimit(userId);
+  if (!rateCheck.allowed) {
+    if (rateCheck.reason === "banned") return { allowed: false, error: "user_banned" };
+    if (rateCheck.reason === "inactive") {
+      const u = await getAuthUserById(userId);
+      const status = u?.status || "inactive";
+      return { allowed: false, error: `user_${status}` };
+    }
+    if (rateCheck.reason === "monthly") return { allowed: false, error: "listing_limit_monthly" };
+    if (rateCheck.reason === "daily") return { allowed: false, error: "listing_limit_daily" };
+    return { allowed: false, error: "create_failed" };
+  }
+  return { allowed: true, rateCheck };
+}
+
+/**
+ * Persists the listing in the database and updates associated media upload status.
+ * @param {object} listingData
+ * @param {string} userId
+ * @param {Date} expiresAt
+ */
+async function persistListing(listingData, userId, expiresAt) {
+  const listing = await Listing.create({
+    type: listingData.type,
+    petType: listingData.petType,
+    breed: listingData.breed || "",
+    color: listingData.color,
+    description: listingData.description || "",
+    images: listingData.images.map((img, i) => ({ ...img, order: i })),
+    location: {
+      address: listingData.address || "",
+      city: listingData.city || "",
+      country: listingData.country || "",
+      coordinates: [listingData.lng, listingData.lat],
+    },
+    locationSource: listingData.locationSource || "manual",
+    contact: {
+      allowEmail: listingData.allowEmail ?? false,
+      allowPhone: listingData.allowPhone ?? false,
+    },
+    userId,
+    expiresAt,
+    status: "active",
+    processingStatus: "pending",
+    locale: listingData.locale || "en",
+  });
+
+  const s3Keys = listingData.images.map((img) => img.s3Key).filter(Boolean);
+  if (s3Keys.length) {
+    const { Upload } = await import("@/models/upload");
+    await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
+  }
+
+  return listing;
+}
+
 /** Create a listing, enqueue ML processing, and apply rate limits. @returns {Promise<{ success: true, id: string } | { error: string }>} */
 export async function createListing(data) {
   try {
     const session = await requireActiveSession();
 
-    const rateCheck = await checkListingRateLimit(session.user.id);
-    if (!rateCheck.allowed) {
-      if (rateCheck.reason === "banned") return { error: "user_banned" };
-      if (rateCheck.reason === "inactive") {
-        const u = await getAuthUserById(session.user.id);
-        const status = u?.status || "inactive";
-        return { error: `user_${status}` };
-      }
-      if (rateCheck.reason === "monthly") return { error: "listing_limit_monthly" };
-      if (rateCheck.reason === "daily") return { error: "listing_limit_daily" };
-      return { error: "create_failed" };
-    }
+    const limitCheck = await checkListingLimitsAndStatus(session.user.id);
+    if (!limitCheck.allowed) return { error: limitCheck.error };
+    const { rateCheck } = limitCheck;
 
     const parsed = validate(createListingSchema, data);
     if (!parsed.ok) {
-      if (parsed.error === "invalid_coordinates") {
-        return { error: "invalid_coordinates" };
-      }
-      if (parsed.error === "contact_required") {
-        return { error: "contact_required" };
-      }
+      if (parsed.error === "invalid_coordinates") return { error: "invalid_coordinates" };
+      if (parsed.error === "contact_required") return { error: "contact_required" };
       return { error: "images_required" };
     }
 
-    const listingData = parsed.data;
     const settings = await getAppSettings();
     const expiresAt = computeInitialExpiresAt(new Date(), settings);
-
-    const listing = await Listing.create({
-      type: listingData.type,
-      petType: listingData.petType,
-      breed: listingData.breed || "",
-      color: listingData.color,
-      description: listingData.description || "",
-      images: listingData.images.map((img, i) => ({ ...img, order: i })),
-      location: {
-        address: listingData.address || "",
-        city: listingData.city || "",
-        country: listingData.country || "",
-        coordinates: [listingData.lng, listingData.lat],
-      },
-      locationSource: listingData.locationSource || "manual",
-      contact: {
-        allowEmail: listingData.allowEmail ?? false,
-        allowPhone: listingData.allowPhone ?? false,
-      },
-      userId: session.user.id,
-      expiresAt,
-      status: "active",
-      processingStatus: "pending",
-      locale: listingData.locale || "en",
-    });
+    const listing = await persistListing(parsed.data, session.user.id, expiresAt);
 
     await incrementListingCount(
       session.user.id,
@@ -88,12 +113,12 @@ export async function createListing(data) {
       rateCheck.listingsThisMonth || 0
     );
 
-    const imageUrls = listingData.images.map((img) => img.url);
+    const imageUrls = parsed.data.images.map((img) => img.url);
     const enqueueResult = await enqueueListingProcessing({
       listingId: listing._id,
       imageUrls,
-      listingType: listingData.type,
-      petType: listingData.petType,
+      listingType: parsed.data.type,
+      petType: parsed.data.petType,
     });
 
     const id = listingPublicId(listing);

@@ -3,12 +3,12 @@ import { Listing } from "@/models/listing";
 import { getListingImageVectors } from "@/lib/qdrant/listing-images";
 import { findListingMatches } from "@/lib/intelligence/matching/find-listing-matches";
 import { notifyListingMatches } from "@/lib/intelligence/matching/notify";
+import { env } from "@/config/env";
 
-const BATCH_SIZE = 50;
 const SCAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 /** Re-run cross-type matching for active listings not scanned recently. */
-export async function reprocessListingMatches({ limit = BATCH_SIZE } = {}) {
+export async function reprocessListingMatches({ limit = env.cron.matchReprocessLimit } = {}) {
   await connectDB();
 
   const cutoff = new Date(Date.now() - SCAN_INTERVAL_MS);

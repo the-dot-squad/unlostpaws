@@ -55,7 +55,7 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
     safetyEnabled: settings.safetyEnabled ?? true,
     safetyNsfwReviewThreshold: settings.safetyNsfwReviewThreshold ?? 0.5,
     safetyNsfwBlockThreshold: settings.safetyNsfwBlockThreshold ?? 0.85,
-    safetyPetMinLikelihood: settings.safetyPetMinLikelihood ?? 0.35,
+    safetyPetMinLikelihood: settings.safetyPetMinLikelihood ?? 0.32,
     safetyMinImageWidth: settings.safetyMinImageWidth ?? 400,
     safetyMinImageHeight: settings.safetyMinImageHeight ?? 400,
     safetyMaxBlurScore: settings.safetyMaxBlurScore ?? 0.85,

@@ -5,7 +5,17 @@ import { ingestProcessedListing } from "@/lib/intelligence/ingest/listing";
  * @param {object} body
  */
 export async function processListingCallback(body) {
-  const { listingId, images, errors = [], embeddingModel } = body;
+  const {
+    listingId,
+    images,
+    errors = [],
+    embeddingModel,
+    workerVersion,
+    runtime,
+    executionProvider,
+    modelPrecision,
+    safetyModel,
+  } = body;
 
   if (!listingId) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -16,6 +26,11 @@ export async function processListingCallback(body) {
     images,
     errors,
     embeddingModel,
+    workerVersion,
+    runtime,
+    executionProvider,
+    modelPrecision,
+    safetyModel,
   });
 
   if (result.status === 404) {

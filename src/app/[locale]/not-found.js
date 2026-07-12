@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import { Footprints, Search, ArrowLeft } from "lucide-react";
+import { Footprints, Search, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -45,14 +45,6 @@ export default function NotFound() {
         {/* Buttons */}
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:gap-2 justify-center">
           <Button
-            asChild
-            className="flex-1 h-11 transition-all active:scale-98"
-          >
-            <Link href={`/${locale}`}>
-              {t("backHome")}
-            </Link>
-          </Button>
-          <Button
             variant="outline"
             className="flex-1 h-11 transition-all active:scale-98 gap-2"
             onClick={() => {
@@ -61,6 +53,15 @@ export default function NotFound() {
           >
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             {t("backNav")}
+          </Button>
+          <Button
+            asChild
+            className="flex-1 h-11 transition-all active:scale-98 gap-2"
+          >
+            <Link href={`/${locale}`}>
+              <Home className="h-4 w-4" />
+              {t("backHome")}
+            </Link>
           </Button>
         </div>
       </div>

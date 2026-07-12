@@ -49,7 +49,7 @@ const appSettingsSchema = new mongoose.Schema(
     /** NSFW score at or above → soft remove listing. */
     safetyNsfwBlockThreshold: { type: Number, default: 0.85 },
     /** Pet relevance below this → flag as non-pet content. */
-    safetyPetMinLikelihood: { type: Number, default: 0.35 },
+    safetyPetMinLikelihood: { type: Number, default: 0.32 },
     safetyMinImageWidth: { type: Number, default: 400 },
     safetyMinImageHeight: { type: Number, default: 400 },
     /** Blur score above this fails quality check (0–1, higher = blurrier). */

@@ -30,7 +30,7 @@ import { getAppSettings } from "@/lib/services/settings";
 export function evaluateImageSafetySignals(images, settings) {
   const reviewThreshold = settings.safetyNsfwReviewThreshold ?? 0.5;
   const blockThreshold = settings.safetyNsfwBlockThreshold ?? 0.85;
-  const petMin = settings.safetyPetMinLikelihood ?? 0.35;
+  const petMin = settings.safetyPetMinLikelihood ?? 0.32;
   const minW = settings.safetyMinImageWidth ?? 400;
   const minH = settings.safetyMinImageHeight ?? 400;
   const maxBlur = settings.safetyMaxBlurScore ?? 0.85;
@@ -229,7 +229,7 @@ export async function assessOwnedPetSafety(images) {
   }
 
   const blockThreshold = settings.safetyNsfwBlockThreshold ?? 0.85;
-  const petMin = settings.safetyPetMinLikelihood ?? 0.35;
+  const petMin = settings.safetyPetMinLikelihood ?? 0.32;
 
   for (const img of images) {
     const nsfw = img.safety?.nsfwScore ?? 0;
