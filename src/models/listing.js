@@ -36,6 +36,13 @@ const listingSchema = new mongoose.Schema(
     },
     processingError: { type: String, default: "" },
     embeddingModel: { type: String, default: "" },
+    worker: {
+      version: { type: String, default: "" },
+      runtime: { type: String, default: "" },
+      executionProvider: { type: String, default: "" },
+      precision: { type: String, default: "" },
+      safetyModel: { type: String, default: "" },
+    },
     petType: { type: String, enum: PET_TYPES, required: true, index: true },
     breed: { type: String, default: "" },
     color: { type: String, required: true },

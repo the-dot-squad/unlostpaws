@@ -1,6 +1,7 @@
 import { ensureRedisConnection, hasRedis } from "@/lib/redis";
 import { IMAGE_QUEUE_STREAM, MAX_JOB_ATTEMPTS, ML_JOB_TYPES } from "@/config/constants/platform";
 import { env } from "@/config/env";
+import { PET_TYPES } from "@/config/constants/enums";
 
 /**
  * @typedef {Object} ImageJobPayload
@@ -42,13 +43,21 @@ export async function enqueueImageJob(payload) {
 
     const webhookUrl = `${baseUrl}/api/webhooks/vision?token=${encodeURIComponent(env.webhook.secret)}`;
 
+    // Normalize petType to match the worker's strict validation
+    let petType = (payload.petType || "").toString().trim().toLowerCase();
+    if (!PET_TYPES.includes(petType)) {
+      petType = "";
+    }
+
+    // Explicitly define the job contract fields passed to the worker
     const job = {
-      ...payload,
+      jobType,
+      listingId: payload.listingId?.toString() || null,
+      ownedPetId: payload.ownedPetId?.toString() || null,
       imageUrls: absoluteImageUrls,
       webhookUrl,
-      listingId: payload.listingId?.toString(),
-      ownedPetId: payload.ownedPetId?.toString(),
-      jobType,
+      listingType: payload.listingType || "",
+      petType,
       attempt: payload.attempt ?? 0,
     };
 

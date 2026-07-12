@@ -27,6 +27,13 @@ const ownedPetSchema = new mongoose.Schema(
     passportPhoto: { type: imageSchema },
     hasEmbedding: { type: Boolean, default: false },
     embeddingModel: { type: String, default: "" },
+    worker: {
+      version: { type: String, default: "" },
+      runtime: { type: String, default: "" },
+      executionProvider: { type: String, default: "" },
+      precision: { type: String, default: "" },
+      safetyModel: { type: String, default: "" },
+    },
     processingStatus: {
       type: String,
       enum: PROCESSING_STATUSES,

@@ -8,7 +8,17 @@ import { assessOwnedPetSafety } from "@/lib/intelligence/safety/assess-content-s
  * @param {object} body
  */
 export async function processOwnedPetCallback(body) {
-  const { ownedPetId, images, embeddingModel, errors = [] } = body;
+  const {
+    ownedPetId,
+    images,
+    embeddingModel,
+    workerVersion,
+    runtime,
+    executionProvider,
+    modelPrecision,
+    safetyModel,
+    errors = [],
+  } = body;
 
   if (!ownedPetId) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -16,10 +26,22 @@ export async function processOwnedPetCallback(body) {
 
   await connectDB();
 
+  // Common metadata to store on all result paths
+  const telemetry = {
+    worker: {
+      version: workerVersion || "",
+      runtime: runtime || "",
+      executionProvider: executionProvider || "",
+      precision: modelPrecision || "",
+      safetyModel: safetyModel || "",
+    },
+  };
+
   if (!images?.length) {
     await OwnedPet.findByIdAndUpdate(ownedPetId, {
       processingStatus: "failed",
       processingError: errors.map((e) => e.error).join("; ") || "Processing failed",
+      ...telemetry,
     });
     return NextResponse.json({ success: false, failed: true });
   }
@@ -29,6 +51,7 @@ export async function processOwnedPetCallback(body) {
     await OwnedPet.findByIdAndUpdate(ownedPetId, {
       processingStatus: "failed",
       processingError: safety.error || "Content safety check failed",
+      ...telemetry,
     });
     return NextResponse.json({ success: false, failed: true, contentBlocked: true });
   }
@@ -38,6 +61,7 @@ export async function processOwnedPetCallback(body) {
     await OwnedPet.findByIdAndUpdate(ownedPetId, {
       processingStatus: "failed",
       processingError: errors.map((e) => e.error).join("; ") || "No embedding produced",
+      ...telemetry,
     });
     return NextResponse.json({ success: false, failed: true });
   }
@@ -66,6 +90,7 @@ export async function processOwnedPetCallback(body) {
     hasEmbedding: true,
     processingStatus: "ready",
     processingError: errors.length ? errors.map((e) => `${e.url}: ${e.error}`).join("; ") : "",
+    ...telemetry,
   });
 
   return NextResponse.json({
