@@ -13,13 +13,11 @@ import { getHomepageJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const tSeo = await getTranslations({ locale, namespace: "seo" });
-  const tCommon = await getTranslations({ locale, namespace: "common" });
-  const siteName = tCommon("appName");
 
   return buildPageMetadata({
     locale,
     title: {
-      absolute: `${siteName} — ${tSeo("homeTitle")}`,
+      absolute: tSeo("homeTitle"),
     },
     description: tSeo("homeDescription"),
   });

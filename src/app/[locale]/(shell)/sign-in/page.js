@@ -15,7 +15,7 @@ export async function generateMetadata({ params }) {
   return buildPageMetadata({
     locale,
     title: t("signInTitle"),
-    description: t("defaultDescription"),
+    description: t("signInDescription"),
     path: "sign-in",
     noIndex: true,
   });

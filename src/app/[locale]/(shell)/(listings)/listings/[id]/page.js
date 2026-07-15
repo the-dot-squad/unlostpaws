@@ -45,21 +45,22 @@ export async function generateMetadata({ params }) {
   const location = [city, country].filter(Boolean).join(", ") || "—";
   const typeLabel = tTypes(listing.type);
   const petTypeLabel = tPetTypes(listing.petType);
-  const title = `${typeLabel} ${petTypeLabel} — ${listing.color}`;
+  const title = t("listingDetailTitle", {
+    type: typeLabel,
+    color: listing.color || "—",
+    petType: petTypeLabel,
+    location,
+  });
   const description = t("listingDetailDescription", {
     type: typeLabel,
     petType: petTypeLabel,
     location,
   });
-  const images = serializeListingImages(listing.images);
-  const ogImage = images[0]?.url;
-
   return buildPageMetadata({
     locale,
     title,
     description,
     path: `listings/${id}`,
-    image: ogImage,
   });
 }
 
@@ -129,6 +130,12 @@ export default async function ListingDetailPage({ params, searchParams }) {
     petType: petTypeLabel,
     location: locationLabel || "—",
   });
+  const listingTitle = t("seo.listingDetailTitle", {
+    type: typeLabel,
+    color: listing.color || "—",
+    petType: petTypeLabel,
+    location: locationLabel || "—",
+  });
 
   const jsonLd = getListingJsonLd({
     listing,
@@ -137,6 +144,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
     petTypeLabel,
     locationLabel,
     description,
+    title: listingTitle,
   });
 
   return (
