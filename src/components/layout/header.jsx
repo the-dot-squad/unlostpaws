@@ -31,6 +31,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const prefix = `/${locale}`;
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const desktopNavLinks = [...MAIN_NAV_LINKS, CREATE_LISTING_LINK];

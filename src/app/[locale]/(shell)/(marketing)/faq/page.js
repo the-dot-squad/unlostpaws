@@ -8,6 +8,7 @@ import { getPublishedContent } from "@/lib/repositories/content";
 import { parseFaqBody } from "@/lib/content/parse-faq";
 import { ROUTE_CONTENT_SLUGS } from "@/config/constants/site-routes";
 import { buildCmsPageMetadata } from "@/lib/seo/cms-metadata";
+import { getFaqJsonLd, serializeJsonLd } from "@/lib/seo/json-ld";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -28,9 +29,14 @@ export default async function FaqPage({ params }) {
   }
 
   const { intro, items } = parseFaqBody(content.body ?? "");
+  const jsonLd = getFaqJsonLd(items);
 
   return (
     <ContentPage title={content.title} subtitle={content.excerpt} icon={CircleHelp}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       {intro ? <HtmlContent html={intro} /> : null}
       <FaqList items={items} />
     </ContentPage>

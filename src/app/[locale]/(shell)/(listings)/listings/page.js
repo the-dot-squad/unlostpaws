@@ -13,14 +13,27 @@ import { LISTINGS_PAGE_SIZE } from "@/config/constants/platform";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { listingsFeedDiscoveryUrl } from "@/lib/feeds/listings";
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { locale } = await params;
+  const sp = await searchParams;
   const t = await getTranslations({ locale, namespace: "seo" });
+
+  // Index only the base listings directory or simple type-only/petType-only filters.
+  // If search queries (?q=) or multiple filters/pagination are set, mark as noIndex.
+  const activeFilters = Object.keys(sp).filter(
+    (k) => k !== "locale" && k !== "type" && k !== "petType"
+  );
+  const hasComplexFilters = activeFilters.length > 0;
+  const hasSearchQuery = Boolean(sp.q);
+  const hasPagination = Number(sp.page) > 1;
+  const noIndex = hasComplexFilters || hasSearchQuery || hasPagination;
+
   const metadata = buildPageMetadata({
     locale,
     title: t("listingsTitle"),
     description: t("listingsDescription"),
     path: "listings",
+    noIndex,
   });
 
   return {

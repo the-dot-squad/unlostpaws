@@ -19,7 +19,7 @@ import { ListingLocationSection } from "@/components/listings/listing-location-s
 import { ListingMetadataBox } from "@/components/listings/listing-metadata-box";
 import { ListingEditForm } from "@/components/listings/listing-edit-form";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
-import { Pencil } from "lucide-react";
+import { Pencil, Camera } from "lucide-react";
 import { SiteContainer } from "@/components/layout/site-container";
 import { getAuthUserById } from "@/lib/auth/users";
 import { userPublicPath } from "@/lib/public-id";
@@ -45,21 +45,22 @@ export async function generateMetadata({ params }) {
   const location = [city, country].filter(Boolean).join(", ") || "—";
   const typeLabel = tTypes(listing.type);
   const petTypeLabel = tPetTypes(listing.petType);
-  const title = `${typeLabel} ${petTypeLabel} — ${listing.color}`;
+  const title = t("listingDetailTitle", {
+    type: typeLabel,
+    color: listing.color || "—",
+    petType: petTypeLabel,
+    location,
+  });
   const description = t("listingDetailDescription", {
     type: typeLabel,
     petType: petTypeLabel,
     location,
   });
-  const images = serializeListingImages(listing.images);
-  const ogImage = images[0]?.url;
-
   return buildPageMetadata({
     locale,
     title,
     description,
     path: `listings/${id}`,
-    image: ogImage,
   });
 }
 
@@ -129,6 +130,12 @@ export default async function ListingDetailPage({ params, searchParams }) {
     petType: petTypeLabel,
     location: locationLabel || "—",
   });
+  const listingTitle = t("seo.listingDetailTitle", {
+    type: typeLabel,
+    color: listing.color || "—",
+    petType: petTypeLabel,
+    location: locationLabel || "—",
+  });
 
   const jsonLd = getListingJsonLd({
     listing,
@@ -137,6 +144,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
     petTypeLabel,
     locationLabel,
     description,
+    title: listingTitle,
   });
 
   return (
@@ -251,6 +259,34 @@ export default async function ListingDetailPage({ params, searchParams }) {
                 />
               </>
             ) : null}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sighting alert widget */}
+      {listing.type === "missing" && listing.status === "active" && (
+        <Card className="overflow-hidden border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent transition-all duration-300 hover:border-amber-500/30">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-foreground text-amber-900 dark:text-amber-200">
+                    {t("listings.sightingWidget.title")}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+                    {t("listings.sightingWidget.description")}
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="default" className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-sm transition-transform active:scale-95">
+                <Link href={`${prefix}/listings/new?type=sighting`}>
+                  {t("listings.sightingWidget.cta")}
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

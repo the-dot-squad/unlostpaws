@@ -37,6 +37,14 @@ export function getHomepageJsonLd(locale) {
       "price": "0.00",
       "priceCurrency": "USD",
     },
+    "publisher": {
+      "@type": "Organization",
+      "name": SITE_NAME,
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${normalizedAppUrl}/favicon-96x96.png`
+      }
+    },
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
@@ -65,8 +73,9 @@ export function getListingJsonLd({
   petTypeLabel,
   locationLabel,
   description,
+  title,
 }) {
-  const title = `${typeLabel} ${petTypeLabel} — ${listing.color}`;
+  const resolvedTitle = title || `${typeLabel} ${petTypeLabel} — ${listing.color}`;
   const id = listing.publicId || listing._id?.toString() || "";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://unlostpaws.com";
   const canonicalUrl = `${appUrl.replace(/\/$/, "")}/${locale}/listings/${id}`;
@@ -79,8 +88,8 @@ export function getListingJsonLd({
     "@context": "https://schema.org",
     "@type": "ItemPage",
     "url": canonicalUrl,
-    "name": title,
-    "description": description || title,
+    "name": resolvedTitle,
+    "description": description || resolvedTitle,
     "mainEntity": {
       "@type": "Message",
       "about": {
@@ -90,7 +99,7 @@ export function getListingJsonLd({
         "breed": listing.breed || undefined,
         "image": imageList.length > 0 ? imageList : undefined,
       },
-      "text": listing.description || title,
+      "text": listing.description || resolvedTitle,
       "dateCreated": listing.createdAt,
       "dateModified": listing.updatedAt,
       "contentLocation": locationLabel
@@ -100,5 +109,20 @@ export function getListingJsonLd({
           }
         : undefined,
     },
+  };
+}
+
+export function getFaqJsonLd(items) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": items.map((item) => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": (item.answerHtml || "").replace(/<[^>]*>/g, ""), // strip raw HTML tags
+      },
+    })),
   };
 }

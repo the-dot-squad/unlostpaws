@@ -129,6 +129,7 @@
     "fish": "Fish",
     "reptile": "Reptile",
     "horse": "Horse",
+    "monkey": "Monkey",
     "other": "Other"
   },
   "listings": {
@@ -246,6 +247,11 @@
     "copyLink": "Copy Link",
     "showOnMap": "Show on map",
     "editListing": "Edit alert",
+    "sightingWidget": {
+      "title": "Have you seen this pet?",
+      "description": "If you think you've spotted this missing pet, please submit a sighting. Make sure to take at least 2 clear photos from different angles to help us match and confirm their identity!",
+      "cta": "Submit Sighting"
+    },
     "saveChanges": "Save changes",
     "extension": {
       "title": "Alert duration",
@@ -717,16 +723,19 @@
   "seo": {
     "defaultTitle": "Lost & Found Pets",
     "defaultDescription": "Help reunite pets with their families worldwide. Post and browse missing, found, and sighting alerts.",
-    "homeTitle": "Find lost pets. Reunite families.",
-    "homeDescription": "Post a missing, found, or sighting alert. Browse the map and listings to help bring pets home.",
-    "listingsTitle": "Pet Alerts",
-    "listingsDescription": "Browse and filter missing, found, and sighting pet alerts by type, location, and details.",
+    "homeTitle": "UnLostPaws | AI-Powered Smart Lost & Found Pet Registry",
+    "homeDescription": "Reuniting families using smart technology. UnLostPaws uses advanced AI image recognition and geofenced mapping to scan, match, and bring lost pets home.",
+    "listingsTitle": "AI-Matched Pet Reports & Sighting Maps",
+    "listingsDescription": "Search pet alerts. Filter by breed, location, and color, or let our AI analyze photos and recommend instant matches.",
     "mapTitle": "Pet Alerts Map",
     "mapDescription": "Explore active pet alerts on an interactive map and find reports near you.",
-    "createListingTitle": "Post Alert",
-    "signInTitle": "Sign In",
+    "createListingTitle": "Post a Pet Alert",
+    "createListingDescription": "Report a missing, found, or sighted pet. Provide photos and details, and let our AI matching engine help search for them.",
+    "signInTitle": "Sign In to Your Account",
+    "signInDescription": "Sign in to your UnLostPaws account to post pet alerts, view matches, manage settings, and help reunite pets.",
     "accountTitle": "My Account",
-    "listingDetailDescription": "{type} {petType} alert in {location}. View photos and contact details on UnLostPaws.",
+    "listingDetailTitle": "{type} {color} {petType} Sighting in {location}",
+    "listingDetailDescription": "A {type} {petType} is reported in {location}. See photos and coordinates and help to find it.",
     "userProfileTitle": "{name}",
     "userProfileDescription": "View active pet alerts posted by {name} on UnLostPaws."
   },

@@ -14,7 +14,7 @@ export const MAP_TILE_LAYERS = {
   },
 };
 
-export const DEFAULT_MAP_CENTER = [20, 0];
+export const DEFAULT_MAP_CENTER = [50, 15];
 export const DEFAULT_MAP_ZOOM = 3;
 export const LOCATION_PICKER_ZOOM = 15;
 /** Target zoom on first click when the map is still zoomed far out. */

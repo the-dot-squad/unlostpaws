@@ -6,7 +6,6 @@ import { hasSetCoordinates } from "@/lib/geo";
 import { createPickerMarkerIcon } from "@/components/map/marker-icons";
 import {
   LOCATION_PICKER_ZOOM,
-  LOCATION_PICKER_MIN_COMFORT_ZOOM,
   MAP_SYNC_DURATION,
 } from "@/components/map/config";
 
@@ -17,7 +16,7 @@ import {
 /**
  * Resolves the target zoom for a coordinate update based on how it was initiated.
  *
- * Click: one step-in to comfort zoom when far out, then pan-only on later clicks.
+ * Click: pan-only, keeping the current zoom level.
  *
  * @param {number} currentZoom
  * @param {CoordinateSource} source
@@ -33,10 +32,7 @@ function resolveSyncZoom(currentZoom, source) {
       return LOCATION_PICKER_ZOOM;
 
     case "click":
-      if (currentZoom >= LOCATION_PICKER_MIN_COMFORT_ZOOM) {
-        return currentZoom;
-      }
-      return LOCATION_PICKER_MIN_COMFORT_ZOOM;
+      return currentZoom;
 
     default:
       return LOCATION_PICKER_ZOOM;
@@ -91,9 +87,16 @@ function MapViewSync({ lat, lng, syncSource }) {
 
 /** Places a pin when the user clicks the map. */
 function MapClickHandler({ onPick }) {
+  const map = useMap();
+
   useMapEvents({
     click(e) {
-      onPick(e.latlng.lat, e.latlng.lng, { source: "click" });
+      const currentZoom = map.getZoom();
+      if (currentZoom < 7) {
+        map.flyTo(e.latlng, 7, { duration: MAP_SYNC_DURATION });
+      } else {
+        onPick(e.latlng.lat, e.latlng.lng, { source: "click" });
+      }
     },
   });
   return null;

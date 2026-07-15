@@ -28,6 +28,7 @@ const PET_TYPE_EMOJI = {
   fish: "🐟",
   reptile: "🦎",
   horse: "🐴",
+  monkey: "🐒",
   other: "🐾",
 };
 

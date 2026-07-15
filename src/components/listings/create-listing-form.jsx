@@ -18,7 +18,6 @@ import { hasSetCoordinates } from "@/lib/geo";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
 
-/** Listing creation wizard: pet details, photos and contact, then location. */
 const STEPS = ["details", "photos", "location"];
 
 const CREATE_ERROR_KEYS = {
@@ -33,7 +32,69 @@ const CREATE_ERROR_KEYS = {
   user_banned: "userBanned",
 };
 
-export function CreateListingForm({ locale, defaultType }) {
+/** Validates each step input for creating listing. */
+function validateCreateListingStep(step, form, uploadBlocked, t) {
+  switch (step) {
+    case 0:
+      if (!form.color.trim()) {
+        toast.error(t("listings.colorRequired"));
+        return false;
+      }
+      return true;
+    case 1:
+      if (uploadBlocked) return false;
+      if (form.images.length < MIN_LISTING_IMAGES) {
+        toast.error(t("listings.createErrors.imagesRequired"));
+        return false;
+      }
+      if (!form.allowEmail && !form.allowPhone) {
+        toast.error(t("listings.contactRequired"));
+        return false;
+      }
+      return true;
+    case 2:
+      if (!hasSetCoordinates(form.lng, form.lat)) {
+        toast.error(t("listings.locationRequired"));
+        return false;
+      }
+      return true;
+    default:
+      return true;
+  }
+}
+
+/** Pre-fills city/country/address using latitude and longitude coordinates. */
+async function fetchReverseGeocode(lat, lng) {
+  if (!hasSetCoordinates(lng, lat)) return null;
+  try {
+    const res = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
+    if (res.ok) return await res.json();
+  } catch {
+    // Best-effort
+  }
+  return null;
+}
+
+/** Handles API submission and error-mapping to translation keys. */
+async function submitListing(form, locale, t) {
+  try {
+    const result = await createListing({ ...form, locale });
+    if (result.error) {
+      const key = CREATE_ERROR_KEYS[result.error];
+      return { success: false, error: key ? t(`listings.createErrors.${key}`) : result.error };
+    }
+    if (!result.id) {
+      return { success: false, error: t("listings.createErrors.createFailed") };
+    }
+    return { success: true, id: result.id, processingWarning: result.processingWarning };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: t("listings.createErrors.createFailed") };
+  }
+}
+
+/** Custom hook containing form state, validation, geolocation helpers, and submission logic. */
+function useCreateListingState({ locale, defaultType }) {
   const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -79,13 +140,8 @@ export function CreateListingForm({ locale, defaultType }) {
   }
 
   async function reverseGeocodeFromCoords(lat, lng) {
-    if (!hasSetCoordinates(lng, lat)) return;
-    try {
-      const res = await fetch(`/api/geocode/reverse?lat=${lat}&lng=${lng}`);
-      if (res.ok) handleReverseGeocode(await res.json());
-    } catch {
-      // Best-effort address pre-fill
-    }
+    const data = await fetchReverseGeocode(lat, lng);
+    if (data) handleReverseGeocode(data);
   }
 
   function handleMapCoordinatesChange(lat, lng) {
@@ -106,36 +162,6 @@ export function CreateListingForm({ locale, defaultType }) {
     }
   }
 
-  function validateStep(index) {
-    switch (index) {
-      case 0:
-        if (!form.color.trim()) {
-          toast.error(t("listings.colorRequired"));
-          return false;
-        }
-        return true;
-      case 1:
-        if (uploadBlocked) return false;
-        if (form.images.length < MIN_LISTING_IMAGES) {
-          toast.error(t("listings.createErrors.imagesRequired"));
-          return false;
-        }
-        if (!form.allowEmail && !form.allowPhone) {
-          toast.error(t("listings.contactRequired"));
-          return false;
-        }
-        return true;
-      case 2:
-        if (!hasSetCoordinates(form.lng, form.lat)) {
-          toast.error(t("listings.locationRequired"));
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
-  }
-
   function handleUploadBlocked(blocked, info) {
     setUploadBlocked(blocked);
     if (blocked && info?.message) {
@@ -145,7 +171,7 @@ export function CreateListingForm({ locale, defaultType }) {
 
   function goNext() {
     if (uploadBlocked) return;
-    if (!validateStep(step)) return;
+    if (!validateCreateListingStep(step, form, uploadBlocked, t)) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
@@ -155,90 +181,100 @@ export function CreateListingForm({ locale, defaultType }) {
 
   async function handleSubmit() {
     if (submittingRef.current || loading || uploadBlocked) return;
-    if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
+    if (
+      !validateCreateListingStep(0, form, uploadBlocked, t) ||
+      !validateCreateListingStep(1, form, uploadBlocked, t) ||
+      !validateCreateListingStep(2, form, uploadBlocked, t)
+    ) {
       return;
     }
 
     submittingRef.current = true;
     setLoading(true);
 
-    try {
-      const result = await createListing({ ...form, locale });
-
-      if (result.error) {
-        const key = CREATE_ERROR_KEYS[result.error];
-        toast.error(key ? t(`listings.createErrors.${key}`) : result.error);
-        submittingRef.current = false;
-        setLoading(false);
-        return;
-      }
-
-      if (!result.id) {
-        toast.error(t("listings.createErrors.createFailed"));
-        submittingRef.current = false;
-        setLoading(false);
-        return;
-      }
-
-      if (result.processingWarning) {
-        toast.warning(t("listings.createdProcessingDelayed"));
-      } else {
-        toast.success(t("listings.created"));
-      }
-
-      trackEvent(ANALYTICS_EVENTS.LISTING_CREATE, {
-        type: form.type,
-        pet_type: form.petType,
-      });
-
-      router.push(`/${locale}/listings/${result.id}`);
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      toast.error(t("listings.createErrors.createFailed"));
+    const res = await submitListing(form, locale, t);
+    if (!res.success) {
+      toast.error(res.error);
       submittingRef.current = false;
       setLoading(false);
+      return;
     }
+
+    if (res.processingWarning) {
+      toast.warning(t("listings.createdProcessingDelayed"));
+    } else {
+      toast.success(t("listings.created"));
+    }
+
+    trackEvent(ANALYTICS_EVENTS.LISTING_CREATE, {
+      type: form.type,
+      pet_type: form.petType,
+    });
+
+    router.push(`/${locale}/listings/${res.id}`);
+    router.refresh();
   }
 
   const locationFromPhoto = form.locationSource === "exif" && hasSetCoordinates(form.lng, form.lat);
 
+  return {
+    step,
+    loading,
+    uploadBlocked,
+    form,
+    stepLabels,
+    locationFromPhoto,
+    update,
+    goBack,
+    goNext,
+    handleSubmit,
+    handleGpsFromPhoto,
+    handleUploadBlocked,
+    handleMapCoordinatesChange,
+    handleReverseGeocode,
+  };
+}
+
+export function CreateListingForm({ locale, defaultType }) {
+  const t = useTranslations();
+  const state = useCreateListingState({ locale, defaultType });
+
   return (
     <Card className="w-full max-w-[58rem] overflow-hidden shadow-lg">
       <div className="grid md:grid-cols-[minmax(220px,28%)_1fr]">
-        <CreateListingSidebar steps={STEPS} currentStep={step} labels={stepLabels} />
+        <CreateListingSidebar steps={STEPS} currentStep={state.step} labels={state.stepLabels} />
 
         <CardContent className="flex flex-col gap-6 p-6 md:p-10">
-          {step === 0 && <CreateListingDetailsStep form={form} update={update} t={t} />}
-          {step === 1 && (
+          {state.step === 0 && <CreateListingDetailsStep form={state.form} update={state.update} t={t} />}
+          {state.step === 1 && (
             <CreateListingPhotosStep
-              form={form}
-              update={update}
+              form={state.form}
+              update={state.update}
               t={t}
-              onGpsFound={handleGpsFromPhoto}
-              onUploadBlockedChange={handleUploadBlocked}
+              onGpsFound={state.handleGpsFromPhoto}
+              onUploadBlockedChange={state.handleUploadBlocked}
             />
           )}
-          {step === 2 && (
+          {state.step === 2 && (
             <CreateListingLocationStep
-              form={form}
-              update={update}
+              form={state.form}
+              update={state.update}
               t={t}
-              locationFromPhoto={locationFromPhoto}
-              onCoordinatesChange={handleMapCoordinatesChange}
-              onReverseGeocode={handleReverseGeocode}
+              locationFromPhoto={state.locationFromPhoto}
+              onCoordinatesChange={state.handleMapCoordinatesChange}
+              onReverseGeocode={state.handleReverseGeocode}
             />
           )}
 
           <CreateListingStepActions
-            step={step}
+            step={state.step}
             stepCount={STEPS.length}
-            loading={loading}
-            disabled={uploadBlocked}
+            loading={state.loading}
+            disabled={state.uploadBlocked}
             t={t}
-            onBack={goBack}
-            onNext={goNext}
-            onSubmit={handleSubmit}
+            onBack={state.goBack}
+            onNext={state.goNext}
+            onSubmit={state.handleSubmit}
           />
         </CardContent>
       </div>

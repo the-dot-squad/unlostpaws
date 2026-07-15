@@ -4,7 +4,7 @@ import { env } from "@/config/env";
 import { absoluteUrl, localeAlternates } from "@/lib/seo/routes";
 
 export const SITE_NAME = "UnLostPaws";
-export const DEFAULT_OG_IMAGE = "/logo.png";
+export const DEFAULT_OG_IMAGE = "/og-image.png";
 
 /** @type {import("next").Metadata["metadataBase"]} */
 export const metadataBase = new URL(env.app.url);
@@ -61,7 +61,23 @@ export function rootMetadata() {
  */
 export function buildPageMetadata({ locale, title, description, path = "", image, noIndex }) {
   const canonical = absoluteUrl(locale, path);
-  const ogImage = image || DEFAULT_OG_IMAGE;
+
+  let ogImage = image;
+  if (!ogImage) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://unlostpaws.com";
+    const baseUrl = appUrl.replace(/\/$/, "");
+    if (path.startsWith("listings/") && path !== "listings/new" && path !== "listings") {
+      const id = path.split("/")[1];
+      ogImage = `${baseUrl}/api/og?locale=en&id=${id}`;
+    } else {
+      const ogTitle = typeof title === "object" && title !== null
+        ? (title.absolute || title.default || "")
+        : title;
+      const encodedTitle = encodeURIComponent(ogTitle || "");
+      const encodedDesc = encodeURIComponent(description || "");
+      ogImage = `${baseUrl}/api/og?locale=en&title=${encodedTitle}&desc=${encodedDesc}`;
+    }
+  }
 
   const ogTitle = typeof title === "object" && title !== null
     ? (title.absolute || title.default || "")

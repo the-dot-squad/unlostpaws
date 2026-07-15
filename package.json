@@ -1,6 +1,6 @@
 {
   "name": "unlostpaws",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "repository": {
     "type": "git",
@@ -42,6 +42,7 @@
     "@radix-ui/react-toast": "^1.2.19",
     "@tanstack/react-table": "^8.21.3",
     "@upstash/redis": "^1.38.0",
+    "arabic-persian-reshaper": "^1.0.1",
     "better-auth": "^1.6.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) {
   return buildPageMetadata({
     locale,
     title: t("createListingTitle"),
-    description: t("defaultDescription"),
+    description: t("createListingDescription"),
     path: "listings/new",
     noIndex: true,
   });

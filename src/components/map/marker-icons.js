@@ -18,10 +18,10 @@ export function createListingMarkerIcon(type) {
 
   return L.divIcon({
     className: "",
-    html: `<span class="listing-map-marker" style="background-color:${color}"></span>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-    popupAnchor: [0, -10],
+    html: `<span class="listing-map-pin" style="background-color:${color}"><span class="listing-map-pin-inner"></span></span>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24],
   });
 }
 

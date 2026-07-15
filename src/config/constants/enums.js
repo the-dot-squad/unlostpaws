@@ -6,7 +6,7 @@ export const LISTING_STATUSES = ["active", "resolved", "expired", "removed", "un
 
 export const PROCESSING_STATUSES = ["pending", "processing", "ready", "failed"];
 
-export const PET_TYPES = ["dog", "cat", "bird", "rabbit", "hamster", "fish", "reptile", "horse", "other"];
+export const PET_TYPES = ["dog", "cat", "bird", "rabbit", "hamster", "fish", "reptile", "horse", "monkey", "other"];
 
 export const REPORT_REASONS = ["spam", "fake", "inappropriate", "duplicate", "other"];
 
