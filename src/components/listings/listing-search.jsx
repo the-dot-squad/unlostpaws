@@ -73,6 +73,159 @@ function filtersToSearchParams(filters) {
   return next;
 }
 
+/** Renders standard search selectors: type, petType, color, country. */
+function SearchFields({ draft, updateDraft, t }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="space-y-1.5">
+        <Label className="text-xs">{t("listings.type")}</Label>
+        <Select
+          value={draft.type || "all"}
+          onValueChange={(v) => updateDraft("type", v === "all" ? "" : v)}
+        >
+          <SelectTrigger className="h-9 bg-background">
+            <SelectValue placeholder={t("common.all")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("common.all")}</SelectItem>
+            {LISTING_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {t(`listingTypes.${type}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">{t("listings.petType")}</Label>
+        <Select
+          value={draft.petType || "all"}
+          onValueChange={(v) => updateDraft("petType", v === "all" ? "" : v)}
+        >
+          <SelectTrigger className="h-9 bg-background">
+            <SelectValue placeholder={t("common.all")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("common.all")}</SelectItem>
+            {PET_TYPES.map((pt) => (
+              <SelectItem key={pt} value={pt}>
+                <span className="flex items-center gap-2">
+                  <PetTypeIcon type={pt} />
+                  {t(`petTypes.${pt}`)}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">{t("listings.color")}</Label>
+        <Input
+          className="h-9 bg-background"
+          value={draft.color}
+          onChange={(e) => updateDraft("color", e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-end gap-1">
+          <div className="min-w-0 flex-1">
+            <CountrySelect
+              label={t("listings.country")}
+              value={draft.country}
+              onChange={(code) => updateDraft("country", code)}
+            />
+          </div>
+          {draft.country ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              aria-label={t("listings.clearCountry")}
+              onClick={() => updateDraft("country", "")}
+            >
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Renders geolocation trigger, radius filter, and clear/submit buttons. */
+function SearchActions({
+  draft,
+  updateDraft,
+  clearLocation,
+  useMyLocation,
+  clearAll,
+  isDirty,
+  locating,
+  hasGeoDraft,
+  t,
+  embedded,
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2",
+        embedded ? "border-t border-border/40 pt-3" : "border-t pt-4"
+      )}
+    >
+      {!hasGeoDraft ? (
+        <Button type="button" variant="outline" size="sm" onClick={useMyLocation} disabled={locating}>
+          {locating ? (
+            <Loader2 className="me-2 size-4 animate-spin" />
+          ) : (
+            <MapPin className="me-2 size-4" />
+          )}
+          {t("listings.useMyLocation")}
+        </Button>
+      ) : (
+        <>
+          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-4 text-primary" />
+            {t("listings.locationActive")}
+          </span>
+          <div className="space-y-1">
+            <Label className="sr-only">{t("listings.radius")}</Label>
+            <Select value={draft.radiusKm} onValueChange={(v) => updateDraft("radiusKm", v)}>
+              <SelectTrigger className="h-9 w-[120px] bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RADIUS_OPTIONS.map((km) => (
+                  <SelectItem key={km} value={String(km)}>
+                    {t(`listings.radiusOptions.${km}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={clearLocation}>
+            <X className="me-1 size-4" />
+            {t("listings.clearLocation")}
+          </Button>
+        </>
+      )}
+
+      <div className="ms-auto flex flex-wrap items-center gap-2">
+        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={clearAll}>
+          {t("listings.clearFilters")}
+        </Button>
+        <Button type="submit" size="sm" className="gap-2" disabled={!isDirty}>
+          <Search className="size-4" />
+          {t("listings.search")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ListingSearchForm({ applied, embedded }) {
   const t = useTranslations();
   const router = useRouter();
@@ -140,137 +293,19 @@ function ListingSearchForm({ applied, embedded }) {
 
   const fields = (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label className="text-xs">{t("listings.type")}</Label>
-          <Select
-            value={draft.type || "all"}
-            onValueChange={(v) => updateDraft("type", v === "all" ? "" : v)}
-          >
-            <SelectTrigger className="h-9 bg-background">
-              <SelectValue placeholder={t("common.all")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              {LISTING_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`listingTypes.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">{t("listings.petType")}</Label>
-          <Select
-            value={draft.petType || "all"}
-            onValueChange={(v) => updateDraft("petType", v === "all" ? "" : v)}
-          >
-            <SelectTrigger className="h-9 bg-background">
-              <SelectValue placeholder={t("common.all")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              {PET_TYPES.map((pt) => (
-                <SelectItem key={pt} value={pt}>
-                  <span className="flex items-center gap-2">
-                    <PetTypeIcon type={pt} />
-                    {t(`petTypes.${pt}`)}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">{t("listings.color")}</Label>
-          <Input
-            className="h-9 bg-background"
-            value={draft.color}
-            onChange={(e) => updateDraft("color", e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-end gap-1">
-            <div className="min-w-0 flex-1">
-              <CountrySelect
-                label={t("listings.country")}
-                value={draft.country}
-                onChange={(code) => updateDraft("country", code)}
-              />
-            </div>
-            {draft.country ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="shrink-0"
-                aria-label={t("listings.clearCountry")}
-                onClick={() => updateDraft("country", "")}
-              >
-                <X className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-2",
-          embedded ? "border-t border-border/40 pt-3" : "border-t pt-4"
-        )}
-      >
-        {!hasGeoDraft ? (
-          <Button type="button" variant="outline" size="sm" onClick={useMyLocation} disabled={locating}>
-            {locating ? (
-              <Loader2 className="me-2 size-4 animate-spin" />
-            ) : (
-              <MapPin className="me-2 size-4" />
-            )}
-            {t("listings.useMyLocation")}
-          </Button>
-        ) : (
-          <>
-            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="size-4 text-primary" />
-              {t("listings.locationActive")}
-            </span>
-            <div className="space-y-1">
-              <Label className="sr-only">{t("listings.radius")}</Label>
-              <Select value={draft.radiusKm} onValueChange={(v) => updateDraft("radiusKm", v)}>
-                <SelectTrigger className="h-9 w-[120px] bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RADIUS_OPTIONS.map((km) => (
-                    <SelectItem key={km} value={String(km)}>
-                      {t(`listings.radiusOptions.${km}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="button" variant="ghost" size="sm" onClick={clearLocation}>
-              <X className="me-1 size-4" />
-              {t("listings.clearLocation")}
-            </Button>
-          </>
-        )}
-
-        <div className="ms-auto flex flex-wrap items-center gap-2">
-          <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" onClick={clearAll}>
-            {t("listings.clearFilters")}
-          </Button>
-          <Button type="submit" size="sm" className="gap-2" disabled={!isDirty}>
-            <Search className="size-4" />
-            {t("listings.search")}
-          </Button>
-        </div>
-      </div>
+      <SearchFields draft={draft} updateDraft={updateDraft} t={t} />
+      <SearchActions
+        draft={draft}
+        updateDraft={updateDraft}
+        clearLocation={clearLocation}
+        useMyLocation={useMyLocation}
+        clearAll={clearAll}
+        isDirty={isDirty}
+        locating={locating}
+        hasGeoDraft={hasGeoDraft}
+        t={t}
+        embedded={embedded}
+      />
     </form>
   );
 

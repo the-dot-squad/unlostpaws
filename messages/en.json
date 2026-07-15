@@ -246,6 +246,11 @@
     "copyLink": "Copy Link",
     "showOnMap": "Show on map",
     "editListing": "Edit alert",
+    "sightingWidget": {
+      "title": "Have you seen this pet?",
+      "description": "If you think you've spotted this missing pet, please submit a sighting. Make sure to take at least 2 clear photos from different angles to help us match and confirm their identity!",
+      "cta": "Submit Sighting"
+    },
     "saveChanges": "Save changes",
     "extension": {
       "title": "Alert duration",
