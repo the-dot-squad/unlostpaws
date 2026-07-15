@@ -30,21 +30,19 @@ function bidiReshape(text) {
 
 function GlowOrb(props) {
   const { size, opacity1, opacity2, top, right, bottom, left } = props;
-  return (
-    <div
-      style={{
-        position: "absolute",
-        top,
-        right,
-        bottom,
-        left,
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: `${size / 2}px`,
-        backgroundImage: `radial-gradient(circle, rgba(37, 99, 235, ${opacity1}) 0%, rgba(37, 99, 235, ${opacity2}) 50%, rgba(255, 255, 255, 0) 80%)`,
-      }}
-    />
-  );
+  const style = {
+    position: "absolute",
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: `${size / 2}px`,
+    backgroundImage: `radial-gradient(circle, rgba(37, 99, 235, ${opacity1}) 0%, rgba(37, 99, 235, ${opacity2}) 50%, rgba(255, 255, 255, 0) 80%)`,
+  };
+  if (top !== undefined) style.top = top;
+  if (right !== undefined) style.right = right;
+  if (bottom !== undefined) style.bottom = bottom;
+  if (left !== undefined) style.left = left;
+
+  return <div style={style} />;
 }
 
 function getFontsConfig(interData, vazirData) {
