@@ -27,18 +27,91 @@ const REVERSE_BASE = "https://nominatim.openstreetmap.org/reverse";
 
 /**
  * @param {Record<string, string>|undefined} address
+ * @param {string|undefined} payloadName
  * @returns {string}
  */
-function buildStreetLine(address) {
+function buildStreetLine(address, payloadName) {
   if (!address) return "";
 
   const parts = [];
-  if (address.house_number) parts.push(address.house_number);
-  if (address.road) parts.push(address.road);
-  else if (address.pedestrian) parts.push(address.pedestrian);
-  else if (address.footway) parts.push(address.footway);
 
-  return parts.join(" ").trim();
+  // 1. POI / Building / Amenity name
+  const poiKeys = [
+    "amenity",
+    "shop",
+    "tourism",
+    "leisure",
+    "building",
+    "office",
+    "historic",
+    "craft",
+    "place",
+    "railway",
+    "aeroway",
+  ];
+
+  let poiName = "";
+  for (const key of poiKeys) {
+    if (address[key] && address[key] !== address.road) {
+      poiName = address[key];
+      break;
+    }
+  }
+
+  const nameLower = String(payloadName || "").toLowerCase().trim();
+  const roadLower = String(address.road || "").toLowerCase().trim();
+  const cityLower = String(address.city || "").toLowerCase().trim();
+  const countyLower = String(address.county || "").toLowerCase().trim();
+  const stateLower = String(address.state || "").toLowerCase().trim();
+  const countryLower = String(address.country || "").toLowerCase().trim();
+  const postcodeLower = String(address.postcode || "").toLowerCase().trim();
+
+  if (
+    !poiName &&
+    payloadName &&
+    nameLower !== roadLower &&
+    nameLower !== cityLower &&
+    nameLower !== countyLower &&
+    nameLower !== stateLower &&
+    nameLower !== countryLower &&
+    nameLower !== postcodeLower
+  ) {
+    poiName = payloadName;
+  }
+
+  if (poiName) {
+    parts.push(poiName);
+  }
+
+  // 2. House number & Road/Street
+  const streetParts = [];
+  if (address.house_number) {
+    streetParts.push(address.house_number);
+  }
+
+  const roadName =
+    address.road ||
+    address.pedestrian ||
+    address.footway ||
+    address.path ||
+    address.cycleway ||
+    address.square;
+  if (roadName) {
+    streetParts.push(roadName);
+  }
+
+  if (streetParts.length > 0) {
+    parts.push(streetParts.join(" "));
+  }
+
+  // 3. Neighborhood / Suburb / Quarter (adds local context)
+  const neighborhood =
+    address.neighbourhood || address.suburb || address.quarter || address.city_district;
+  if (neighborhood && neighborhood !== address.city && !parts.includes(neighborhood)) {
+    parts.push(neighborhood);
+  }
+
+  return parts.join(", ").trim();
 }
 
 /**
@@ -66,7 +139,7 @@ function parseReverseGeocode(payload) {
   const address = payload?.address || {};
 
   return {
-    address: buildStreetLine(address) || payload?.name || "",
+    address: buildStreetLine(address, payload?.name) || "",
     city: pickCity(address),
     country: (address.country_code || "").toUpperCase(),
     displayName: payload?.display_name || "",
