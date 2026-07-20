@@ -1,7 +1,6 @@
 import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
-import { applyProxyRateLimit } from "./lib/rate-limit";
 import { rejectCrossSiteRequest } from "./lib/request-metadata";
 
 const intlMiddleware = createMiddleware(routing);
@@ -16,11 +15,6 @@ function redirectLocalePrefixedPath(request, pattern, targetPrefix) {
 }
 
 export async function proxy(request) {
-  const blocked = await applyProxyRateLimit(request);
-  if (blocked) {
-    return blocked;
-  }
-
   const { pathname } = request.nextUrl;
 
   const adminRedirect = redirectLocalePrefixedPath(

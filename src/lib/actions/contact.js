@@ -8,8 +8,6 @@ import { buildContactFormEmail } from "@/lib/email/templates";
 import { contactFormSchema, validate } from "@/lib/validation";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { verifyListingTurnstile } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/request-metadata";
-import { checkIpRateLimits } from "@/lib/rate-limit/ip";
 
 /** Validate, verify Turnstile, and email the public contact form. */
 export async function submitContactForm({ name, topic, message, token }) {
@@ -21,15 +19,6 @@ export async function submitContactForm({ name, topic, message, token }) {
   const captcha = await verifyListingTurnstile(token, TURNSTILE_ACTIONS.CONTACT_FORM);
   if (!captcha.ok) {
     return { error: captcha.error };
-  }
-
-  try {
-    const ipCheck = await checkIpRateLimits(await getClientIp());
-    if (!ipCheck.allowed) {
-      return { error: "rate_limit_exceeded" };
-    }
-  } catch {
-    // Rate limit store unavailable — allow submission.
   }
 
   const { name: safeName, topic: safeTopic, message: safeMessage } = parsed.data;

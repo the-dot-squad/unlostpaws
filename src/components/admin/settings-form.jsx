@@ -13,27 +13,28 @@ import { toast } from "sonner";
 import { PET_TYPES } from "@/config/constants/enums";
 import { prepareSocialLinksForSave } from "@/lib/socials";
 
-function RateLimitReadonlyField({ label, rateLimitEnv, valueKey }) {
-  const value = rateLimitEnv?.active
-    ? `${rateLimitEnv[valueKey]} / ${rateLimitEnv.windowSeconds}s`
-    : "—";
-
+function RateLimitReadonlyField({ label, value, hint }) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       <Input readOnly disabled value={value} />
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
 
 function RateLimitsCard({ form, update, rateLimitEnv }) {
+  const uploadValue = rateLimitEnv?.active
+    ? `${rateLimitEnv.uploadMaxRequests} / ${rateLimitEnv.windowSeconds}s`
+    : "—";
+
   return (
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle>Rate limits</CardTitle>
           <Badge variant={rateLimitEnv?.active ? "default" : "secondary"}>
-            IP {rateLimitEnv?.active ? "active" : "inactive"}
+            Upload {rateLimitEnv?.active ? "active" : "inactive"}
           </Badge>
           {rateLimitEnv?.active ? (
             <Badge variant="outline" className="capitalize">
@@ -41,7 +42,9 @@ function RateLimitsCard({ form, update, rateLimitEnv }) {
             </Badge>
           ) : null}
         </div>
-        <CardDescription>Per-user posting caps and per-IP request throttling.</CardDescription>
+        <CardDescription>
+          Listing and report caps in MongoDB. General API throttling in Vercel Firewall. Upload limits in Redis.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -62,14 +65,14 @@ function RateLimitsCard({ form, update, rateLimitEnv }) {
         </div>
 
         <RateLimitReadonlyField
-          label="Requests per IP"
-          rateLimitEnv={rateLimitEnv}
-          valueKey="maxRequests"
+          label="General API (Vercel Firewall)"
+          value="200 / 60s"
+          hint="Configured in the Vercel project dashboard."
         />
         <RateLimitReadonlyField
-          label="Upload requests per IP"
-          rateLimitEnv={rateLimitEnv}
-          valueKey="uploadMaxRequests"
+          label="Upload per IP (Redis)"
+          value={uploadValue}
+          hint="Env: UPLOAD_RATE_LIMIT_MAX_REQUESTS, UPLOAD_RATE_LIMIT_WINDOW_SECONDS."
         />
       </CardContent>
     </Card>

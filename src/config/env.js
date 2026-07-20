@@ -213,12 +213,11 @@ export const env = {
     gtmId: process.env.NEXT_PUBLIC_GTM_ID || "",
   },
 
-  rateLimit: {
-    enabled: process.env.RATE_LIMIT_ENABLED !== "false",
-    maxRequests: Math.max(1, Number(process.env.RATE_LIMIT_MAX_REQUESTS || 200)),
-    windowSeconds: Math.max(1, Number(process.env.RATE_LIMIT_WINDOW_SECONDS || 60)),
-    uploadMaxRequests: Math.max(1, Number(process.env.RATE_LIMIT_UPLOAD_MAX_REQUESTS || 40)),
-    useMemoryFallback: isDev && process.env.RATE_LIMIT_DEV_MEMORY !== "false",
+  uploadRateLimit: {
+    enabled: process.env.UPLOAD_RATE_LIMIT_ENABLED !== "false",
+    maxRequests: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_MAX_REQUESTS || 40)),
+    windowSeconds: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_SECONDS || 60)),
+    useMemoryFallback: isDev && process.env.UPLOAD_RATE_LIMIT_DEV_MEMORY !== "false",
   },
 
   content: {
@@ -242,24 +241,23 @@ export const env = {
 };
 
 /** @returns {"redis" | "memory" | "off"} */
-export function resolveIpRateLimitStore() {
-  const { rateLimit, redis } = env;
-  if (!rateLimit.enabled) return "off";
+export function resolveUploadRateLimitStore() {
+  const { uploadRateLimit, redis } = env;
+  if (!uploadRateLimit.enabled) return "off";
   if (redis.url && redis.token) return "redis";
-  if (rateLimit.useMemoryFallback) return "memory";
+  if (uploadRateLimit.useMemoryFallback) return "memory";
   return "off";
 }
 
-/** Admin settings UI — IP rate limit summary. */
+/** Admin settings UI — upload Redis limits and Vercel general API note. */
 export function getRateLimitDisplayConfig() {
-  const adapter = resolveIpRateLimitStore();
+  const adapter = resolveUploadRateLimitStore();
   return {
-    enabled: env.rateLimit.enabled,
+    enabled: env.uploadRateLimit.enabled,
     active: adapter !== "off",
     adapter,
-    maxRequests: env.rateLimit.maxRequests,
-    windowSeconds: env.rateLimit.windowSeconds,
-    uploadMaxRequests: env.rateLimit.uploadMaxRequests,
+    uploadMaxRequests: env.uploadRateLimit.maxRequests,
+    windowSeconds: env.uploadRateLimit.windowSeconds,
   };
 }
 

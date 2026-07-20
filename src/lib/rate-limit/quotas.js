@@ -1,12 +1,16 @@
-/** @file Per-user quotas — listings, reports, uploads. */
+/** @file Per-user quotas — listings, reports, upload enforcement. */
 
 import { ModerationReport } from "@/models/moderation-report";
 import { getAppSettings } from "@/lib/services/settings";
 import { getAuthUserById, authUserIdFilter } from "@/lib/auth/users";
 import { getClientIp } from "@/lib/request-metadata";
 import { env } from "@/config/env";
-import { hasRedis, ensureRedisConnection } from "@/lib/redis";
-import { checkIpRateLimits } from "./ip";
+import { hasRedis } from "@/lib/redis";
+import {
+  checkUploadIpRateLimit,
+  getDailyUploadCount,
+  incrementDailyUploadCount,
+} from "./upload-limits";
 import { MAX_LISTING_IMAGES } from "@/config/constants/enums";
 import { getMongoDb } from "@/config/db";
 
@@ -23,12 +27,6 @@ function isSameMonth(a, b) {
     a.getUTCFullYear() === b.getUTCFullYear() &&
     a.getUTCMonth() === b.getUTCMonth()
   );
-}
-
-function uploadDayKey(userId, prefix) {
-  const d = new Date();
-  const day = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `rl:upload:user:${userId}:${prefix}:${day}`;
 }
 
 // MongoDB $cond branch key — built at runtime to satisfy unicorn/no-thenable.
@@ -60,16 +58,6 @@ function listingCountIncrementCond(resetField, countField, dateFormat, currentPe
     { $add: [{ $ifNull: [countPath, 0] }, 1] },
     1
   );
-}
-
-async function dailyUploadCount(key, increment = false) {
-  const redis = await ensureRedisConnection();
-  if (increment) {
-    const n = await redis.incr(key);
-    if (n === 1) await redis.expire(key, 172_800);
-    return n;
-  }
-  return Number(await redis.get(key)) || 0;
 }
 
 export async function checkListingRateLimit(userId) {
@@ -144,10 +132,10 @@ export async function checkReportRateLimit(userId) {
 }
 
 export async function enforceUploadRateLimits({ userId, prefix }) {
-  if (!env.rateLimit.enabled) return { allowed: true };
+  if (!env.uploadRateLimit.enabled) return { allowed: true };
 
   try {
-    const ip = await checkIpRateLimits(await getClientIp(), true);
+    const ip = await checkUploadIpRateLimit(await getClientIp());
     if (!ip.allowed) return { allowed: false, error: "rate_limit_exceeded", status: 429 };
   } catch {
     return { allowed: false, error: "rate_limit_unavailable", status: 503 };
@@ -179,7 +167,7 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
 
   try {
     const cap = (await getAppSettings()).maxListingsPerDay * MAX_LISTING_IMAGES;
-    if ((await dailyUploadCount(uploadDayKey(userId, prefix))) >= cap) {
+    if ((await getDailyUploadCount(userId, prefix)) >= cap) {
       return { allowed: false, error: "upload_daily_limit", status: 429 };
     }
   } catch {
@@ -192,7 +180,7 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
 export async function recordListingUploadPresign(userId, prefix) {
   if (prefix !== "listings" || !hasRedis()) return;
   try {
-    await dailyUploadCount(uploadDayKey(userId, prefix), true);
+    await incrementDailyUploadCount(userId, prefix);
   } catch {
     // Non-fatal.
   }
