@@ -1,4 +1,3 @@
-import { requireStaff } from "@/lib/auth/session";
 import { getInfrastructureStats } from "@/lib/repositories/admin-stats";
 import { formatBytes } from "@/lib/format";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -20,7 +19,6 @@ import {
 } from "lucide-react";
 
 export default async function AdminStatsPage() {
-  await requireStaff();
   const stats = await getInfrastructureStats();
 
   const { database, qdrant, redis, processing, embeddings, environment, services } = stats;

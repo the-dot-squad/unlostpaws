@@ -1,4 +1,4 @@
-/** @file Public route paths and absolute URL helpers for SEO. */
+/** @file Locale-prefixed absolute URL helpers shared by SEO and email. */
 
 import { env } from "@/config/env";
 import { locales } from "@/i18n/routing";
@@ -23,11 +23,16 @@ const baseUrl = env.app.url.replace(/\/$/, "");
 /**
  * Build an absolute URL for a locale-prefixed path.
  * @param {string} locale
- * @param {string} [path] — segment after /{locale}/ (empty for home)
+ * @param {string} [path] — segment after /{locale}/ (with or without leading slash)
  */
 export function absoluteUrl(locale, path = "") {
   const normalized = path.replace(/^\//, "").replace(/\/$/, "");
   return normalized ? `${baseUrl}/${locale}/${normalized}` : `${baseUrl}/${locale}`;
+}
+
+/** Alias used by transactional email templates. */
+export function appUrl(locale, path) {
+  return absoluteUrl(locale, path);
 }
 
 /**

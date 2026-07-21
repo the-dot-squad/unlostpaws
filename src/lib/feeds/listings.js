@@ -7,6 +7,7 @@ import { searchListings } from "@/lib/listings/search";
 import { absoluteUrl } from "@/lib/seo/routes";
 import { SITE_NAME } from "@/lib/seo/metadata";
 import { buildFeedUrl, feedImageFromListing } from "@/lib/feeds/url";
+import { escapeHtml } from "@/lib/email/format";
 
 /**
  * @typedef {object} FeedFilters
@@ -75,15 +76,6 @@ function buildFeedDescription(filters, t, tTypes, tPetTypes, locale) {
 
   if (parts.length === 0) return t("listingsDescription");
   return t("filteredDescription", { filters: parts.join(" · ") });
-}
-
-/** @param {string} value */
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 /**

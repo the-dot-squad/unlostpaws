@@ -15,6 +15,7 @@ export {
   updateListingImageStatusBulk,
   deleteListingImageVectorsByListingId,
   searchListingImages,
+  getListingImageVectors,
 } from "@/lib/qdrant/listing-images";
 
 export {
@@ -23,5 +24,3 @@ export {
   updateOwnedPetStatus,
   searchOwnedPets,
 } from "@/lib/qdrant/owned-pets";
-
-export { getListingImageVectors } from "@/lib/qdrant/listing-images";

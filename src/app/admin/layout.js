@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import { connectDB } from "@/config/db";
-import { getSession } from "@/lib/auth/session";
+import { requireStaffPage } from "@/lib/auth/session";
 import { countOpenReportCases } from "@/lib/moderation/report-cases";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
-import { routing } from "@/i18n/routing";
 import { noIndexMetadata } from "@/lib/seo/metadata";
 import { inter } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -14,18 +13,7 @@ import "@/app/globals.css";
 export const metadata = noIndexMetadata("Admin");
 
 export default async function AdminLayout({ children }) {
-  const session = await getSession();
-  const status = session?.user?.status || (session?.user?.banned ? "banned" : "active");
-  const isStaff =
-    session &&
-    status === "active" &&
-    (session.user.role === "admin" || session.user.role === "moderator");
-
-  if (!isStaff) {
-    const locale = session?.user?.locale || routing.defaultLocale;
-    const error = status !== "active" ? `user_${status}` : undefined;
-    redirect(`/${locale}/sign-in${error ? `?error=${error}` : ""}`);
-  }
+  const session = await requireStaffPage();
 
   await connectDB();
   const openReports = await countOpenReportCases();

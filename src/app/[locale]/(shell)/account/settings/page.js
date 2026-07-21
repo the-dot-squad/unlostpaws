@@ -1,12 +1,12 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { requireActiveSessionPage } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { ProfileForm } from "@/components/account/profile-form";
 
 export default async function SettingsPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await requireActiveSessionPage(locale);
+  const session = await getSession();
 
   return (
     <div className="space-y-6">

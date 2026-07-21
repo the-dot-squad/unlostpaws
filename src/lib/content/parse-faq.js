@@ -1,4 +1,4 @@
-import { sanitizeContentHtml } from "./sanitize";
+import { sanitizeContentHtml } from "./sanitize-html";
 
 const LIST_OPEN_RE = /<(ul|ol)(\s[^>]*)?>/i;
 const LIST_TAG_RE = /<\/?(ul|ol)(\s[^>]*)?>/gi;

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requireStaff } from "@/lib/auth/session";
 import { reportCasePath } from "@/lib/moderation/report-cases";
 import { getDashboardStats } from "@/lib/repositories/admin-stats";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 
 export default async function AdminDashboard() {
-  await requireStaff();
   const stats = await getDashboardStats();
 
   return (

@@ -1,6 +1,6 @@
 /** @file CMS content reads — fetches pages from DGContent API and falls back to translation files. */
 
-import ContentFetcher from "@/lib/content/index";
+import ContentFetcher from "@/lib/content/client";
 import { getMessageFallbackContent } from "@/lib/content/message-fallbacks";
 
 const contentClient = new ContentFetcher();

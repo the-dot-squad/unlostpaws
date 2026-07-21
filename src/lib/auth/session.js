@@ -4,11 +4,27 @@ import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getMongoDb } from "@/config/db";
+import { routing } from "@/i18n/routing";
+import { isStaffRole } from "@/lib/auth/ban";
 import { getAuth } from "./index";
 
 export async function getSession() {
   const auth = await getAuth();
   return auth.api.getSession({ headers: await headers() });
+}
+
+/**
+ * Normalize account status from session user fields.
+ * @param {{ status?: string; banned?: boolean } | null | undefined} user
+ */
+export function resolveUserStatus(user) {
+  if (!user) return "inactive";
+  return user.status || (user.banned ? "banned" : "active");
+}
+
+/** @param {{ status?: string; banned?: boolean } | null | undefined} user */
+export function isActiveUser(user) {
+  return resolveUserStatus(user) === "active";
 }
 
 /** Active signed-in user — throws when missing or banned. */
@@ -17,7 +33,7 @@ export async function requireActiveSession() {
   if (!session) {
     throw new Error("UNAUTHORIZED");
   }
-  const status = session.user.status || (session.user.banned ? "banned" : "active");
+  const status = resolveUserStatus(session.user);
   if (status !== "active") {
     if (status === "banned") throw new Error("BANNED");
     if (status === "deactivated") throw new Error("DEACTIVATED");
@@ -30,7 +46,7 @@ export async function requireActiveSession() {
 /** Admin or moderator — staff moderation access. */
 export async function requireStaff() {
   const session = await requireActiveSession();
-  if (session.user.role !== "admin" && session.user.role !== "moderator") {
+  if (!isStaffRole(session.user.role)) {
     throw new Error("FORBIDDEN");
   }
   return session;
@@ -52,7 +68,7 @@ export async function requireAdmin() {
 export async function requireActiveSessionPage(locale) {
   const session = await getSession();
   if (session?.user) {
-    const status = session.user.status || (session.user.banned ? "banned" : "active");
+    const status = resolveUserStatus(session.user);
     if (status !== "active") {
       redirect(`/${locale}/sign-in?error=user_${status}`);
     }
@@ -60,6 +76,27 @@ export async function requireActiveSessionPage(locale) {
   if (!session) {
     redirect(`/${locale}/sign-in`);
   }
+  return session;
+}
+
+/** Page guard — redirect non-staff users to sign-in. */
+export async function requireStaffPage() {
+  const session = await getSession();
+  const locale = session?.user?.locale || routing.defaultLocale;
+
+  if (!session?.user) {
+    redirect(`/${locale}/sign-in`);
+  }
+
+  const status = resolveUserStatus(session.user);
+  if (status !== "active") {
+    redirect(`/${locale}/sign-in?error=user_${status}`);
+  }
+
+  if (!isStaffRole(session.user.role)) {
+    redirect(`/${locale}/sign-in`);
+  }
+
   return session;
 }
 
@@ -76,6 +113,59 @@ export function authActionError(err) {
   if (err.message === "DELETED") return { error: "deleted" };
   if (err.message === "FORBIDDEN") return { error: "forbidden" };
   return null;
+}
+
+/**
+ * @template T
+ * @param {string} label
+ * @param {() => Promise<unknown>} guard
+ * @param {(guardResult: unknown) => Promise<T>} handler
+ * @param {{ rethrow?: boolean; error?: string }} [options]
+ */
+async function runGuardedAction(label, guard, handler, { rethrow = true, error = "internal_error" } = {}) {
+  try {
+    const guardResult = await guard();
+    return await handler(guardResult);
+  } catch (err) {
+    const authErr = authActionError(err);
+    if (authErr) return authErr;
+    console.error(`${label} failed:`, err);
+    if (rethrow) throw err;
+    return { error };
+  }
+}
+
+/**
+ * Wrap a server action with active-session auth and shared error handling.
+ * @template T
+ * @param {string} label
+ * @param {(session: Awaited<ReturnType<typeof requireActiveSession>>) => Promise<T>} handler
+ * @param {{ rethrow?: boolean; error?: string }} [options]
+ */
+export function withAuthAction(label, handler, options) {
+  return runGuardedAction(label, requireActiveSession, handler, options);
+}
+
+/**
+ * Wrap a staff-only server action with shared error handling.
+ * @template T
+ * @param {string} label
+ * @param {(session: Awaited<ReturnType<typeof requireStaff>>) => Promise<T>} handler
+ * @param {{ rethrow?: boolean; error?: string }} [options]
+ */
+export function withStaffAction(label, handler, options) {
+  return runGuardedAction(label, requireStaff, handler, options);
+}
+
+/**
+ * Wrap an admin-only server action with shared error handling.
+ * @template T
+ * @param {string} label
+ * @param {(session: Awaited<ReturnType<typeof requireAdmin>>) => Promise<T>} handler
+ * @param {{ rethrow?: boolean; error?: string }} [options]
+ */
+export function withAdminAction(label, handler, options) {
+  return runGuardedAction(label, requireAdmin, handler, options);
 }
 
 /**

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { verifyTurnstile, TurnstileError } from "nextjs-turnstile";
 import { env } from "@/config/env";
+import { validate } from "@/lib/validation";
 
 /**
  * Extract a Turnstile token from an API request.
@@ -55,4 +56,26 @@ export async function verifyListingTurnstile(token, action) {
     console.error("Turnstile verification error:", error);
     return { ok: false, error: "captcha_failed" };
   }
+}
+
+/**
+ * Validate input, verify Turnstile, then run the handler.
+ * @template T
+ * @param {import("@/lib/validation").ZodSchemaLike} schema
+ * @param {object} data
+ * @param {string} action
+ * @param {(parsed: object) => Promise<T>} handler
+ */
+export async function runTurnstileAction(schema, data, action, handler) {
+  const parsed = validate(schema, data);
+  if (!parsed.ok) {
+    return { error: parsed.error };
+  }
+
+  const captcha = await verifyListingTurnstile(parsed.data.token, action);
+  if (!captcha.ok) {
+    return { error: captcha.error };
+  }
+
+  return handler(parsed.data);
 }

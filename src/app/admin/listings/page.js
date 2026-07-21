@@ -1,5 +1,4 @@
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { queryListings } from "@/lib/repositories/admin";
 import { resolveImageUrl } from "@/lib/storage/urls";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -22,7 +21,6 @@ import {
 import { formatDate } from "@/lib/format";
 
 export default async function AdminListingsPage({ searchParams }) {
-  await requireStaff();
   await connectDB();
 
   const sp = await searchParams;

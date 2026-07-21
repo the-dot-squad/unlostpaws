@@ -1,7 +1,7 @@
 /** @file Admin server actions — listings, users, pets, moderation, settings. */
 "use server";
 
-import { authActionError, requireAdmin, requireStaff } from "@/lib/auth/session";
+import { withAdminAction, withStaffAction } from "@/lib/auth/session";
 import { getBanGuardError } from "@/lib/auth/ban";
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
 import { notifyManualStatusChange } from "@/lib/email/account-status";
@@ -11,6 +11,7 @@ import { setListingStatus } from "@/lib/listings/status";
 import { applyListingAdminUpdate, extendListingRecord } from "@/lib/services/listings";
 import { resolveReportCase as resolveReportCaseService } from "@/lib/services/moderation";
 import { getAppSettings, updateAppSettings as saveAppSettings } from "@/lib/services/settings";
+import { checkMicrochipUnique } from "@/lib/services/owned-pets";
 import { OwnedPet } from "@/models/owned-pet";
 import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema } from "@/lib/validation";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -30,44 +31,31 @@ function revalidateAdmin() {
 
 /** Change listing status (activate, remove, etc.). */
 export async function updateListingStatus(listingPublicId, status) {
-  try {
-    await requireStaff();
+  return withStaffAction("updateListingStatus", async () => {
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
     await setListingStatus(listing, status);
     revalidateAdmin();
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Permanently purge a listing and all derived data. Admin-only. */
 export async function adminPurgeListing(listingPublicId) {
-  try {
-    await requireAdmin();
-
+  return withAdminAction("adminPurgeListing", async () => {
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
     await deleteListingCompletely(listing);
     revalidateAdmin();
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Full admin edit of a listing's editable fields. */
 export async function adminUpdateListing(listingPublicId, data) {
-  try {
-    await requireStaff();
-
+  return withStaffAction("adminUpdateListing", async () => {
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
@@ -96,18 +84,12 @@ export async function adminUpdateListing(listingPublicId, data) {
     revalidateAdmin();
     revalidatePath(`/admin/listings/${toListingPublicId(listing)}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Extend a listing's expiry (admin — bypasses user extension window). */
 export async function adminExtendListing(listingPublicId) {
-  try {
-    await requireStaff();
-
+  return withStaffAction("adminExtendListing", async () => {
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
@@ -117,19 +99,14 @@ export async function adminExtendListing(listingPublicId) {
     revalidateAdmin();
     revalidatePath(`/admin/listings/${toListingPublicId(listing)}`);
     return { success: true, expiresAt: listing.expiresAt.toISOString() };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Resolve a moderation case (all open reports for listing + reason). */
 export async function resolveReportCase({ listingId, reason, action, note }) {
-  try {
-    const session = await requireStaff();
-    if (action === "purge_listing") {
-      await requireAdmin();
+  return withStaffAction("resolveReportCase", async (session) => {
+    if (action === "purge_listing" && session.user.role !== "admin") {
+      return { error: "forbidden" };
     }
 
     const result = await resolveReportCaseService({
@@ -153,27 +130,18 @@ export async function resolveReportCase({ listingId, reason, action, note }) {
     revalidateAdmin();
     revalidatePath("/admin/reports");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Promote or demote a user's role. Admin-only. */
 export async function updateUserRole(userId, role) {
-  try {
-    await requireAdmin();
+  return withAdminAction("updateUserRole", async () => {
     await updateAuthUserById(userId, { role });
     const user = await getAuthUserById(userId);
     revalidatePath("/admin/users");
     if (user?.publicId) revalidatePath(`/admin/users/${user.publicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /**
@@ -185,8 +153,7 @@ export async function updateUserRole(userId, role) {
  * @param {string} [options.reason] - Optional note for the suspension email
  */
 export async function banUser(userId, banned, { reason } = {}) {
-  try {
-    await requireAdmin();
+  return withAdminAction("banUser", async () => {
     const user = await getAuthUserById(userId);
     if (!user) return { error: "User not found" };
 
@@ -213,18 +180,12 @@ export async function banUser(userId, banned, { reason } = {}) {
     revalidatePath("/admin/users");
     if (user.publicId) revalidatePath(`/admin/users/${user.publicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Update user profile fields and role from the admin edit form. */
 export async function adminUpdateUser(userId, data) {
-  try {
-    await requireAdmin();
-
+  return withAdminAction("adminUpdateUser", async () => {
     const parsed = validate(adminUserSchema, data);
     if (!parsed.ok) return { error: "Validation failed" };
 
@@ -266,17 +227,12 @@ export async function adminUpdateUser(userId, data) {
     revalidatePath("/admin/users");
     if (user?.publicId) revalidatePath(`/admin/users/${user.publicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Permanently delete a user and all owned data. Admin-only. */
 export async function adminDeleteUser(userId) {
-  try {
-    const session = await requireAdmin();
+  return withAdminAction("adminDeleteUser", async (session) => {
     if (session.user.id === userId) return { error: "You cannot delete your own account" };
 
     const user = normalizeAuthUser(await getAuthUserById(userId));
@@ -285,36 +241,24 @@ export async function adminDeleteUser(userId) {
     await purgeUserAccount(user);
     revalidateAdmin();
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Upsert singleton app settings. Admin-only. */
 export async function updateAppSettings(data) {
-  try {
-    await requireAdmin();
-
+  return withAdminAction("updateAppSettings", async () => {
     const result = await saveAppSettings(data);
     if (result.error) return { error: result.error };
 
     revalidatePath("/admin/settings");
     revalidatePath("/", "layout");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Quick status change for registered pets. */
 export async function updateOwnedPetStatus(petPublicId, status) {
-  try {
-    await requireStaff();
-
+  return withStaffAction("updateOwnedPetStatus", async () => {
     const pet = await OwnedPet.findOne({ publicId: petPublicId });
     if (!pet) return { error: "Pet not found" };
 
@@ -329,33 +273,22 @@ export async function updateOwnedPetStatus(petPublicId, status) {
     revalidatePath("/admin/pets");
     revalidatePath(`/admin/pets/${petPublicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Save an admin note on a registered pet. */
 export async function updateOwnedPetAdminNote(petPublicId, adminNote) {
-  try {
-    await requireStaff();
+  return withStaffAction("updateOwnedPetAdminNote", async () => {
     await OwnedPet.findOneAndUpdate({ publicId: petPublicId }, { adminNote });
     revalidatePath("/admin/pets");
     revalidatePath(`/admin/pets/${petPublicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Full admin edit of a registered pet. */
 export async function adminUpdateOwnedPet(petPublicId, data) {
-  try {
-    await requireStaff();
-
+  return withStaffAction("adminUpdateOwnedPet", async () => {
     const pet = await OwnedPet.findOne({ publicId: petPublicId });
     if (!pet) return { error: "Pet not found" };
 
@@ -365,8 +298,8 @@ export async function adminUpdateOwnedPet(petPublicId, data) {
     const { name, microchipId, petType, breed, color, description, status, adminNote } = parsed.data;
 
     if (microchipId !== pet.microchipId) {
-      const duplicate = await OwnedPet.findOne({ microchipId, _id: { $ne: pet._id } });
-      if (duplicate) return { error: "Microchip ID already registered" };
+      const isUnique = await checkMicrochipUnique(microchipId, pet._id);
+      if (!isUnique) return { error: "Microchip ID already registered" };
     }
 
     const prevStatus = pet.status;
@@ -389,9 +322,5 @@ export async function adminUpdateOwnedPet(petPublicId, data) {
     revalidatePath("/admin/pets");
     revalidatePath(`/admin/pets/${petPublicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }

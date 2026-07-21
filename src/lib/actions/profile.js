@@ -2,9 +2,11 @@
 "use server";
 
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
-import { authActionError, requireActiveSession } from "@/lib/auth/session";
+import { withAuthAction } from "@/lib/auth/session";
 import { purgeUserAccount } from "@/lib/services/users";
 import { validate, updateProfileSchema } from "@/lib/validation";
+import { markUploadsAttached } from "@/lib/storage/cleanup";
+import { resolveStorageKey } from "@/lib/storage/urls";
 import { revalidatePath } from "next/cache";
 
 const ERROR_MESSAGES = {
@@ -15,9 +17,7 @@ const ERROR_MESSAGES = {
 
 /** Update the signed-in user's profile (name, contact, locale, location, avatar). */
 export async function updateProfile({ name, phone, locale, country, city, image }) {
-  try {
-    const session = await requireActiveSession();
-
+  return withAuthAction("updateProfile", async (session) => {
     const parsed = validate(updateProfileSchema, { name, phone, locale, country, city, image });
     if (!parsed.ok) {
       return { error: ERROR_MESSAGES[parsed.error] ?? ERROR_MESSAGES.invalid_input };
@@ -34,28 +34,18 @@ export async function updateProfile({ name, phone, locale, country, city, image 
     await updateAuthUserById(session.user.id, updates);
 
     if (parsed.data.image) {
-      const { extractKeyFromImageOrUrl } = await import("@/lib/storage/cleanup-helpers");
-      const key = extractKeyFromImageOrUrl(parsed.data.image);
-      if (key) {
-        const { Upload } = await import("@/models/upload");
-        await Upload.updateMany({ key }, { $set: { status: "attached" } });
-      }
+      const key = resolveStorageKey(parsed.data.image);
+      if (key) await markUploadsAttached(key);
     }
 
     revalidatePath("/");
     return { success: true, locale: parsed.data.locale };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Permanently delete the signed-in user's account and all associated data. */
 export async function deleteMyAccount() {
-  try {
-    const session = await requireActiveSession();
-
+  return withAuthAction("deleteMyAccount", async (session) => {
     const user = normalizeAuthUser(await getAuthUserById(session.user.id));
     if (!user) return { error: "Account not found" };
 
@@ -64,9 +54,5 @@ export async function deleteMyAccount() {
     revalidatePath("/");
     revalidatePath("/account", "layout");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }

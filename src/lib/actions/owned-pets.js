@@ -1,22 +1,19 @@
 /** @file Owned-pet server actions — register, update, archive. */
 "use server";
 
-import { authActionError, requireActiveSession } from "@/lib/auth/session";
+import { withAuthAction } from "@/lib/auth/session";
+import { requireOwnedPet } from "@/lib/actions/require-owned";
 import { OwnedPet } from "@/models/owned-pet";
 import { getAppSettings } from "@/lib/services/settings";
+import { checkMicrochipUnique } from "@/lib/services/owned-pets";
 import { validate, ownedPetSchema } from "@/lib/validation";
 import { enqueueOwnedPetProcessing } from "@/lib/intelligence";
+import { markProcessingFailed } from "@/lib/intelligence/processing-failure";
 import { revalidatePath } from "next/cache";
 import { deleteOwnedPetVector } from "@/lib/qdrant";
 import { syncOwnedPetStatus } from "@/lib/intelligence/sync-owned-pet-status";
-import { encodeOwnedPetPublicId, findOwnedPetByPublicId } from "@/lib/public-id";
-
-async function checkMicrochipUnique(microchipId, excludeId = null) {
-  const query = { microchipId, status: { $ne: "removed" } };
-  if (excludeId) query._id = { $ne: excludeId };
-  const existing = await OwnedPet.findOne(query);
-  return !existing;
-}
+import { encodeOwnedPetPublicId } from "@/lib/public-id";
+import { markUploadsAttached } from "@/lib/storage/cleanup";
 
 function mapOwnedPetValidationError(parsed) {
   if (parsed.ok) return null;
@@ -25,11 +22,21 @@ function mapOwnedPetValidationError(parsed) {
   return "PHOTO_REQUIRED";
 }
 
+async function setOwnedPetStatus(session, publicId, status) {
+  const owned = await requireOwnedPet(session, publicId);
+  if (owned.error) return owned;
+
+  owned.pet.status = status;
+  await owned.pet.save();
+  await syncOwnedPetStatus(owned.pet._id, status);
+
+  revalidatePath("/");
+  return { success: true };
+}
+
 /** Register a pet, enforce per-user limits, and enqueue ML embedding. */
 export async function createOwnedPet(data) {
-  try {
-    const session = await requireActiveSession();
-
+  return withAuthAction("createOwnedPet", async (session) => {
     const parsed = validate(ownedPetSchema, data);
     const validationError = mapOwnedPetValidationError(parsed);
     if (validationError) {
@@ -72,10 +79,7 @@ export async function createOwnedPet(data) {
     await pet.save();
 
     const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
-    if (s3Keys.length) {
-      const { Upload } = await import("@/models/upload");
-      await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
-    }
+    await markUploadsAttached(s3Keys);
 
     const enqueueResult = await enqueueOwnedPetProcessing({
       ownedPetId: pet._id.toString(),
@@ -84,27 +88,20 @@ export async function createOwnedPet(data) {
     });
 
     if (!enqueueResult.ok) {
-      pet.processingStatus = "failed";
-      pet.processingError = enqueueResult.error || "ENQUEUE_FAILED";
-      await pet.save();
+      await markProcessingFailed(pet, enqueueResult.error || "ENQUEUE_FAILED");
     }
 
     revalidatePath("/");
     return { success: true, id: pet.publicId };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Update a registered pet; re-embeds when the primary photo changes. */
 export async function updateOwnedPet(publicId, data) {
-  try {
-    const session = await requireActiveSession();
-
-    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
-    if (!pet) return { error: "NOT_FOUND" };
+  return withAuthAction("updateOwnedPet", async (session) => {
+    const owned = await requireOwnedPet(session, publicId);
+    if (owned.error) return owned;
+    const pet = owned.pet;
 
     if (pet.status === "archived") {
       return { error: "CANNOT_EDIT_ARCHIVED" };
@@ -146,87 +143,31 @@ export async function updateOwnedPet(publicId, data) {
       });
 
       if (!enqueueResult.ok) {
-        pet.processingStatus = "failed";
-        pet.processingError = enqueueResult.error || "ENQUEUE_FAILED";
+        await markProcessingFailed(pet, enqueueResult.error || "ENQUEUE_FAILED");
       }
     }
 
     await pet.save();
 
     const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
-    if (s3Keys.length) {
-      const { Upload } = await import("@/models/upload");
-      await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
-    }
+    await markUploadsAttached(s3Keys);
 
     revalidatePath("/");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Archive a pet (soft-remove from matching). */
 export async function archiveOwnedPet(publicId) {
-  try {
-    const session = await requireActiveSession();
-
-    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
-    if (!pet) return { error: "NOT_FOUND" };
-
-    pet.status = "archived";
-    await pet.save();
-    await syncOwnedPetStatus(pet._id, "archived");
-
-    revalidatePath("/");
-    return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  return withAuthAction("archiveOwnedPet", (session) => setOwnedPetStatus(session, publicId, "archived"));
 }
 
 /** Restore an archived pet back to active. */
 export async function restoreOwnedPet(publicId) {
-  try {
-    const session = await requireActiveSession();
-
-    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
-    if (!pet) return { error: "NOT_FOUND" };
-
-    pet.status = "active";
-    await pet.save();
-    await syncOwnedPetStatus(pet._id, "active");
-
-    revalidatePath("/");
-    return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  return withAuthAction("restoreOwnedPet", (session) => setOwnedPetStatus(session, publicId, "active"));
 }
 
 /** Soft-remove a pet (sets status to removed, deletes vectors). */
 export async function removeOwnedPet(publicId) {
-  try {
-    const session = await requireActiveSession();
-
-    const pet = await findOwnedPetByPublicId(publicId, { userId: session.user.id });
-    if (!pet) return { error: "NOT_FOUND" };
-
-    pet.status = "removed";
-    await pet.save();
-    await syncOwnedPetStatus(pet._id, "removed");
-
-    revalidatePath("/");
-    return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  return withAuthAction("removeOwnedPet", (session) => setOwnedPetStatus(session, publicId, "removed"));
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { reverseGeocode } from "@/lib/nominatim";
-import { validate, reverseGeocodeQuerySchema } from "@/lib/validation";
+import { reverseGeocodeQuerySchema } from "@/lib/validation";
+import { parseValidatedQuery } from "@/lib/api/query-params";
 import { rejectCrossSiteRequest } from "@/lib/request-metadata";
 
 /** Reverse geocode lat/lng via Nominatim (server-side proxy). */
@@ -9,14 +10,12 @@ export async function GET(request) {
   if (blocked) return blocked;
 
   const { searchParams } = new URL(request.url);
-  const parsed = validate(reverseGeocodeQuerySchema, {
-    lat: searchParams.get("lat"),
-    lng: searchParams.get("lng"),
-  });
-
-  if (!parsed.ok) {
-    return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
-  }
+  const parsed = parseValidatedQuery(
+    { lat: searchParams.get("lat"), lng: searchParams.get("lng") },
+    reverseGeocodeQuerySchema,
+    { error: "Invalid coordinates" }
+  );
+  if (parsed.response) return parsed.response;
 
   const result = await reverseGeocode(parsed.data.lat, parsed.data.lng);
 

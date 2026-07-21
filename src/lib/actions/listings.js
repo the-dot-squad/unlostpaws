@@ -2,11 +2,13 @@
 "use server";
 
 import { connectDB } from "@/config/db";
-import { authActionError, requireActiveSession } from "@/lib/auth/session";
+import { withAuthAction } from "@/lib/auth/session";
+import { requireOwnedListing } from "@/lib/actions/require-owned";
 import { Listing, listingPublicId } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkListingRateLimit, incrementListingCount } from "@/lib/rate-limit";
 import { enqueueListingProcessing } from "@/lib/intelligence";
+import { markProcessingFailed } from "@/lib/intelligence/processing-failure";
 import { extendListingRecord, resolveListingRecord, deleteListingRecord } from "@/lib/services/listings";
 import {
   validate,
@@ -16,18 +18,17 @@ import {
   listingReportSchema,
 } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
-import { findListingByPublicId } from "@/lib/public-id";
 import { getAuthUserById } from "@/lib/auth/users";
 import { canUserExtendListing, computeInitialExpiresAt } from "@/lib/listings/expiry";
 import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunion";
 import { revealListingContact } from "@/lib/listings/reveal-contact";
 import { submitListingReport } from "@/lib/listings/submit-report";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
-import { verifyListingTurnstile } from "@/lib/turnstile";
+import { runTurnstileAction } from "@/lib/turnstile";
+import { markUploadsAttached } from "@/lib/storage/cleanup";
 
 /**
  * Checks if a user is allowed to create a new listing based on rate limits.
- * Resolves user status details on failure.
  * @param {string} userId
  */
 async function checkListingLimitsAndStatus(userId) {
@@ -46,12 +47,7 @@ async function checkListingLimitsAndStatus(userId) {
   return { allowed: true, rateCheck };
 }
 
-/**
- * Persists the listing in the database and updates associated media upload status.
- * @param {object} listingData
- * @param {string} userId
- * @param {Date} expiresAt
- */
+/** Persists the listing and marks associated uploads as attached. */
 async function persistListing(listingData, userId, expiresAt) {
   const listing = await Listing.create({
     type: listingData.type,
@@ -79,122 +75,94 @@ async function persistListing(listingData, userId, expiresAt) {
   });
 
   const s3Keys = listingData.images.map((img) => img.s3Key).filter(Boolean);
-  if (s3Keys.length) {
-    const { Upload } = await import("@/models/upload");
-    await Upload.updateMany({ key: { $in: s3Keys } }, { $set: { status: "attached" } });
-  }
+  await markUploadsAttached(s3Keys);
 
   return listing;
 }
 
-/** Create a listing, enqueue ML processing, and apply rate limits. @returns {Promise<{ success: true, id: string } | { error: string }>} */
+/** Create a listing, enqueue ML processing, and apply rate limits. */
 export async function createListing(data) {
-  try {
-    const session = await requireActiveSession();
+  return withAuthAction(
+    "createListing",
+    async (session) => {
+      const limitCheck = await checkListingLimitsAndStatus(session.user.id);
+      if (!limitCheck.allowed) return { error: limitCheck.error };
+      const { rateCheck } = limitCheck;
 
-    const limitCheck = await checkListingLimitsAndStatus(session.user.id);
-    if (!limitCheck.allowed) return { error: limitCheck.error };
-    const { rateCheck } = limitCheck;
+      const parsed = validate(createListingSchema, data);
+      if (!parsed.ok) {
+        if (parsed.error === "invalid_coordinates") return { error: "invalid_coordinates" };
+        if (parsed.error === "contact_required") return { error: "contact_required" };
+        return { error: "images_required" };
+      }
 
-    const parsed = validate(createListingSchema, data);
-    if (!parsed.ok) {
-      if (parsed.error === "invalid_coordinates") return { error: "invalid_coordinates" };
-      if (parsed.error === "contact_required") return { error: "contact_required" };
-      return { error: "images_required" };
-    }
+      const settings = await getAppSettings();
+      const expiresAt = computeInitialExpiresAt(new Date(), settings);
+      const listing = await persistListing(parsed.data, session.user.id, expiresAt);
 
-    const settings = await getAppSettings();
-    const expiresAt = computeInitialExpiresAt(new Date(), settings);
-    const listing = await persistListing(parsed.data, session.user.id, expiresAt);
+      await incrementListingCount(
+        session.user.id,
+        rateCheck.listingsToday || 0,
+        rateCheck.listingsThisMonth || 0
+      );
 
-    await incrementListingCount(
-      session.user.id,
-      rateCheck.listingsToday || 0,
-      rateCheck.listingsThisMonth || 0
-    );
+      const imageUrls = parsed.data.images.map((img) => img.url);
+      const enqueueResult = await enqueueListingProcessing({
+        listingId: listing._id,
+        imageUrls,
+        listingType: parsed.data.type,
+        petType: parsed.data.petType,
+      });
 
-    const imageUrls = parsed.data.images.map((img) => img.url);
-    const enqueueResult = await enqueueListingProcessing({
-      listingId: listing._id,
-      imageUrls,
-      listingType: parsed.data.type,
-      petType: parsed.data.petType,
-    });
+      const id = listingPublicId(listing);
 
-    const id = listingPublicId(listing);
+      if (!enqueueResult.ok) {
+        await markProcessingFailed(listing, enqueueResult.error || "ENQUEUE_FAILED");
+        revalidatePath("/");
+        return { success: true, id, processingWarning: true };
+      }
 
-    if (!enqueueResult.ok) {
-      listing.processingStatus = "failed";
-      listing.processingError = enqueueResult.error || "ENQUEUE_FAILED";
-      await listing.save();
       revalidatePath("/");
-      return { success: true, id, processingWarning: true };
-    }
-
-    revalidatePath("/");
-    return { success: true, id };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    console.error("createListing failed:", err);
-    return { error: "create_failed" };
-  }
+      return { success: true, id };
+    },
+    { rethrow: false, error: "create_failed" }
+  );
 }
 
 /** Mark the owner's listing as resolved. */
 export async function resolveListing(publicId) {
-  try {
-    const session = await requireActiveSession();
+  return withAuthAction("resolveListing", async (session) => {
+    const owned = await requireOwnedListing(session, publicId);
+    if (owned.error) return owned;
 
-    const listing = await findListingByPublicId(publicId, { userId: session.user.id });
-    if (!listing) return { error: "Not found" };
-
-    await resolveListingRecord(listing);
+    await resolveListingRecord(owned.listing);
     revalidatePath("/");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Soft-delete a listing (owner only). */
 export async function deleteListing(publicId) {
-  try {
-    const session = await requireActiveSession();
+  return withAuthAction("deleteListing", async (session) => {
+    const owned = await requireOwnedListing(session, publicId);
+    if (owned.error) return owned;
 
-    const listing = await findListingByPublicId(publicId, { userId: session.user.id });
-    if (!listing) return { error: "Not found" };
-
-    if (listing.status === "removed") {
+    if (owned.listing.status === "removed") {
       return { success: true };
     }
 
-    await deleteListingRecord(listing);
+    await deleteListingRecord(owned.listing);
     revalidatePath("/");
     revalidatePath(`/listings/${publicId}`);
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Update editable fields on an active listing (owner only). */
 export async function updateListing(publicId, data) {
-  try {
-    const session = await requireActiveSession();
-
-    const listing = await findListingByPublicId(publicId, {
-      userId: session.user.id,
-      status: "active",
-    });
-
-    if (!listing) {
-      return { error: "Not found" };
-    }
+  return withAuthAction("updateListing", async (session) => {
+    const owned = await requireOwnedListing(session, publicId, { status: "active" });
+    if (owned.error) return owned;
 
     const parsed = validate(updateListingSchema, data);
     if (!parsed.ok) {
@@ -205,6 +173,7 @@ export async function updateListing(publicId, data) {
     }
 
     const { color, breed, description, address, city, country, lng, lat } = parsed.data;
+    const listing = owned.listing;
 
     listing.color = color;
     listing.breed = breed || "";
@@ -219,23 +188,16 @@ export async function updateListing(publicId, data) {
     await listing.save();
     revalidatePath("/");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Extend an active listing's expiry (owner only). */
 export async function extendListing(publicId) {
-  try {
-    const session = await requireActiveSession();
+  return withAuthAction("extendListing", async (session) => {
+    const owned = await requireOwnedListing(session, publicId);
+    if (owned.error) return owned;
 
-    const listing = await findListingByPublicId(publicId, { userId: session.user.id });
-    if (!listing) {
-      return { error: "Not found" };
-    }
-
+    const listing = owned.listing;
     const settings = await getAppSettings();
     const extensionLocked = await hasReunionExtensionLock(listing._id);
     const check = canUserExtendListing(
@@ -249,59 +211,44 @@ export async function extendListing(publicId) {
     await extendListingRecord(listing, settings);
     revalidatePath("/");
     return { success: true, expiresAt: listing.expiresAt.toISOString() };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }
 
 /** Turnstile-gated contact reveal for an active listing. */
 export async function revealListingContactAction(listingPublicId, token) {
-  const parsed = validate(listingContactSchema, { token });
-  if (!parsed.ok) {
-    return { error: parsed.error };
-  }
+  return runTurnstileAction(listingContactSchema, { token }, TURNSTILE_ACTIONS.LISTING_CONTACT, async () => {
+    await connectDB();
+    const result = await revealListingContact(listingPublicId);
 
-  const captcha = await verifyListingTurnstile(token, TURNSTILE_ACTIONS.LISTING_CONTACT);
-  if (!captcha.ok) {
-    return { error: captcha.error };
-  }
+    if (!result.ok) {
+      return { error: result.error };
+    }
 
-  await connectDB();
-  const result = await revealListingContact(listingPublicId);
-
-  if (!result.ok) {
-    return { error: result.error };
-  }
-
-  return { success: true, contact: result.contact };
+    return { success: true, contact: result.contact };
+  });
 }
 
 /** Authenticated listing report with Turnstile verification. */
 export async function submitListingReportAction({ listingPublicId, token, reason, details }) {
-  const parsed = validate(listingReportSchema, { token, reason, details });
-  if (!parsed.ok) {
-    return { error: parsed.error };
-  }
+  return runTurnstileAction(
+    listingReportSchema,
+    { token, reason, details },
+    TURNSTILE_ACTIONS.LISTING_REPORT,
+    async (parsed) => {
+      await connectDB();
+      const result = await submitListingReport({
+        listingId: listingPublicId,
+        reason: parsed.reason,
+        details: parsed.details,
+      });
 
-  const captcha = await verifyListingTurnstile(token, TURNSTILE_ACTIONS.LISTING_REPORT);
-  if (!captcha.ok) {
-    return { error: captcha.error };
-  }
+      if (!result.ok) {
+        return { error: result.error };
+      }
 
-  await connectDB();
-  const result = await submitListingReport({
-    listingId: listingPublicId,
-    reason: parsed.data.reason,
-    details: parsed.data.details,
-  });
-
-  if (!result.ok) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/");
-  revalidatePath(`/listings/${listingPublicId}`);
-  return { success: true };
+      revalidatePath("/");
+      revalidatePath(`/listings/${listingPublicId}`);
+      return { success: true };
+    }
+  );
 }

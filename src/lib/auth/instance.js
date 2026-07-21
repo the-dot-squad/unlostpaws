@@ -11,7 +11,7 @@ import { ObjectId } from "mongodb";
 import { env } from "@/config/env";
 import { defaultLocale } from "@/i18n/routing";
 import { encodeUserPublicId } from "@/lib/public-id";
-import { buildSocialProviders } from "./social-providers";
+import { buildSocialProviders } from "./providers";
 
 /**
  * Build a locale-aware sign-in redirect for auth hook errors.

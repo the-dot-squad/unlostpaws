@@ -1,4 +1,4 @@
-/** @file OAuth provider discovery — only expose providers with credentials configured. */
+/** @file OAuth provider discovery and Better Auth social provider config. */
 
 import { env } from "@/config/env";
 
@@ -11,12 +11,48 @@ export const OAUTH_PROVIDER_DEFS = [
   { id: "twitter", label: "X" },
 ];
 
+/** @type {Record<OAuthProviderId, { clientId: string; clientSecret: string; prompt?: string }>} */
+const OAUTH_CREDENTIALS = {
+  google: env.auth.google,
+  facebook: env.auth.facebook,
+  twitter: env.auth.twitter,
+};
+
+function isProviderConfigured(id) {
+  const creds = OAUTH_CREDENTIALS[id];
+  return Boolean(creds.clientId && creds.clientSecret);
+}
+
 /** @returns {OAuthProviderId[]} */
 export function getConfiguredOAuthProviderIds() {
-  /** @type {OAuthProviderId[]} */
-  const ids = [];
-  if (env.auth.google.clientId && env.auth.google.clientSecret) ids.push("google");
-  if (env.auth.facebook.clientId && env.auth.facebook.clientSecret) ids.push("facebook");
-  if (env.auth.twitter.clientId && env.auth.twitter.clientSecret) ids.push("twitter");
-  return ids;
+  return OAUTH_PROVIDER_DEFS.filter(({ id }) => isProviderConfigured(id)).map(({ id }) => id);
+}
+
+/** @returns {Record<string, object>} */
+export function buildSocialProviders() {
+  const socialProviders = {};
+
+  if (isProviderConfigured("google")) {
+    socialProviders.google = {
+      clientId: OAUTH_CREDENTIALS.google.clientId,
+      clientSecret: OAUTH_CREDENTIALS.google.clientSecret,
+      prompt: "select_account",
+    };
+  }
+
+  if (isProviderConfigured("facebook")) {
+    socialProviders.facebook = {
+      clientId: OAUTH_CREDENTIALS.facebook.clientId,
+      clientSecret: OAUTH_CREDENTIALS.facebook.clientSecret,
+    };
+  }
+
+  if (isProviderConfigured("twitter")) {
+    socialProviders.twitter = {
+      clientId: OAUTH_CREDENTIALS.twitter.clientId,
+      clientSecret: OAUTH_CREDENTIALS.twitter.clientSecret,
+    };
+  }
+
+  return socialProviders;
 }

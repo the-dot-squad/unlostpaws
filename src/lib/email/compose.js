@@ -1,11 +1,12 @@
-import { env } from "@/config/env";
 import { createTranslator } from "next-intl";
 import enMessages from "@messages/en.json";
 import faMessages from "@messages/fa.json";
+import { appUrl } from "@/lib/seo/routes";
 import { wrapEmail } from "./layout";
 
-const baseUrl = env.app.url;
 const MESSAGES_BY_LOCALE = { en: enMessages, fa: faMessages };
+
+export { appUrl };
 
 export async function getTranslator(locale = "en") {
   const normalizedLocale = ["en", "fa"].includes(locale) ? locale : "en";
@@ -18,11 +19,6 @@ export function localizeReportReason(t, reason) {
   return knownReasons.includes(reason) ? t(`reportReasons.${reason}`) : reason;
 }
 
-export function appUrl(locale, path) {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${baseUrl}/${locale}${normalizedPath}`;
-}
-
 /**
  * Build the standard `{ subject, html, text }` payload used by i18n transactional emails.
  *
@@ -32,7 +28,7 @@ export function appUrl(locale, path) {
  * @param {string} params.bodyHtml
  * @param {string} [params.ctaUrl]
  * @param {string} params.text - Plain-text fallback body
- * @param {Record<string, unknown>} [params.previewValues] - Interpolation values for `previewText`
+ * @param {Record<string, unknown>} [params.previewValues] - Interpolation values for `previewValues`
  */
 export async function buildEmail({ key, locale = "en", bodyHtml, ctaUrl, text, previewValues }) {
   const t = await getTranslator(locale);

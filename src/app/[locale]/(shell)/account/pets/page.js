@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { requireActiveSessionPage } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { connectDB } from "@/config/db";
 import { OwnedPet } from "@/models/owned-pet";
 import { resolveOwnedPetPublicId } from "@/lib/public-id";
@@ -16,7 +16,7 @@ export default async function MyPetsPage({ params }) {
   const tAccount = await getTranslations("account");
   const tPetTypes = await getTranslations("petTypes");
   const tListings = await getTranslations("listings");
-  const session = await requireActiveSessionPage(locale);
+  const session = await getSession();
 
   await connectDB();
   const pets = (await OwnedPet.find({

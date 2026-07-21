@@ -11,6 +11,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/config/env";
 import { imageContentTypeFromExtension } from "@/lib/storage/images";
+import { LOCAL_UPLOADS_DIR, localUploadPath } from "@/lib/storage/constants";
 import crypto from "crypto";
 import { mkdir, writeFile, readFile, unlink } from "fs/promises";
 import path from "path";
@@ -51,7 +52,7 @@ function getS3Client() {
 }
 
 async function readLocalObject(key) {
-  const filePath = path.join(process.cwd(), "public", "uploads", path.basename(key));
+  const filePath = localUploadPath(key);
   const body = await readFile(filePath);
   const ext = path.extname(key).slice(1).toLowerCase();
   return { body, contentType: imageContentTypeFromExtension(ext) };
@@ -124,9 +125,8 @@ export async function createPresignedUpload({
 
 export async function uploadObject({ key, body, contentType }) {
   if (!isS3Storage() && !hasS3Backend()) {
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
-    const filePath = path.join(uploadDir, path.basename(key));
+    await mkdir(LOCAL_UPLOADS_DIR, { recursive: true });
+    const filePath = localUploadPath(key);
     await writeFile(filePath, body);
     return { publicUrl: getPublicUrl(key) };
   }
@@ -179,8 +179,7 @@ export async function deleteObject(key) {
   }
 
   try {
-    const filePath = path.join(process.cwd(), "public", "uploads", path.basename(key));
-    await unlink(filePath);
+    await unlink(localUploadPath(key));
   } catch {
     // Local dev file may not exist when using remote storage only.
   }
@@ -217,8 +216,7 @@ export async function deleteObjects(keys) {
 
   for (const key of keys) {
     try {
-      const filePath = path.join(process.cwd(), "public", "uploads", path.basename(key));
-      await unlink(filePath);
+      await unlink(localUploadPath(key));
     } catch {
       // ignore
     }

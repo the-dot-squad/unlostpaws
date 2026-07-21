@@ -7,7 +7,8 @@ import { renderAtomFeed } from "@/lib/feeds/formats/atom";
 import { renderJsonFeed } from "@/lib/feeds/formats/json-feed";
 import { renderRssFeed } from "@/lib/feeds/formats/rss";
 import { feedContentType, resolveFeedFormat } from "@/lib/feeds/resolve-format";
-import { feedQuerySchema, validate } from "@/lib/validation";
+import { feedQuerySchema } from "@/lib/validation";
+import { parseValidatedQuery } from "@/lib/api/query-params";
 
 /** @param {import("@/lib/feeds/listings").ListingsFeed} feed */
 function renderFeed(feed, format) {
@@ -28,16 +29,17 @@ export async function GET(request, { params }) {
   const { searchParams } = new URL(request.url);
   const rawCountry = searchParams.get("country") || undefined;
 
-  const parsed = validate(feedQuerySchema, {
-    type: searchParams.get("type") || undefined,
-    petType: searchParams.get("petType") || undefined,
-    country: rawCountry,
-    format: searchParams.get("format") || undefined,
-  });
-
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error, field: parsed.field }, { status: 400 });
-  }
+  const parsed = parseValidatedQuery(
+    {
+      type: searchParams.get("type") || undefined,
+      petType: searchParams.get("petType") || undefined,
+      country: rawCountry,
+      format: searchParams.get("format") || undefined,
+    },
+    feedQuerySchema,
+    { includeField: true }
+  );
+  if (parsed.response) return parsed.response;
 
   const country = normalizeCountryCode(parsed.data.country);
   if (rawCountry && !country) {
