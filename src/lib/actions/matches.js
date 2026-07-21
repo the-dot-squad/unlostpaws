@@ -2,7 +2,7 @@
 "use server";
 
 import { connectDB } from "@/config/db";
-import { authActionError, requireActiveSession } from "@/lib/auth/session";
+import { withAuthAction } from "@/lib/auth/session";
 import { ListingMatch } from "@/models/listing-match";
 import {
   confirmReunionMatch,
@@ -14,9 +14,7 @@ import { revalidatePath } from "next/cache";
 
 /** Confirm or dismiss a reunification match (missing alert owner only). */
 export async function updateMatchStatus(matchId, status) {
-  try {
-    const session = await requireActiveSession();
-
+  return withAuthAction("updateMatchStatus", async (session) => {
     const parsed = validate(updateMatchStatusSchema, { matchId, status });
     if (!parsed.ok) return { error: "validation_failed" };
 
@@ -42,9 +40,5 @@ export async function updateMatchStatus(matchId, status) {
 
     revalidatePath("/");
     return { success: true };
-  } catch (err) {
-    const authErr = authActionError(err);
-    if (authErr) return authErr;
-    throw err;
-  }
+  });
 }

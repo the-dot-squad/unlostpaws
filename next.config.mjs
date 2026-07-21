@@ -68,6 +68,8 @@ const nextConfig = {
     return config;
   },
   images: {
+    loader: "custom",
+    loaderFile: "./src/lib/images/image-loader.js",
     remotePatterns: [
       { protocol: "https", hostname: mediaHost },
       { protocol: "http", hostname: "localhost" },

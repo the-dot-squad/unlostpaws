@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { findListingByPublicId } from "@/lib/public-id";
 import { listingPublicId } from "@/models/listing";
 import { getAuthUserById } from "@/lib/auth/users";
@@ -12,7 +11,6 @@ import { getAppSettings } from "@/lib/services/settings";
 import { toPlainObject } from "@/lib/utils";
 
 export default async function AdminListingEditPage({ params }) {
-  await requireStaff();
   await connectDB();
 
   const { id } = await params;

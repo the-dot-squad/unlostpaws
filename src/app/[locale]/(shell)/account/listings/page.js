@@ -1,5 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { requireActiveSessionPage } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { connectDB } from "@/config/db";
 import { Listing, attachListingPublicId } from "@/models/listing";
 import { ListingCard } from "@/components/listings/listing-card";
@@ -9,7 +9,7 @@ export default async function MyListingsPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
-  const session = await requireActiveSessionPage(locale);
+  const session = await getSession();
 
   await connectDB();
   const listings = (

@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { connectDB } from "@/config/db";
 import { createPresignedUpload } from "@/lib/storage/s3";
 import { validate, presignUploadSchema } from "@/lib/validation";
 import { enforceUploadRateLimits, recordListingUploadPresign } from "@/lib/rate-limit";
-import { rejectCrossSiteRequest } from "@/lib/request-metadata";
-import { connectDB } from "@/config/db";
+import {
+  requireActiveSessionForApi,
+  trackPendingUpload,
+} from "@/lib/api/upload-route";
 
 export async function POST(request) {
-  const blocked = rejectCrossSiteRequest(request);
-  if (blocked) return blocked;
-
-  await connectDB();
-
-  const session = await getSession();
-  const isInactive = session?.user?.status ? session.user.status !== "active" : session?.user?.banned;
-  if (!session || isInactive) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireActiveSessionForApi(request);
+  if (auth instanceof NextResponse) return auth;
+  const { session } = auth;
 
   const body = await request.json();
   const parsed = validate(presignUploadSchema, body);
@@ -43,13 +38,11 @@ export async function POST(request) {
   });
 
   try {
-    const { Upload } = await import("@/models/upload");
-    await Upload.create({
+    await trackPendingUpload({
       key: result.key,
       url: result.publicUrl,
       userId: session.user.id,
       prefix,
-      status: "pending",
     });
   } catch (err) {
     console.error("Failed to track presigned upload in DB:", err);

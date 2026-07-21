@@ -1,4 +1,4 @@
-/** @file Shared Upstash Redis client for job enqueueing, rate limits, and health probes. */
+/** @file Shared Upstash Redis client for ML job queue, upload IP rate limits, and health probes. */
 
 import { Redis } from "@upstash/redis";
 import { env } from "@/config/env";

@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import path from "path";
 import { readFile } from "fs/promises";
 import { getObject, hasS3Backend, isS3Storage } from "@/lib/storage/s3";
+import { localUploadPath } from "@/lib/storage/constants";
 import { imageContentTypeFromExtension } from "@/lib/storage/images";
 import { isDev } from "@/config/env";
 
+/** Prefixes allowed for public media proxy (subset of MEDIA_PREFIXES — no avatars). */
 const ALLOWED_PREFIXES = ["listings/", "pets/", "content/", "dev/"];
 
 async function readLocalUploadByBasename(key) {
-  const filePath = path.join(process.cwd(), "public", "uploads", path.basename(key));
+  const filePath = localUploadPath(key);
   const body = await readFile(filePath);
   return { body, contentType: imageContentTypeFromExtension(path.extname(key).slice(1)) };
 }

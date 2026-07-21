@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { reportCasePath, queryReportCases } from "@/lib/moderation/report-cases";
 import { listingPath } from "@/lib/paths";
 import { routing } from "@/i18n/routing";
@@ -24,7 +23,6 @@ import { formatDateTimeFull } from "@/lib/format";
 import { Eye, Users } from "lucide-react";
 
 export default async function AdminReportsPage({ searchParams }) {
-  await requireStaff();
   await connectDB();
 
   const sp = await searchParams;

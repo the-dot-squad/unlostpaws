@@ -1,6 +1,6 @@
 {
   "name": "unlostpaws",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "repository": {
     "type": "git",
@@ -16,7 +16,8 @@
     "postinstall": "cp node_modules/@lottiefiles/dotlottie-web/dist/dotlottie-player.wasm public/dotlottie-player.wasm && patch-package",
     "ml:reset": "node --env-file=.env.local scripts/reset-ml-data.mjs",
     "ml:reprocess": "node --env-file=.env.local scripts/reprocess-all.mjs",
-    "ml:reset-intelligence": "node --env-file=.env.local scripts/reset-intelligence-data.mjs"
+    "ml:reset-intelligence": "node --env-file=.env.local scripts/reset-intelligence-data.mjs",
+    "qdrant:keepalive": "node --env-file=.env.local scripts/qdrant-keepalive.mjs"
   },
   "overrides": {
     "postcss": "^8.5.10"

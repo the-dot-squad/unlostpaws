@@ -1,7 +1,9 @@
 /** @file Resolve stored image keys to browser-facing URLs. */
 
 import path from "path";
+import { env } from "@/config/env";
 import { getPublicUrl, hasS3Backend, isS3Storage } from "@/lib/storage/s3";
+import { MEDIA_PREFIXES } from "@/lib/storage/constants";
 
 /** App proxy path for object keys (works without S3_PUBLIC_URL). */
 export function getMediaProxyUrl(key) {
@@ -14,6 +16,48 @@ export function extractMediaKey(url) {
   const marker = "/api/media/";
   const idx = url.indexOf(marker);
   if (idx !== -1) return url.slice(idx + marker.length);
+  return null;
+}
+
+/**
+ * Resolve an object storage key from a stored image reference or raw key/URL.
+ * Returns null for external URLs (e.g. OAuth avatars).
+ */
+export function resolveStorageKey(imageOrKey) {
+  if (!imageOrKey) return null;
+
+  if (typeof imageOrKey === "object") {
+    if (imageOrKey.s3Key) return imageOrKey.s3Key;
+    if (imageOrKey.url) return resolveStorageKey(imageOrKey.url);
+    return null;
+  }
+
+  if (typeof imageOrKey !== "string") return null;
+
+  const fromProxy = extractMediaKey(imageOrKey);
+  if (fromProxy) return fromProxy;
+
+  const publicUrl = env.storage.publicUrl;
+  if (publicUrl && imageOrKey.startsWith(publicUrl)) {
+    return imageOrKey.slice(publicUrl.length).replace(/^\/+/, "");
+  }
+
+  if (imageOrKey.includes("/uploads/")) {
+    const idx = imageOrKey.indexOf("/uploads/");
+    return imageOrKey.slice(idx + "/uploads/".length);
+  }
+
+  if (!imageOrKey.includes("://") && !imageOrKey.startsWith("/")) {
+    return imageOrKey;
+  }
+
+  for (const prefix of MEDIA_PREFIXES) {
+    const idx = imageOrKey.indexOf(prefix);
+    if (idx !== -1) {
+      return imageOrKey.slice(idx);
+    }
+  }
+
   return null;
 }
 

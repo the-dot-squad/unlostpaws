@@ -2,10 +2,19 @@
 
 import { connectDB } from "@/config/db";
 import { deleteObjects } from "@/lib/storage/s3";
+import { cutoffBeforeHours } from "@/lib/storage/constants";
 import { Upload } from "@/models/upload";
-import { extractKeyFromImageOrUrl } from "@/lib/storage/cleanup-helpers";
 
-export { extractKeyFromImageOrUrl };
+/**
+ * Mark upload tracking documents as attached after media is linked to a record.
+ * @param {string | string[]} keys
+ */
+export async function markUploadsAttached(keys) {
+  const keyList = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+  if (!keyList.length) return;
+
+  await Upload.updateMany({ key: { $in: keyList } }, { $set: { status: "attached" } });
+}
 
 /**
  * Scan the indexed Upload collection to identify and bulk-delete orphan media files.
@@ -16,9 +25,8 @@ export { extractKeyFromImageOrUrl };
 export async function pruneOrphanUploads({ maxAgeHours = 24 } = {}) {
   await connectDB();
 
-  const cutoffTime = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
+  const cutoffTime = cutoffBeforeHours(maxAgeHours);
 
-  // Find pending uploads older than cutoffTime
   const orphans = await Upload.find({
     status: "pending",
     createdAt: { $lt: cutoffTime },
@@ -36,7 +44,6 @@ export async function pruneOrphanUploads({ maxAgeHours = 24 } = {}) {
 
   const orphanKeys = orphans.map((o) => o.key);
 
-  // Bulk delete from S3/R2 and local dev storage, and remove tracking documents
   await deleteObjects(orphanKeys);
 
   return {

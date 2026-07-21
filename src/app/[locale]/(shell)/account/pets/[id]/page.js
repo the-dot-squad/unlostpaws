@@ -4,14 +4,14 @@ import { connectDB } from "@/config/db";
 import { findOwnedPetByPublicId, resolveOwnedPetPublicId } from "@/lib/public-id";
 import { PetForm } from "@/components/pets/pet-form";
 import { PetDetailView } from "@/components/pets/pet-detail-view";
-import { requireActiveSessionPage } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 
 export default async function PetDetailPage({ params, searchParams }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const tListings = await getTranslations("listings");
   const tPetTypes = await getTranslations("petTypes");
-  const session = await requireActiveSessionPage(locale);
+  const session = await getSession();
   const sp = await searchParams;
 
   await connectDB();

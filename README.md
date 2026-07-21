@@ -53,6 +53,7 @@
 *   **Granular User Quotas & Account Rules:** Strict nested quota tracking for uploads and listings, paired with automated session revocation and staff guards on account ban.
 *   **Persian & Arabic Text Normalization:** Multi-dialect character normalization ensures high fuzzy matching accuracy across language variations (breed, color).
 *   **Storage Optimization:** Automatic cron cleanup purges uploaded images that are not associated with any listings or active profiles.
+*   **Cloudflare Edge Image Optimization:** Custom Next.js image loader that dynamically formats and optimizes S3/R2 image requests through Cloudflare's Edge resizing tool in production.
 *   **Advanced Admin Management:** Custom settings dashboard to tune thresholds, review moderation queues, and oversee reports.
 
 ---
@@ -192,10 +193,14 @@ The communication layer is refactored into a provider-agnostic modular system:
 *   **Dynamic API Origins:** Allows custom API origin overrides (e.g., `MAILTRAP_API_ORIGIN`, `MAILJET_API_ORIGIN`, `ZEPTOMAIL_API_ORIGIN`) for compliance, proxying, or sandboxed dev networks.
 *   **Modular Templates:** Categorized into transactional files (`account`, `contact`, `matches`, `moderation`, `reports`) for easy customization and translations.
 
-### 6. Security, Session Revocation, and Quotas
+### 6. Security, Session Revocation, Quotas, and Rate Limits
 Security is built directly into the account lifecycle:
 *   **Immediate Revocation:** Banned user status is checked dynamically during request authentication, instantly revoking active sessions and rejecting form/upload operations.
-*   **Rate Limits and Quotas:** Nested quota tracking inside the MongoDB User schema limits daily/monthly listings and reports, protecting database and compute costs.
+*   **Rate Limits:** General API routing protection is delegated to the edge firewall (e.g., Vercel Firewall), while sensitive file upload endpoints are throttled via an isolated Upstash Redis rate-limiting adapter (supporting sliding window IP limits and daily per-user upload quotas).
+*   **MongoDB Quotas:** Nested quota tracking inside the MongoDB User schema limits daily/monthly listings and reports, protecting database and compute costs.
+
+### 7. Cloudflare Edge Image Resizing
+In production, image optimization is delegated to Cloudflare's Edge Image Resizing service (`/cdn-cgi/image/...`). A custom Next.js image loader intercepts S3/R2 image source paths and automatically rewrites them with the appropriate optimization constraints (width, quality, and auto format), reducing page weight and load times without relying on standard Next.js server-side image processing.
 
 ---
 
@@ -438,6 +443,9 @@ npm run ml:reset-intelligence
 
 # Re-enqueue all active listings into the Redis Stream for reprocessing
 npm run ml:reprocess
+
+# Ping Qdrant Cloud with a tiny write/read/delete cycle to keep the free cluster active
+npm run qdrant:keepalive
 ```
 
 ---

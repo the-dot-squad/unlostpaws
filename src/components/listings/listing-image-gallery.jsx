@@ -25,6 +25,7 @@ function PhotoButton({ img, i, className, onClick, alt }) {
         loading={i === 0 ? "eager" : "lazy"}
         fetchPriority={i === 0 ? "high" : "low"}
         unoptimized={img.url.startsWith("/api/media")}
+        quality={85}
       />
       <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/25 group-hover:opacity-100">
         <Expand className="size-6 text-white drop-shadow-md" aria-hidden />

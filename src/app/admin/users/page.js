@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { queryUsers } from "@/lib/repositories/admin";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminFilterToolbar } from "@/components/admin/filter-toolbar";
@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 
 export default async function AdminUsersPage({ searchParams }) {
-  const session = await requireStaff();
+  const session = await getSession();
   await connectDB();
 
   const sp = await searchParams;

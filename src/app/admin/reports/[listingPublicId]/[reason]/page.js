@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { getReportCaseData } from "@/lib/moderation/report-cases";
 import { getAuthUsersByIds } from "@/lib/auth/users";
 import { ReportEntriesList } from "@/components/admin/report-entries-list";
@@ -17,7 +16,6 @@ import { toPlainObject } from "@/lib/utils";
 import { routing } from "@/i18n/routing";
 
 export default async function AdminReportCasePage({ params }) {
-  await requireStaff();
   await connectDB();
 
   const { listingPublicId, reason: reasonParam } = await params;

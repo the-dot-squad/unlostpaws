@@ -1,4 +1,8 @@
-export { applyProxyRateLimit } from "./ip";
+export {
+  checkUploadIpRateLimit,
+  getDailyUploadCount,
+  incrementDailyUploadCount,
+} from "./upload-limits";
 export {
   checkListingRateLimit,
   incrementListingCount,

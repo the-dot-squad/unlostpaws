@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { resolveOwnedPetPublicId } from "@/lib/public-id";
 import { queryPets } from "@/lib/repositories/admin";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -22,7 +21,6 @@ import {
 import { formatDate } from "@/lib/format";
 
 export default async function AdminPetsPage({ searchParams }) {
-  await requireStaff();
   await connectDB();
 
   const sp = await searchParams;

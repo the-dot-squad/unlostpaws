@@ -76,16 +76,16 @@ export function Header() {
                   ))}
                   {(session.user.role === "admin" ||
                     session.user.role === "moderator") && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">
-                          <Shield />
-                          {t("nav.admin")}
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">
+                            <Shield />
+                            {t("nav.admin")}
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => authClient.signOut()}>
                     <LogOut />

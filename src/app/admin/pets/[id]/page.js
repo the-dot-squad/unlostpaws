@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { connectDB, getMongoDb } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { authUserIdFilter, normalizeAuthUser } from "@/lib/auth/users";
 import { OwnedPet } from "@/models/owned-pet";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -8,7 +7,6 @@ import { AdminPetForm } from "@/components/admin/pet-form";
 import { toPlainObject } from "@/lib/utils";
 
 export default async function AdminPetEditPage({ params }) {
-  await requireStaff();
   await connectDB();
 
   const { id: publicId } = await params;

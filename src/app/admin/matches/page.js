@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { connectDB } from "@/config/db";
-import { requireStaff } from "@/lib/auth/session";
 import { ListingMatch } from "@/models/listing-match";
 import { Listing, listingPublicId } from "@/models/listing";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -26,7 +25,6 @@ function listingLabel(listing) {
 }
 
 export default async function AdminMatchesPage({ searchParams }) {
-  await requireStaff();
   await connectDB();
 
   const sp = await searchParams;

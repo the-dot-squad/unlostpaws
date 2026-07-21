@@ -1,22 +1,16 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
 import { uploadObject } from "@/lib/storage/s3";
 import { ALLOWED_IMAGE_MIMES, validateImageBuffer } from "@/lib/storage/images";
 import { enforceUploadRateLimits } from "@/lib/rate-limit";
-import { rejectCrossSiteRequest } from "@/lib/request-metadata";
-import { connectDB } from "@/config/db";
+import {
+  requireActiveSessionForApi,
+  upsertPendingUpload,
+} from "@/lib/api/upload-route";
 
 export async function POST(request) {
-  const blocked = rejectCrossSiteRequest(request);
-  if (blocked) return blocked;
-
-  await connectDB();
-
-  const session = await getSession();
-  const isInactive = session?.user?.status ? session.user.status !== "active" : session?.user?.banned;
-  if (!session || isInactive) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireActiveSessionForApi(request);
+  if (auth instanceof NextResponse) return auth;
+  const { session } = auth;
 
   const formData = await request.formData();
   const file = formData.get("file");
@@ -57,18 +51,12 @@ export async function POST(request) {
   });
 
   try {
-    const { Upload } = await import("@/models/upload");
-    await Upload.findOneAndUpdate(
-      { key },
-      {
-        key,
-        url: publicUrl,
-        userId: session.user.id,
-        prefix,
-        status: "pending",
-      },
-      { upsert: true, new: true }
-    );
+    await upsertPendingUpload({
+      key,
+      url: publicUrl,
+      userId: session.user.id,
+      prefix,
+    });
   } catch (err) {
     console.error("Failed to track direct upload in DB:", err);
   }
