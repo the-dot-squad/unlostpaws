@@ -252,6 +252,12 @@
       "description": "If you think you've spotted this missing pet, please submit a sighting. Make sure to take at least 2 clear photos from different angles to help us match and confirm their identity!",
       "cta": "Submit Sighting"
     },
+    "ownershipCta": {
+      "badge": "Pet Owners",
+      "title": "Have a pet at home? Register their microchip",
+      "description": "Save your pet's microchip details and photos now. If they ever wander off or get lost, we can help bring them back home much faster.",
+      "button": "Register Your Pet"
+    },
     "saveChanges": "Save changes",
     "extension": {
       "title": "Alert duration",

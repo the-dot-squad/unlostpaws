@@ -4,6 +4,7 @@ import { searchListings } from "@/lib/listings/search";
 import { ListingSearch } from "@/components/listings/listing-search";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ListingsPagination } from "@/components/listings/listings-pagination";
+import { PetOwnershipCta } from "@/components/listings/pet-ownership-cta";
 import { EmptyState } from "@/components/marketing/empty-state";
 import { PageHeader } from "@/components/marketing/page-header";
 import { ContentBody } from "@/components/marketing/content-page";
@@ -144,6 +145,14 @@ export default async function ListingsPage({ params, searchParams }) {
             />
           </>
         )}
+
+        <PetOwnershipCta
+          locale={locale}
+          badge={t("listings.ownershipCta.badge")}
+          title={t("listings.ownershipCta.title")}
+          description={t("listings.ownershipCta.description")}
+          button={t("listings.ownershipCta.button")}
+        />
       </ContentBody>
     </>
   );
