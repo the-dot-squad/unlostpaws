@@ -9,9 +9,15 @@ import { adminPurgeListing } from "@/lib/actions/admin";
 import { listingPath } from "@/lib/paths";
 import { routing } from "@/i18n/routing";
 import { toast } from "sonner";
+import { AdminRequeueProcessingButton } from "@/components/admin/requeue-processing-button";
 
-/** Row actions for admin listings: view public ad, edit, purge. */
-export function AdminListingActions({ listingId, locale = routing.defaultLocale }) {
+/** Row actions for admin listings: view public ad, edit, requeue, purge. */
+export function AdminListingActions({
+  listingId,
+  locale = routing.defaultLocale,
+  processingStatus,
+  processingError,
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const publicUrl = listingPath(listingId, locale);
@@ -53,6 +59,13 @@ export function AdminListingActions({ listingId, locale = routing.defaultLocale 
           <span className="sr-only">Edit</span>
         </Link>
       </Button>
+      <AdminRequeueProcessingButton
+        kind="listing"
+        publicId={listingId}
+        status={processingStatus}
+        processingError={processingError}
+        variant="icon"
+      />
       <Button
         size="sm"
         variant="destructive"

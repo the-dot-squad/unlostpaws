@@ -1,24 +1,24 @@
 /**
- * Image intelligence pipeline — queue, callbacks, ingest, matching, moderation.
+ * Image intelligence pipeline — queue, processing status, vector sync, match cron.
+ * Server-only: do not import this barrel from Client Components (pulls Mongo/Redis).
  *
  * @module @/lib/intelligence
  */
 
-export { ingestProcessedListing } from "@/lib/intelligence/ingest/listing";
-
-export { assessContentSafety, assessOwnedPetSafety } from "@/lib/intelligence/safety/assess-content-safety";
-
 export {
-  enqueueImageJob,
   enqueueListingProcessing,
   enqueueOwnedPetProcessing,
-  retryListingProcessing,
-  MAX_JOB_ATTEMPTS,
+  requeueListingProcessing,
+  requeueOwnedPetProcessing,
 } from "@/lib/intelligence/queue";
+
+export { markProcessingFailed, processingErrorKey } from "@/lib/intelligence/processing";
 
 export {
   syncListingImageStatus,
   syncListingImageStatusBulk,
-} from "@/lib/intelligence/sync-listing-image-status";
+} from "@/lib/intelligence/sync/listing-images";
+
+export { syncOwnedPetStatus } from "@/lib/intelligence/sync/owned-pets";
 
 export { reprocessListingMatches } from "@/lib/intelligence/matching/reprocess";

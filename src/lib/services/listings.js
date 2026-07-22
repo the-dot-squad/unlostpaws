@@ -5,6 +5,7 @@ import { findListingByPublicId } from "@/lib/public-id";
 import { setListingStatus } from "@/lib/listings/status";
 import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
 import { ListingMatch } from "@/models/listing-match";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
  * Mark a listing resolved by its owner.
@@ -47,6 +48,7 @@ export async function extendListingRecord(listing, settings) {
   }
 
   await listing.save();
+  await invalidateGeoCache();
   return listing;
 }
 
@@ -73,6 +75,7 @@ export async function applyListingAdminUpdate(listing, fields) {
 
   listing.status = fields.status;
   await listing.save();
+  await invalidateGeoCache();
   return listing;
 }
 

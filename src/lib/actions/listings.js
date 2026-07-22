@@ -7,8 +7,7 @@ import { requireOwnedListing } from "@/lib/actions/require-owned";
 import { Listing, listingPublicId } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkListingRateLimit, incrementListingCount } from "@/lib/rate-limit";
-import { enqueueListingProcessing } from "@/lib/intelligence";
-import { markProcessingFailed } from "@/lib/intelligence/processing-failure";
+import { enqueueListingProcessing, markProcessingFailed } from "@/lib/intelligence";
 import { extendListingRecord, resolveListingRecord, deleteListingRecord } from "@/lib/services/listings";
 import {
   validate,
@@ -20,12 +19,13 @@ import {
 import { revalidatePath } from "next/cache";
 import { getAuthUserById } from "@/lib/auth/users";
 import { canUserExtendListing, computeInitialExpiresAt } from "@/lib/listings/expiry";
-import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunion";
+import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunify";
 import { revealListingContact } from "@/lib/listings/reveal-contact";
 import { submitListingReport } from "@/lib/listings/submit-report";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { runTurnstileAction } from "@/lib/turnstile";
 import { markUploadsAttached } from "@/lib/storage/cleanup";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
  * Checks if a user is allowed to create a new listing based on rate limits.
@@ -76,6 +76,7 @@ async function persistListing(listingData, userId, expiresAt) {
 
   const s3Keys = listingData.images.map((img) => img.s3Key).filter(Boolean);
   await markUploadsAttached(s3Keys);
+  await invalidateGeoCache();
 
   return listing;
 }
@@ -119,7 +120,7 @@ export async function createListing(data) {
       if (!enqueueResult.ok) {
         await markProcessingFailed(listing, enqueueResult.error || "ENQUEUE_FAILED");
         revalidatePath("/");
-        return { success: true, id, processingWarning: true };
+        return { success: true, id, processingFailed: true };
       }
 
       revalidatePath("/");
@@ -186,6 +187,7 @@ export async function updateListing(publicId, data) {
     };
 
     await listing.save();
+    await invalidateGeoCache();
     revalidatePath("/");
     return { success: true };
   });

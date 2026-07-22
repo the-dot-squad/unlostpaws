@@ -1,9 +1,11 @@
+/** @file Cross-type visual+metadata matching — score and persist ListingMatch rows. */
+
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";
 import { ListingImage } from "@/models/listing-image";
 import { ListingMatch } from "@/models/listing-match";
 import { getAppSettings } from "@/lib/services/settings";
-import { metadataScore } from "@/lib/intelligence/matching/metadata-score";
+import { metadataScore } from "@/lib/intelligence/matching/metadata";
 import {
   matchTierForTypes,
   thresholdForPair,
@@ -11,10 +13,16 @@ import {
   canonicalListingPair,
 } from "@/lib/intelligence/matching/pairs";
 import { searchListingImages } from "@/lib/qdrant/listing-images";
-import { LISTING_TYPES } from "@/config/constants/enums";
+import { findCrossTypeListingsInRadius } from "@/lib/intelligence/matching/geo";
+import { GEO_MATCH_CANDIDATE_CAP } from "@/config/constants/platform";
 
 /**
  * Score and persist cross-type listing matches for a processed listing.
+ *
+ * Peak cost (per listing ingest):
+ * - Mongo: ≤ GEO_MATCH_CANDIDATE_CAP geo candidates
+ * - Qdrant: ≤ embeddings.length × ceil(candidates/100) ANN searches (listingIds batches),
+ *   each with limit 50 — no unbounded geo_radius scan over the full collection.
  *
  * @param {Object} params
  * @param {import("mongoose").Types.ObjectId|string} params.listingId
@@ -47,29 +55,48 @@ export async function findListingMatches({
   }
 
   const coords = sourceListing.location?.coordinates;
-  const crossTypes = LISTING_TYPES.filter((t) => t !== listingType);
-  const center = coords?.length === 2 ? { lat: coords[1], lon: coords[0] } : null;
+  if (!coords?.length) {
+    return { created: 0 };
+  }
 
   const highThreshold = settings.matchConfidenceHighThreshold ?? 0.9;
 
-  // 1. Fetch source listing's image MD5s once outside the loop
+  // Cap Mongo geo candidates (all cross-types), then constrain Qdrant to those IDs.
+  const geoCandidates = await findCrossTypeListingsInRadius({
+    coordinates: coords,
+    radiusKm: settings.geoMatchRadiusKm,
+    sourceListingType: listingType,
+    petType,
+    excludeListingId: listingId,
+    excludeUserId: userId,
+    limit: GEO_MATCH_CANDIDATE_CAP,
+  });
+
+  if (!geoCandidates.length) {
+    return { created: 0 };
+  }
+
+  const listingIds = geoCandidates.map((c) => c._id);
+  const geoMeta = new Map(geoCandidates.map((c) => [c._id.toString(), c]));
+
   const sourceImages = await ListingImage.find({ listingId }).select("md5").lean();
   const sourceMd5s = new Set(sourceImages.map((img) => img.md5).filter(Boolean));
 
   const bestByListing = new Map();
+  const scoreThreshold = (settings.matchSimilarityThreshold ?? 0.82) * 0.9;
 
+  // Omit listingType filter so every cross-type in listingIds can match;
+  // isCrossTypePair below still enforces valid pairs.
   for (let qi = 0; qi < embeddings.length; qi++) {
     const hits = await searchListingImages({
       vector: embeddings[qi],
       embeddingModel,
       petType,
-      listingType: crossTypes[0],
-      center,
-      radiusKm: settings.geoMatchRadiusKm,
+      listingIds,
       excludeListingId: listingId,
       excludeUserId: userId,
       limit: 50,
-      scoreThreshold: (settings.matchSimilarityThreshold ?? 0.82) * 0.9,
+      scoreThreshold,
     });
 
     for (const hit of hits) {
@@ -90,15 +117,19 @@ export async function findListingMatches({
     return { created: 0 };
   }
 
-  // Fetch the candidate listings' metadata and MD5s in batch queries
-  const [candidates, candidateImages] = await Promise.all([
-    Listing.find({ _id: { $in: matchListingIds }, status: "active" }).lean(),
+  const missingMetaIds = matchListingIds.filter((id) => !geoMeta.has(String(id)));
+  const [extraCandidates, candidateImages] = await Promise.all([
+    missingMetaIds.length
+      ? Listing.find({ _id: { $in: missingMetaIds }, status: "active" }).lean()
+      : Promise.resolve([]),
     ListingImage.find({ listingId: { $in: matchListingIds } }).select("listingId md5").lean(),
   ]);
 
-  const candidateMeta = new Map(candidates.map((c) => [c._id.toString(), c]));
+  const candidateMeta = new Map(geoMeta);
+  for (const c of extraCandidates) {
+    candidateMeta.set(c._id.toString(), c);
+  }
 
-  // Group candidate MD5s by listingId in memory
   const candidateMd5sByListing = new Map();
   for (const img of candidateImages) {
     const lid = String(img.listingId);
@@ -130,7 +161,6 @@ export async function findListingMatches({
       continue;
     }
 
-    // Check if they share any identical image MD5 using the sets in memory (reduces DB queries)
     const candidateMd5Set = candidateMd5sByListing.get(String(match.listingId)) || new Set();
     const hasSharedMd5 = [...sourceMd5s].some((md5) => candidateMd5Set.has(md5));
     if (hasSharedMd5) {

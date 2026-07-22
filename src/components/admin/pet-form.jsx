@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { adminUpdateOwnedPet } from "@/lib/actions/admin";
+import { AdminRequeueProcessingButton } from "@/components/admin/requeue-processing-button";
 import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -133,6 +134,14 @@ export function AdminPetForm({ pet, owner }) {
           <p><span className="font-medium text-foreground">Owner:</span> {owner?.name || "—"}</p>
           <p><span className="font-medium text-foreground">Email:</span> {owner?.email || "—"}</p>
           <p><span className="font-medium text-foreground">Processing:</span> {pet.processingStatus}</p>
+          <div className="sm:col-span-2">
+            <AdminRequeueProcessingButton
+              kind="owned-pet"
+              publicId={pet.publicId}
+              status={pet.processingStatus}
+              processingError={pet.processingError}
+            />
+          </div>
           <p><span className="font-medium text-foreground">Created:</span> {formatDate(pet.createdAt)}</p>
         </CardContent>
       </Card>

@@ -1,7 +1,9 @@
+/** @file Cron reprocess — re-run cross-type matching for stale active listings. */
+
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";
 import { getListingImageVectors } from "@/lib/qdrant/listing-images";
-import { findListingMatches } from "@/lib/intelligence/matching/find-listing-matches";
+import { findListingMatches } from "@/lib/intelligence/matching/cross-type";
 import { notifyListingMatches } from "@/lib/intelligence/matching/notify";
 import { env } from "@/config/env";
 

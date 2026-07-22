@@ -34,5 +34,5 @@ const ListingsMapClient = dynamic(
  * @param {string} [props.petType]
  */
 export function ListingsMap({ locale, type, petType }) {
-  return <ListingsMapClient key={`${type}-${petType}`} locale={locale} type={type} petType={petType} />;
+  return <ListingsMapClient locale={locale} type={type} petType={petType} />;
 }

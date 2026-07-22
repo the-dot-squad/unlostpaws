@@ -1,8 +1,20 @@
 /** @file Platform limits, ML worker contract, and admin telemetry collection names. */
 
 // Pagination & map limits
-/** Max markers returned per map viewport request. */
+/** Hard cap on markers returned per map viewport request. */
 export const MAP_LISTINGS_LIMIT = 500;
+
+/** Default page size for map viewport fetches (cursor pagination). */
+export const MAP_LISTINGS_PAGE_SIZE = 200;
+
+/** Redis TTL (seconds) for map / geo browse response cache. */
+export const LISTINGS_CACHE_TTL_SEC = 45;
+
+/**
+ * Max Mongo candidates for cross-type visual matching before Qdrant ANN.
+ * Peak cost: ≤ this many listing IDs × ceil(ids/100) Qdrant batches per embedding.
+ */
+export const GEO_MATCH_CANDIDATE_CAP = 500;
 
 /** Browse listings grid — 4 columns × 6 rows. */
 export const LISTINGS_PAGE_SIZE = 24;

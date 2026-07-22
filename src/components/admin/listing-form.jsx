@@ -22,6 +22,7 @@ import { AdminListingImagesPanel } from "@/components/admin/listing-images-panel
 import { AdminStatusBadge } from "@/components/admin/status-badge";
 import { adminUpdateListing } from "@/lib/actions/admin";
 import { AdminListingExtensionPanel } from "@/components/admin/listing-extension-panel";
+import { AdminRequeueProcessingButton } from "@/components/admin/requeue-processing-button";
 import { hasSetCoordinates } from "@/lib/geo";
 import { formatDate } from "@/lib/format";
 import { ExternalLink } from "lucide-react";
@@ -212,6 +213,14 @@ function SidebarCard({ listing, extensionDays }) {
           <div>
             <p className="text-xs font-medium uppercase text-muted-foreground">ML processing</p>
             <p className="mt-1 capitalize">{listing.processingStatus}</p>
+            <div className="mt-2">
+              <AdminRequeueProcessingButton
+                kind="listing"
+                publicId={listing.publicId}
+                status={listing.processingStatus}
+                processingError={listing.processingError}
+              />
+            </div>
           </div>
           <div>
             <p className="text-xs font-medium uppercase text-muted-foreground">Photos</p>

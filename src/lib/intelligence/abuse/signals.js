@@ -1,7 +1,9 @@
+/** @file Abuse signal checks — MD5/pHash, embedding similarity, metadata reposts. */
+
 import { Listing } from "@/models/listing";
 import { ListingImage } from "@/models/listing-image";
-import { findPhashMatches } from "@/lib/intelligence/abuse/phash-buckets";
-import { descriptionOverlap } from "@/lib/intelligence/matching/metadata-score";
+import { findPhashMatches } from "@/lib/intelligence/abuse/phash";
+import { descriptionOverlap } from "@/lib/intelligence/matching/metadata";
 import { searchListingImagesByUser, searchSameTypeListingImages } from "@/lib/qdrant/listing-images";
 
 /**
@@ -28,9 +30,9 @@ export function geoDistanceKm(a, b) {
  * @param {import("mongoose").Document} params.listing
  * @param {Array<{ md5?: string, phash?: string }>} params.images
  * @param {Date} params.since
- * @param {import("@/lib/intelligence/abuse/assess-risk").AbuseSignal[]} params.signals
- * @param {import("@/lib/intelligence/abuse/assess-risk").RelatedListingEvidence[]} params.relatedListings
- * @param {(list: import("@/lib/intelligence/abuse/assess-risk").RelatedListingEvidence[], listingId: import("mongoose").Types.ObjectId|string, relationship: "duplicate_of"|"similar_to", score: number) => Promise<void>} params.addRelatedListing
+ * @param {import("@/lib/intelligence/abuse/risk").AbuseSignal[]} params.signals
+ * @param {import("@/lib/intelligence/abuse/risk").RelatedListingEvidence[]} params.relatedListings
+ * @param {(list: import("@/lib/intelligence/abuse/risk").RelatedListingEvidence[], listingId: import("mongoose").Types.ObjectId|string, relationship: "duplicate_of"|"similar_to", score: number) => Promise<void>} params.addRelatedListing
  */
 export async function checkDuplicateImageSignals({
   listing,

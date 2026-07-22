@@ -1,8 +1,10 @@
+/** @file Owned-pet vision success callback — vector upsert + safety. */
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/config/db";
 import { OwnedPet } from "@/models/owned-pet";
 import { upsertOwnedPetVector } from "@/lib/qdrant";
-import { assessOwnedPetSafety } from "@/lib/intelligence/safety/assess-content-safety";
+import { assessOwnedPetSafety } from "@/lib/intelligence/safety/content";
 
 async function handleProcessingFailure(ownedPetId, error, telemetry) {
   await OwnedPet.findByIdAndUpdate(ownedPetId, {

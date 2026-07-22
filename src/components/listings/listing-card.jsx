@@ -47,10 +47,7 @@ export function ListingCard({
               {daysRemainingLabel}
             </Badge>
           ) : null}
-          {!owner && listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
-            <ProcessingStatusBadge status={listing.processingStatus} label={processingLabel} />
-          ) : null}
-          {owner && listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
+          {listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
             <ProcessingStatusBadge status={listing.processingStatus} label={processingLabel} />
           ) : null}
         </div>

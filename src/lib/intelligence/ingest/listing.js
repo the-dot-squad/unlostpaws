@@ -1,10 +1,12 @@
+/** @file Listing ingest after vision worker — safety → abuse → persist → match → notify. */
+
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";
-import { assessContentSafety } from "@/lib/intelligence/safety/assess-content-safety";
-import { assessAbuseRisk } from "@/lib/intelligence/abuse/assess-risk";
-import { applyModeration } from "@/lib/intelligence/abuse/apply-moderation";
+import { assessContentSafety } from "@/lib/intelligence/safety/content";
+import { assessAbuseRisk } from "@/lib/intelligence/abuse/risk";
+import { applyModeration } from "@/lib/intelligence/abuse/apply";
 import { persistListingImages } from "@/lib/intelligence/ingest/persist-images";
-import { findListingMatches } from "@/lib/intelligence/matching/find-listing-matches";
+import { findListingMatches } from "@/lib/intelligence/matching/cross-type";
 import { notifyListingMatches } from "@/lib/intelligence/matching/notify";
 import { commitStatusSync } from "@/lib/listings/status";
 import { tryPostListingToTelegram } from "@/lib/telegram";

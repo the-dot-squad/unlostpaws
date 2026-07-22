@@ -281,9 +281,15 @@
       "pending": "Analyzing photos…",
       "processing": "Analyzing photos…",
       "ready": "Photos analyzed",
-      "failed": "Photo analysis failed"
+      "failed": "Photo analysis failed",
+      "errors": {
+        "generic": "We couldn't analyze the photos. You can retry, or try different photos.",
+        "redisUnavailable": "Photo analysis is temporarily unavailable. Please try again shortly.",
+        "enqueueFailed": "We couldn't start photo analysis. Please retry in a moment.",
+        "noImages": "Add clear photos before retrying analysis."
+      }
     },
-    "retryProcessing": "Retry photo analysis",
+    "createdProcessingFailed": "Alert posted, but photo analysis failed to start. Our team can requeue it if needed.",
     "suggestedPet": "This alert may match your registered pet: {name}",
     "viewSuggestedPet": "View registered pet",
     "createSubtitle": "Three quick steps: pet details, location, then photos and contact.",
@@ -518,7 +524,7 @@
   },
   "map": {
     "title": "Alert Map",
-    "heroSubtitle": "Pan the map, set filters, then search the visible area for nearby alerts.",
+    "heroSubtitle": "Pan the map to load nearby alerts automatically. Use filters or Search this area to refresh.",
     "filters": "Filters",
     "openFilters": "Filters",
     "applyFilters": "Apply",
@@ -528,6 +534,8 @@
     "loading": "Loading alerts...",
     "noResults": "No alerts in this area",
     "truncated": "Showing first {count} alerts. Zoom in to see more.",
+    "hasMore": "Showing {count} alerts in this area. Zoom in or load more.",
+    "loadMore": "Show more in this area",
     "viewAlert": "View alert",
     "searchThisArea": "Search this area",
     "zoomInToSearch": "Zoom in closer to search this area",

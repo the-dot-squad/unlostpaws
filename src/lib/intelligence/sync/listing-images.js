@@ -1,3 +1,5 @@
+/** @file Sync denormalized listingStatus on ListingImage + Qdrant when listing status changes. */
+
 import { ListingImage } from "@/models/listing-image";
 import {
   updateListingImageStatus as updateQdrantListingImageStatus,
@@ -26,7 +28,7 @@ export async function syncListingImageStatus(listingId, status) {
 /**
  * Bulk status sync for cron expiry and batch admin operations.
  *
- * @param {import('mongoose').Types.ObjectId|string[]} listingIds
+ * @param {Array<import('mongoose').Types.ObjectId|string>} listingIds
  * @param {string} status
  */
 export async function syncListingImageStatusBulk(listingIds, status) {

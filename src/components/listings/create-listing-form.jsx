@@ -86,7 +86,7 @@ async function submitListing(form, locale, t) {
     if (!result.id) {
       return { success: false, error: t("listings.createErrors.createFailed") };
     }
-    return { success: true, id: result.id, processingWarning: result.processingWarning };
+    return { success: true, id: result.id, processingFailed: result.processingFailed };
   } catch (err) {
     console.error(err);
     return { success: false, error: t("listings.createErrors.createFailed") };
@@ -200,8 +200,8 @@ function useCreateListingState({ locale, defaultType }) {
       return;
     }
 
-    if (res.processingWarning) {
-      toast.warning(t("listings.createdProcessingDelayed"));
+    if (res.processingFailed) {
+      toast.warning(t("listings.createdProcessingFailed"));
     } else {
       toast.success(t("listings.created"));
     }

@@ -1,3 +1,5 @@
+/** @file Vision worker failure callback — mark listing/pet processing failed. */
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";

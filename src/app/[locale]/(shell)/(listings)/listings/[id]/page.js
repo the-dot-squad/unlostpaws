@@ -29,7 +29,7 @@ import {
 } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
 import { serializeExtensionPolicy } from "@/lib/listings/expiry";
-import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunion";
+import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunify";
 
 export async function generateMetadata({ params }) {
   const { locale, id } = await params;
