@@ -224,7 +224,6 @@ export const env = {
     apiBaseUrl:
       process.env.DGCONTENT_API_BASE_URL || "https://dgtteam-content.vercel.app/api",
     apiKey: process.env.DGCONTENT_API_KEY || "",
-    websiteKey: process.env.DGCONTENT_WEBSITE_KEY || "",
   },
 
   publicId: {
