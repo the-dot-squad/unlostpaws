@@ -113,7 +113,11 @@ export default async function AdminListingsPage({ searchParams }) {
                 </AdminTableTd>
                 <AdminTableTd className="text-xs text-muted-foreground">{formatDate(l.createdAt)}</AdminTableTd>
                 <AdminTableTd>
-                  <AdminListingActions listingId={l.publicId} />
+                  <AdminListingActions
+                    listingId={l.publicId}
+                    processingStatus={l.processingStatus}
+                    processingError={l.processingError}
+                  />
                 </AdminTableTd>
               </AdminTableRow>
             ))

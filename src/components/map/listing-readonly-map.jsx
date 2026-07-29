@@ -41,7 +41,7 @@ export function ListingReadonlyMap({ lat, lng, listingType }) {
         className="h-72 w-full min-h-[18rem]"
         scrollWheelZoom={false}
       >
-        <TileLayer url={tiles.url} attribution={tiles.attribution} />
+        <TileLayer className="map-tiles" url={tiles.url} attribution={tiles.attribution} />
         <MapSizeFix />
         <Marker position={[lat, lng]} icon={createListingMarkerIcon(listingType)} />
       </MapContainer>

@@ -7,11 +7,13 @@ import { OwnedPet } from "@/models/owned-pet";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkMicrochipUnique } from "@/lib/services/owned-pets";
 import { validate, ownedPetSchema } from "@/lib/validation";
-import { enqueueOwnedPetProcessing } from "@/lib/intelligence";
-import { markProcessingFailed } from "@/lib/intelligence/processing-failure";
+import {
+  enqueueOwnedPetProcessing,
+  markProcessingFailed,
+  syncOwnedPetStatus,
+} from "@/lib/intelligence";
 import { revalidatePath } from "next/cache";
 import { deleteOwnedPetVector } from "@/lib/qdrant";
-import { syncOwnedPetStatus } from "@/lib/intelligence/sync-owned-pet-status";
 import { encodeOwnedPetPublicId } from "@/lib/public-id";
 import { markUploadsAttached } from "@/lib/storage/cleanup";
 

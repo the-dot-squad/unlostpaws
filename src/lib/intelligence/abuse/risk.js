@@ -1,3 +1,5 @@
+/** @file Abuse risk orchestrator — combines duplicate/embedding/metadata signals. */
+
 import { connectDB } from "@/config/db";
 import { Listing, listingPublicId } from "@/models/listing";
 import { getAppSettings } from "@/lib/services/settings";
@@ -5,7 +7,7 @@ import {
   checkDuplicateImageSignals,
   checkEmbeddingSignals,
   checkMetadataRepostSignals,
-} from "./assess-risk-signals";
+} from "./signals";
 
 /**
  * @typedef {Object} AbuseSignal

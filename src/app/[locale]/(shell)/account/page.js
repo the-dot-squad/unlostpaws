@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/auth/session";
-import { getAccountDashboardData } from "@/lib/intelligence/matching/reads";
+import { getAccountDashboardData } from "@/lib/intelligence/matching/account";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/account/stat-card";

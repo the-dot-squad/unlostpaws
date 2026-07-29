@@ -86,6 +86,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans), system-ui, sans-serif;
@@ -162,6 +163,7 @@
     transform: scale(0.5);
     opacity: 0.6;
   }
+
   100% {
     transform: scale(1.4);
     opacity: 0;
@@ -209,4 +211,9 @@
 
 .leaflet-control-attribution a {
   color: var(--primary);
+}
+
+/* Clean dark mode Leaflet map layer inversion filter */
+.dark .leaflet-layer {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }

@@ -214,7 +214,10 @@ export const env = {
   },
 
   uploadRateLimit: {
-    enabled: process.env.UPLOAD_RATE_LIMIT_ENABLED !== "false",
+    enabled:
+      process.env.UPLOAD_RATE_LIMIT_ENABLED !== undefined
+        ? process.env.UPLOAD_RATE_LIMIT_ENABLED === "true"
+        : !isDev,
     maxRequests: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_MAX_REQUESTS || 40)),
     windowSeconds: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_SECONDS || 60)),
     useMemoryFallback: isDev && process.env.UPLOAD_RATE_LIMIT_DEV_MEMORY !== "false",
@@ -224,7 +227,6 @@ export const env = {
     apiBaseUrl:
       process.env.DGCONTENT_API_BASE_URL || "https://dgtteam-content.vercel.app/api",
     apiKey: process.env.DGCONTENT_API_KEY || "",
-    websiteKey: process.env.DGCONTENT_WEBSITE_KEY || "",
   },
 
   publicId: {

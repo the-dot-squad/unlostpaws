@@ -42,12 +42,11 @@ export default async function UserProfilePage({ params }) {
   if (!user || isInactive) notFound();
 
   await connectDB();
-  const listings = (
-    await Listing.find({ userId: user.id, status: "active" })
-      .sort({ createdAt: -1 })
-      .limit(24)
-      .lean()
-  ).map(attachListingPublicId);
+  const rawListings = await Listing.find({ userId: user.id, status: "active" })
+    .sort({ createdAt: -1 })
+    .limit(24)
+    .lean();
+  const listings = JSON.parse(JSON.stringify(rawListings)).map(attachListingPublicId);
 
   const countryLabel = getCountryName(user.country, locale);
   const locationLine = [user.city, countryLabel].filter(Boolean).join(", ");

@@ -252,6 +252,12 @@
       "description": "If you think you've spotted this missing pet, please submit a sighting. Make sure to take at least 2 clear photos from different angles to help us match and confirm their identity!",
       "cta": "Submit Sighting"
     },
+    "ownershipCta": {
+      "badge": "Pet Owners",
+      "title": "Have a pet at home? Register their microchip",
+      "description": "Save your pet's microchip details and photos now. If they ever wander off or get lost, we can help bring them back home much faster.",
+      "button": "Register Your Pet"
+    },
     "saveChanges": "Save changes",
     "extension": {
       "title": "Alert duration",
@@ -281,9 +287,15 @@
       "pending": "Analyzing photos…",
       "processing": "Analyzing photos…",
       "ready": "Photos analyzed",
-      "failed": "Photo analysis failed"
+      "failed": "Photo analysis failed",
+      "errors": {
+        "generic": "We couldn't analyze the photos. You can retry, or try different photos.",
+        "redisUnavailable": "Photo analysis is temporarily unavailable. Please try again shortly.",
+        "enqueueFailed": "We couldn't start photo analysis. Please retry in a moment.",
+        "noImages": "Add clear photos before retrying analysis."
+      }
     },
-    "retryProcessing": "Retry photo analysis",
+    "createdProcessingFailed": "Alert posted, but photo analysis failed to start. Our team can requeue it if needed.",
     "suggestedPet": "This alert may match your registered pet: {name}",
     "viewSuggestedPet": "View registered pet",
     "createSubtitle": "Three quick steps: pet details, location, then photos and contact.",
@@ -518,7 +530,7 @@
   },
   "map": {
     "title": "Alert Map",
-    "heroSubtitle": "Pan the map, set filters, then search the visible area for nearby alerts.",
+    "heroSubtitle": "Pan the map to load nearby alerts automatically. Use filters or Search this area to refresh.",
     "filters": "Filters",
     "openFilters": "Filters",
     "applyFilters": "Apply",
@@ -528,6 +540,8 @@
     "loading": "Loading alerts...",
     "noResults": "No alerts in this area",
     "truncated": "Showing first {count} alerts. Zoom in to see more.",
+    "hasMore": "Showing {count} alerts in this area. Zoom in or load more.",
+    "loadMore": "Show more in this area",
     "viewAlert": "View alert",
     "searchThisArea": "Search this area",
     "zoomInToSearch": "Zoom in closer to search this area",
@@ -860,5 +874,42 @@
       "outro": "We appreciate your help in keeping UnLostPaws a safe community for pet reunifications.",
       "textFallback": "Thank you for your report."
     }
+  },
+  "flyer": {
+    "title": "Printable Poster",
+    "subtitle": "Customize and print a high-resolution poster for your pet alert.",
+    "actionButton": "Print Poster / QR",
+    "qrCodeButton": "QR Code",
+    "printPosterButton": "Print Poster",
+    "qrCodeTitle": "Pet Alert QR Code",
+    "qrCodeSubtitle": "Scan or download this QR code to quickly share this alert.",
+    "copyLink": "Copy Link",
+    "copied": "Copied",
+    "linkCopied": "Link copied to clipboard!",
+    "selectImage": "Select Primary Photo",
+    "headline": "Poster Headline",
+    "headlineMissing": "MISSING PET - PLEASE HELP FIND",
+    "headlineFound": "FOUND PET - ARE YOU THE OWNER?",
+    "headlineSpotted": "PET SIGHTING - SPOTTED NEARBY",
+    "headlineSurrender": "PET ADOPTION / SURRENDER",
+    "showPhone": "Show Phone Number",
+    "showEmail": "Show Email Address",
+    "customNotes": "Custom Message or Distinct Marks",
+    "customNotesPlaceholder": "e.g., Wearing a red collar, answers to Max, cash reward offered...",
+    "printButton": "Print Poster / Save PDF",
+    "downloadQR": "Download QR Code Image",
+    "scanCTA": "Scan QR code with smartphone camera to view live alert & report sightings",
+    "contactOwner": "Contact Information",
+    "phone": "Phone",
+    "email": "Email",
+    "reward": "REWARD OFFERED",
+    "location": "Last Seen Location",
+    "date": "Date Reported",
+    "close": "Close",
+    "preview": "Flyer Live Preview",
+    "details": "Pet Details",
+    "backToListing": "Back to Listing",
+    "color": "Color",
+    "scanToContact": "Scan QR code above to view live alert & contact creator online."
   }
 }

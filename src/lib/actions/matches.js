@@ -8,7 +8,7 @@ import {
   confirmReunionMatch,
   dismissReunionMatch,
   isMissingListingOwner,
-} from "@/lib/intelligence/matching/reunion";
+} from "@/lib/intelligence/matching/reunify";
 import { updateMatchStatusSchema, validate } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 

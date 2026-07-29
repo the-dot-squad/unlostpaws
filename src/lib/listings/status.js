@@ -1,6 +1,7 @@
 /** @file Listing status transitions with ML denormalized field sync. */
 
-import { syncListingImageStatus } from "@/lib/intelligence/sync-listing-image-status";
+import { syncListingImageStatus } from "@/lib/intelligence";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
  * Persist listing status and sync `listingStatus` on ListingImage + Qdrant payloads.
@@ -15,6 +16,10 @@ export async function setListingStatus(listing, status, { syncMl = true, save = 
   listing.status = status;
   if (save) {
     await listing.save();
+    if (prev !== status) {
+      // Map / geo browse caches key off active listings — bump version on any status change.
+      await invalidateGeoCache();
+    }
     if (syncMl && prev !== status) {
       await syncListingImageStatus(listing._id, status);
     }
@@ -26,6 +31,12 @@ export async function setListingStatus(listing, status, { syncMl = true, save = 
         listing._deferredSyncs = [];
       }
       listing._deferredSyncs.push(() => syncListingImageStatus(listing._id, status));
+    }
+    if (prev !== status) {
+      if (!listing._deferredSyncs) {
+        listing._deferredSyncs = [];
+      }
+      listing._deferredSyncs.push(() => invalidateGeoCache());
     }
   }
 

@@ -1,3 +1,5 @@
+/** @file Sync/delete owned-pet Qdrant vectors when MongoDB status changes. */
+
 import {
   deleteOwnedPetVector,
   updateOwnedPetStatus as updateQdrantOwnedPetStatus,

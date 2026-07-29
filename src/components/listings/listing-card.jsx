@@ -6,6 +6,8 @@ import { ProcessingStatusBadge } from "@/components/listings/processing-status-b
 import { listingPublicId } from "@/models/listing";
 import { MapPin } from "lucide-react";
 import { getCountryName } from "@/config/countries";
+import { FlyerCustomizerButton } from "@/components/flyer/flyer-customizer-button";
+import { QRCodeButton } from "@/components/flyer/qr-code-button";
 
 /**
  * @param {object} props
@@ -27,6 +29,8 @@ export function ListingCard({
   const countryLabel = getCountryName(listing.location?.country, locale);
   const locationLine = [listing.location?.city, countryLabel].filter(Boolean).join(", ");
 
+  const serializedListing = listing ? JSON.parse(JSON.stringify(listing)) : null;
+
   const card = (
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-[4/3] bg-muted">
@@ -47,10 +51,7 @@ export function ListingCard({
               {daysRemainingLabel}
             </Badge>
           ) : null}
-          {!owner && listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
-            <ProcessingStatusBadge status={listing.processingStatus} label={processingLabel} />
-          ) : null}
-          {owner && listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
+          {listing.processingStatus && listing.processingStatus !== "ready" && processingLabel ? (
             <ProcessingStatusBadge status={listing.processingStatus} label={processingLabel} />
           ) : null}
         </div>
@@ -70,6 +71,12 @@ export function ListingCard({
           <p className="mt-1 text-xs text-muted-foreground">
             {(listing.distance / 1000).toFixed(1)} km away
           </p>
+        ) : null}
+        {owner ? (
+          <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-end gap-2">
+            <QRCodeButton listing={serializedListing} locale={locale} size="sm" />
+            <FlyerCustomizerButton listing={serializedListing} locale={locale} size="sm" />
+          </div>
         ) : null}
       </CardContent>
     </Card>

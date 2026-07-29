@@ -1,3 +1,5 @@
+/** @file Listing vision success callback → ingest pipeline. */
+
 import { NextResponse } from "next/server";
 import { ingestProcessedListing } from "@/lib/intelligence/ingest/listing";
 

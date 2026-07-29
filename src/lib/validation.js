@@ -83,6 +83,14 @@ export const mapQuerySchema = z.object({
   neLat: z.coerce.number().min(-90).max(90),
   type: z.enum(LISTING_TYPES).optional(),
   petType: z.enum(PET_TYPES).optional(),
+  /** Cursor from a previous response (`createdAtISO_objectId`). */
+  cursor: z.string().min(1).max(80).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional(),
+  /** When "1", skip Redis and force a fresh Mongo read. */
+  fresh: z
+    .enum(["0", "1"])
+    .optional()
+    .transform((v) => v === "1"),
 });
 
 /** Listing syndication feed query parameters. */

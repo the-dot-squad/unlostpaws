@@ -18,7 +18,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
 import { listingPublicId as toListingPublicId } from "@/models/listing";
 import { MODERATION_CASES_TAG } from "@/lib/moderation/report-cases";
-import { syncOwnedPetStatus } from "@/lib/intelligence/sync-owned-pet-status";
+import { syncOwnedPetStatus } from "@/lib/intelligence";
 
 function revalidateAdmin() {
   revalidatePath("/admin");
@@ -317,6 +317,42 @@ export async function adminUpdateOwnedPet(petPublicId, data) {
 
     if (prevStatus !== status) {
       await syncOwnedPetStatus(pet._id, status);
+    }
+
+    revalidatePath("/admin/pets");
+    revalidatePath(`/admin/pets/${petPublicId}`);
+    return { success: true };
+  });
+}
+
+/** Staff requeue for a listing stuck in pending/failed ML processing. */
+export async function adminRequeueListingProcessing(listingPublicId) {
+  return withStaffAction("adminRequeueListingProcessing", async () => {
+    const listing = await findListingByPublicId(listingPublicId);
+    if (!listing) return { error: "Listing not found" };
+
+    const { requeueListingProcessing } = await import("@/lib/intelligence");
+    const result = await requeueListingProcessing(listing);
+    if (result.error) {
+      return { error: result.errorKey || result.error };
+    }
+
+    revalidateAdmin();
+    revalidatePath(`/admin/listings/${listingPublicId}`);
+    return { success: true };
+  });
+}
+
+/** Staff requeue for an owned pet stuck in pending/failed ML processing. */
+export async function adminRequeueOwnedPetProcessing(petPublicId) {
+  return withStaffAction("adminRequeueOwnedPetProcessing", async () => {
+    const pet = await OwnedPet.findOne({ publicId: petPublicId });
+    if (!pet) return { error: "Pet not found" };
+
+    const { requeueOwnedPetProcessing } = await import("@/lib/intelligence");
+    const result = await requeueOwnedPetProcessing(pet);
+    if (result.error) {
+      return { error: result.errorKey || result.error };
     }
 
     revalidatePath("/admin/pets");

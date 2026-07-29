@@ -1,8 +1,6 @@
-import { levenshteinDistance, normalizePersianArabic } from "@/lib/text.js";
+/** @file Token overlap scoring for listing metadata (breed, color, description). */
 
-/**
- * Token overlap scoring for listing metadata (breed, color, description).
- */
+import { levenshteinDistance, normalizePersianArabic } from "@/lib/text.js";
 
 /**
  * Normalizes and splits a string into a set of lowercased tokens.

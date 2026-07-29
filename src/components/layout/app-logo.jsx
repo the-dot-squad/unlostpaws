@@ -20,6 +20,7 @@ export function AppLogo({ size = "sm", className }) {
       className={cn("shrink-0", className)}
       aria-hidden
       priority
+      unoptimized
     />
   );
 }

@@ -6,6 +6,8 @@ import { PetForm } from "@/components/pets/pet-form";
 import { PetDetailView } from "@/components/pets/pet-detail-view";
 import { getSession } from "@/lib/auth/session";
 
+import { toPlainObject } from "@/lib/utils";
+
 export default async function PetDetailPage({ params, searchParams }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
@@ -22,7 +24,7 @@ export default async function PetDetailPage({ params, searchParams }) {
 
   if (!petDoc) notFound();
 
-  const pet = resolveOwnedPetPublicId(petDoc.toObject());
+  const pet = toPlainObject(resolveOwnedPetPublicId(petDoc.toObject()));
   const isEditing = sp.edit === "1";
 
   if (isEditing) {
@@ -31,7 +33,7 @@ export default async function PetDetailPage({ params, searchParams }) {
     }
     return (
       <div className="py-2">
-        <PetForm locale={locale} pet={{ ...pet, _id: pet._id.toString() }} />
+        <PetForm locale={locale} pet={pet} />
       </div>
     );
   }

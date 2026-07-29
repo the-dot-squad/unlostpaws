@@ -5,6 +5,8 @@ import { Listing, attachListingPublicId } from "@/models/listing";
 import { ListingCard } from "@/components/listings/listing-card";
 import { daysUntilExpiry } from "@/lib/listings/expiry";
 
+import { toPlainObject } from "@/lib/utils";
+
 export default async function MyListingsPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -12,9 +14,10 @@ export default async function MyListingsPage({ params }) {
   const session = await getSession();
 
   await connectDB();
-  const listings = (
-    await Listing.find({ userId: session.user.id, status: { $ne: "removed" } }).sort({ createdAt: -1 }).lean()
-  ).map(attachListingPublicId);
+  const rawListings = await Listing.find({ userId: session.user.id, status: { $ne: "removed" } })
+    .sort({ createdAt: -1 })
+    .lean();
+  const listings = rawListings.map((l) => attachListingPublicId(toPlainObject(l)));
 
   return (
     <div className="space-y-6">
@@ -29,11 +32,16 @@ export default async function MyListingsPage({ params }) {
           {listings.map((listing) => {
             const isActive = listing.status === "active";
             const daysLeft = isActive ? daysUntilExpiry(listing.expiresAt) : 0;
+            const listingWithContact = {
+              ...listing,
+              contactPhone: session?.user?.phone || session?.user?.phoneNumber || listing.contactPhone || "",
+              contactEmail: session?.user?.email || listing.contactEmail || "",
+            };
 
             return (
               <ListingCard
                 key={listing._id.toString()}
-                listing={listing}
+                listing={listingWithContact}
                 locale={locale}
                 owner
                 typeLabel={t(`listingTypes.${listing.type}`)}

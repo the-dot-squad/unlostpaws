@@ -1,10 +1,13 @@
 /** @file Listing lifecycle orchestration for actions and moderation. */
 
 import { cache } from "react";
+import { connectDB } from "@/config/db";
+import { Listing } from "@/models/listing";
 import { findListingByPublicId } from "@/lib/public-id";
 import { setListingStatus } from "@/lib/listings/status";
 import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
 import { ListingMatch } from "@/models/listing-match";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
  * Mark a listing resolved by its owner.
@@ -47,6 +50,7 @@ export async function extendListingRecord(listing, settings) {
   }
 
   await listing.save();
+  await invalidateGeoCache();
   return listing;
 }
 
@@ -73,11 +77,23 @@ export async function applyListingAdminUpdate(listing, fields) {
 
   listing.status = fields.status;
   await listing.save();
+  await invalidateGeoCache();
   return listing;
 }
 
+import mongoose from "mongoose";
+import { attachListingPublicId } from "@/models/listing";
+import { toPlainObject } from "@/lib/utils";
+
 /** Cached listing fetch — shared by page render and generateMetadata. */
 export const getListingForPage = cache(async (publicId) => {
-  const doc = await findListingByPublicId(publicId);
-  return doc?.toObject?.() ?? null;
+  if (!publicId) return null;
+  let doc = await findListingByPublicId(publicId);
+  if (!doc && mongoose.Types.ObjectId.isValid(publicId)) {
+    await connectDB();
+    doc = await Listing.findById(publicId);
+  }
+  if (!doc) return null;
+  const plain = toPlainObject(doc);
+  return attachListingPublicId(plain);
 });

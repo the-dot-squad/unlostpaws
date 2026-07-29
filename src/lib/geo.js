@@ -67,7 +67,7 @@ const BROWSER_GEO_OPTIONS = {
  * @param {PositionOptions} [options]
  * @returns {Promise<GeolocationPosition>}
  */
-export function getBrowserPosition(options = {}) {
+function getBrowserPosition(options = {}) {
   return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       reject(new Error("GEOLOCATION_UNAVAILABLE"));

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MAP_LISTINGS_LIMIT } from "@/config/constants/platform";
 import {
   MapContainer,
   TileLayer,
@@ -22,12 +21,20 @@ import {
   createListingMarkerIcon,
   createUserLocationIcon,
 } from "@/components/map/marker-icons";
+import { ListingMarkerCluster } from "@/components/map/listing-marker-cluster";
+import {
+  boundsCacheKey,
+  fetchMapListings,
+  mergeListingsById,
+} from "@/components/map/map-listings-fetch";
 import {
   MAP_TILE_LAYERS,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   USER_LOCATION_ZOOM,
   MAP_MIN_SEARCH_ZOOM,
+  MAP_VIEWPORT_FETCH_DEBOUNCE_MS,
+  MAP_CLUSTER_DISABLE_AT_ZOOM,
 } from "@/components/map/config";
 import "leaflet/dist/leaflet.css";
 
@@ -94,11 +101,102 @@ function InitialGeolocation({ onLocated, onDenied }) {
   return null;
 }
 
-/** Bottom-center control — enabled only when zoomed in enough. */
-function SearchAreaButton({ mapActionsRef, type, petType, onResults, canSearch }) {
+/**
+ * Debounced auto-fetch on pan/zoom when zoom is high enough.
+ * Skips when quantized bounds+filters match the last successful fetch.
+ */
+function ViewportAutoFetch({
+  type,
+  petType,
+  enabled,
+  onResults,
+  lastKeyRef,
+  abortRef,
+}) {
+  const map = useMap();
+  const timerRef = useRef(null);
+
+  const runFetch = useCallback(() => {
+    if (!enabled) return;
+
+    const bounds = map.getBounds();
+    const key = boundsCacheKey(bounds, type, petType);
+    if (key === lastKeyRef.current) return;
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    onResults({ loading: true, mode: "replace" });
+
+    fetchMapListings({
+      bounds,
+      type,
+      petType,
+      signal: controller.signal,
+    })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        lastKeyRef.current = key;
+        onResults({
+          loading: false,
+          searched: true,
+          mode: "replace",
+          listings: data.listings || [],
+          hasMore: Boolean(data.hasMore),
+          nextCursor: data.nextCursor || null,
+          limit: data.limit,
+        });
+      })
+      .catch((err) => {
+        if (err.name === "AbortError") return;
+        onResults({
+          loading: false,
+          searched: true,
+          mode: "replace",
+          listings: [],
+          hasMore: false,
+          nextCursor: null,
+        });
+      });
+  }, [abortRef, enabled, lastKeyRef, map, onResults, petType, type]);
+
+  useMapEvents({
+    moveend: () => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(runFetch, MAP_VIEWPORT_FETCH_DEBOUNCE_MS);
+    },
+    zoomend: () => {
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(runFetch, MAP_VIEWPORT_FETCH_DEBOUNCE_MS);
+    },
+  });
+
+  // Refetch when filters change while already zoomed in.
+  useEffect(() => {
+    lastKeyRef.current = null;
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(runFetch, MAP_VIEWPORT_FETCH_DEBOUNCE_MS);
+    return () => clearTimeout(timerRef.current);
+  }, [type, petType, runFetch, lastKeyRef]);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  return null;
+}
+
+/** Explicit refresh — bypasses bounds-unchanged short-circuit and Redis (`fresh=1`). */
+function SearchAreaButton({
+  mapActionsRef,
+  type,
+  petType,
+  onResults,
+  canSearch,
+  lastKeyRef,
+  abortRef,
+  loading,
+}) {
   const t = useTranslations("map");
-  const [loading, setLoading] = useState(false);
-  const abortRef = useRef(null);
 
   const handleSearch = useCallback(async () => {
     const actions = mapActionsRef.current;
@@ -109,45 +207,39 @@ function SearchAreaButton({ mapActionsRef, type, petType, onResults, canSearch }
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setLoading(true);
-    onResults({ loading: true });
-
-    const params = new URLSearchParams({
-      swLng: String(bounds.getWest()),
-      swLat: String(bounds.getSouth()),
-      neLng: String(bounds.getEast()),
-      neLat: String(bounds.getNorth()),
-    });
-    if (type) params.set("type", type);
-    if (petType) params.set("petType", petType);
+    onResults({ loading: true, mode: "replace" });
 
     try {
-      const res = await fetch(`/api/listings/map?${params}`, { signal: controller.signal });
-      if (!res.ok) throw new Error("Fetch failed");
-      const data = await res.json();
+      const data = await fetchMapListings({
+        bounds,
+        type,
+        petType,
+        fresh: true,
+        signal: controller.signal,
+      });
+      lastKeyRef.current = boundsCacheKey(bounds, type, petType);
       onResults({
         loading: false,
         searched: true,
+        mode: "replace",
         listings: data.listings || [],
-        truncated: Boolean(data.truncated),
+        hasMore: Boolean(data.hasMore),
+        nextCursor: data.nextCursor || null,
+        limit: data.limit,
       });
     } catch (err) {
       if (err.name !== "AbortError") {
         onResults({
           loading: false,
           searched: true,
+          mode: "replace",
           listings: [],
-          truncated: false,
+          hasMore: false,
+          nextCursor: null,
         });
       }
-    } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
     }
-  }, [mapActionsRef, type, petType, onResults, canSearch]);
-
-  useEffect(() => () => abortRef.current?.abort(), []);
+  }, [abortRef, canSearch, lastKeyRef, mapActionsRef, onResults, petType, type]);
 
   const disabled = loading || !canSearch;
 
@@ -178,7 +270,6 @@ function SearchAreaButton({ mapActionsRef, type, petType, onResults, canSearch }
   );
 }
 
-/** Floating locate button — bottom right. */
 function LocateMeButton({ mapActionsRef, onLocated, onDenied }) {
   const t = useTranslations("map");
   const [loading, setLoading] = useState(false);
@@ -223,19 +314,24 @@ function LocateMeButton({ mapActionsRef, onLocated, onDenied }) {
   );
 }
 
-/** Full-screen browse map with search and geolocation. */
+/** Full-screen browse map with auto viewport fetch, clusters, and load-more. */
 export function ListingsMap({ locale, type, petType }) {
   const { resolvedTheme } = useTheme();
   const t = useTranslations("map");
   const tCommon = useTranslations("common");
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [truncated, setTruncated] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [pageLimit, setPageLimit] = useState(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [mapZoom, setMapZoom] = useState(DEFAULT_MAP_ZOOM);
   const mapActionsRef = useRef(null);
+  const lastKeyRef = useRef(null);
+  const abortRef = useRef(null);
 
   const canSearch = mapZoom >= MAP_MIN_SEARCH_ZOOM;
 
@@ -259,18 +355,83 @@ export function ListingsMap({ locale, type, petType }) {
     setLocationDenied(true);
   }, []);
 
-  const handleSearchResults = useCallback(({ loading: isLoading, searched, listings: next, truncated: isTruncated }) => {
-    if (isLoading) {
-      setLoading(true);
-      return;
+  const handleSearchResults = useCallback(
+    ({
+      loading: isLoading,
+      searched,
+      listings: next,
+      hasMore: more,
+      nextCursor: cursor,
+      limit,
+      mode,
+    }) => {
+      if (isLoading) {
+        if (mode === "append") {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+        }
+        return;
+      }
+
+      setLoading(false);
+      setLoadingMore(false);
+
+      if (searched) {
+        setHasSearched(true);
+        setListings((prev) =>
+          mode === "append" ? mergeListingsById(prev, next || []) : next || []
+        );
+        setHasMore(Boolean(more));
+        setNextCursor(cursor || null);
+        if (limit != null) setPageLimit(limit);
+      }
+    },
+    []
+  );
+
+  const handleLoadMore = useCallback(async () => {
+    const actions = mapActionsRef.current;
+    if (!actions || !canSearch || !hasMore || !nextCursor || loadingMore) return;
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    handleSearchResults({ loading: true, mode: "append" });
+
+    try {
+      const data = await fetchMapListings({
+        bounds: actions.getBounds(),
+        type,
+        petType,
+        cursor: nextCursor,
+        signal: controller.signal,
+      });
+      handleSearchResults({
+        loading: false,
+        searched: true,
+        mode: "append",
+        listings: data.listings || [],
+        hasMore: Boolean(data.hasMore),
+        nextCursor: data.nextCursor || null,
+        limit: data.limit,
+      });
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        handleSearchResults({
+          loading: false,
+          searched: true,
+          mode: "append",
+          listings: [],
+          hasMore: false,
+          nextCursor: null,
+        });
+      }
     }
-    setLoading(false);
-    if (searched) {
-      setHasSearched(true);
-      setListings(next);
-      setTruncated(isTruncated);
-    }
-  }, []);
+  }, [canSearch, handleSearchResults, hasMore, loadingMore, nextCursor, petType, type]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   return (
     <div className="relative h-full min-h-0">
@@ -280,10 +441,18 @@ export function ListingsMap({ locale, type, petType }) {
         className="h-full w-full"
         scrollWheelZoom
       >
-        <TileLayer url={tiles.url} attribution={tiles.attribution} />
+        <TileLayer className="map-tiles" url={tiles.url} attribution={tiles.attribution} />
         <MapActionsBridge onBridge={handleMapBridge} />
         <MapZoomWatcher onZoomChange={handleZoomChange} />
         <InitialGeolocation onLocated={handleLocated} onDenied={handleDenied} />
+        <ViewportAutoFetch
+          type={type}
+          petType={petType}
+          enabled={canSearch}
+          onResults={handleSearchResults}
+          lastKeyRef={lastKeyRef}
+          abortRef={abortRef}
+        />
 
         {userLocation && (
           <Marker
@@ -293,17 +462,24 @@ export function ListingsMap({ locale, type, petType }) {
           />
         )}
 
-        {listings.map((listing) => (
-          <Marker
-            key={listing.id}
-            position={[listing.lat, listing.lng]}
-            icon={createListingMarkerIcon(listing.type)}
-          >
-            <Popup>
-              <ListingMapPopup listing={listing} locale={locale} />
-            </Popup>
-          </Marker>
-        ))}
+        <ListingMarkerCluster
+          showCoverageOnHover={false}
+          maxClusterRadius={60}
+          disableClusteringAtZoom={MAP_CLUSTER_DISABLE_AT_ZOOM}
+          spiderfyOnMaxZoom
+        >
+          {listings.map((listing) => (
+            <Marker
+              key={listing.id}
+              position={[listing.lat, listing.lng]}
+              icon={createListingMarkerIcon(listing.type)}
+            >
+              <Popup>
+                <ListingMapPopup listing={listing} locale={locale} />
+              </Popup>
+            </Marker>
+          ))}
+        </ListingMarkerCluster>
       </MapContainer>
 
       <SearchAreaButton
@@ -312,6 +488,9 @@ export function ListingsMap({ locale, type, petType }) {
         petType={petType}
         onResults={handleSearchResults}
         canSearch={canSearch}
+        lastKeyRef={lastKeyRef}
+        abortRef={abortRef}
+        loading={loading}
       />
 
       <LocateMeButton
@@ -337,10 +516,27 @@ export function ListingsMap({ locale, type, petType }) {
         </div>
       )}
 
-      {truncated && (
+      {(hasMore || (hasSearched && listings.length > 0 && pageLimit)) && (
         <div className="pointer-events-none absolute inset-x-0 bottom-16 flex justify-center px-4">
-          <div className="rounded-lg border bg-background/90 px-3 py-2 text-center text-xs text-muted-foreground shadow-sm">
-            {t("truncated", { count: MAP_LISTINGS_LIMIT })}
+          <div className="flex max-w-md flex-col items-center gap-2 rounded-lg border bg-background/90 px-3 py-2 text-center text-xs text-muted-foreground shadow-sm">
+            {hasMore ? (
+              <>
+                <p>{t("hasMore", { count: listings.length })}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="pointer-events-auto"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore || loading}
+                >
+                  {loadingMore ? (
+                    <Loader2 className="me-2 size-3.5 animate-spin" />
+                  ) : null}
+                  {t("loadMore")}
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
       )}

@@ -1,3 +1,5 @@
+/** @file Soft-remove and hard-delete listing assets, vectors, and related docs. */
+
 import { Listing } from "@/models/listing";
 import { ListingImage } from "@/models/listing-image";
 import { ListingMatch } from "@/models/listing-match";
@@ -7,6 +9,7 @@ import { deleteStoredMedia } from "@/lib/storage/delete";
 import { setListingStatus } from "@/lib/listings/status";
 import { recordConfirmedViolation } from "@/lib/moderation/violations";
 import { getAppSettings } from "@/lib/services/settings";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
  * Delete listing image files from storage and remove ML-derived records.
@@ -73,4 +76,5 @@ export async function deleteListingCompletely(listing) {
   await purgeListingAssets(listing);
   await ModerationReport.deleteMany({ listingId: listing._id });
   await Listing.deleteOne({ _id: listing._id });
+  await invalidateGeoCache();
 }

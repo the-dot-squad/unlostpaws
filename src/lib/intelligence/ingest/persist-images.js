@@ -1,6 +1,8 @@
+/** @file Persist processed listing images to Mongo + Qdrant. */
+
 import { ListingImage } from "@/models/listing-image";
 import { upsertListingImageVector } from "@/lib/qdrant/listing-images";
-import { phashPrefix } from "@/lib/intelligence/abuse/phash-buckets";
+import { phashPrefix } from "@/lib/intelligence/abuse/phash";
 
 /**
  * @typedef {Object} ProcessedImagePayload

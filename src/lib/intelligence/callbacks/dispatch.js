@@ -1,3 +1,5 @@
+/** @file Vision webhook callback router by job type. */
+
 import { NextResponse } from "next/server";
 import { processListingCallback } from "@/lib/intelligence/callbacks/listing";
 import { processOwnedPetCallback } from "@/lib/intelligence/callbacks/owned-pet";

@@ -48,15 +48,14 @@ class Content {
    */
   async getPage(slug, language = null) {
     try {
-      if (!this.config.apiKey || !this.config.websiteKey) {
-        console.warn("DG Content API not properly configured. Missing API key or website key.");
+      if (!this.config.apiKey) {
+        console.warn("DG Content API not properly configured. Missing API key.");
         return null;
       }
 
       const params = {
         resource: "page",
         slug,
-        website: this.config.websiteKey,
       };
 
       const lang = language || this.language;
