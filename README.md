@@ -1,7 +1,7 @@
 # 🐾 UnLostPaws
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.10-black?logo=next.js)](https://nextjs.org/)
+[![Next.js Version](https://img.shields.io/badge/Next.js-16.2.12-black?logo=next.js)](https://nextjs.org/)
 [![Python FastAPI](https://img.shields.io/badge/FastAPI-Worker-009688?logo=fastapi)](https://github.com/the-dot-squad/unlostpaws-worker)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb)](https://www.mongodb.com/)
 [![Redis](https://img.shields.io/badge/Redis-Queue-DC382D?logo=redis)](https://redis.io/)
