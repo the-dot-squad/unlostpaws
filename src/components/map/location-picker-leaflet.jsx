@@ -134,7 +134,7 @@ export function LocationPickerLeaflet({
         className="h-72 w-full"
         scrollWheelZoom
       >
-        <TileLayer url={tiles.url} attribution={tiles.attribution} />
+        <TileLayer className="map-tiles" url={tiles.url} attribution={tiles.attribution} />
         <MapViewSync lat={lat} lng={lng} syncSource={syncSource} />
         <MapClickHandler onPick={onCoordinatesChange} />
 

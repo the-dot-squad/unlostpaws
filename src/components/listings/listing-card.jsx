@@ -29,6 +29,8 @@ export function ListingCard({
   const countryLabel = getCountryName(listing.location?.country, locale);
   const locationLine = [listing.location?.city, countryLabel].filter(Boolean).join(", ");
 
+  const serializedListing = listing ? JSON.parse(JSON.stringify(listing)) : null;
+
   const card = (
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-[4/3] bg-muted">
@@ -71,9 +73,9 @@ export function ListingCard({
           </p>
         ) : null}
         {owner ? (
-          <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-            <QRCodeButton listing={listing} locale={locale} size="sm" />
-            <FlyerCustomizerButton listing={listing} locale={locale} size="sm" />
+          <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-end gap-2">
+            <QRCodeButton listing={serializedListing} locale={locale} size="sm" />
+            <FlyerCustomizerButton listing={serializedListing} locale={locale} size="sm" />
           </div>
         ) : null}
       </CardContent>

@@ -10,7 +10,7 @@ export const MAP_TILE_LAYERS = {
   dark: {
     url: MAP_TILE_URLS.dark,
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
 };
 

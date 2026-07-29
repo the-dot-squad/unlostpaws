@@ -82,6 +82,8 @@ export async function applyListingAdminUpdate(listing, fields) {
 }
 
 import mongoose from "mongoose";
+import { attachListingPublicId } from "@/models/listing";
+import { toPlainObject } from "@/lib/utils";
 
 /** Cached listing fetch — shared by page render and generateMetadata. */
 export const getListingForPage = cache(async (publicId) => {
@@ -91,5 +93,7 @@ export const getListingForPage = cache(async (publicId) => {
     await connectDB();
     doc = await Listing.findById(publicId);
   }
-  return doc?.toObject?.() ?? null;
+  if (!doc) return null;
+  const plain = toPlainObject(doc);
+  return attachListingPublicId(plain);
 });

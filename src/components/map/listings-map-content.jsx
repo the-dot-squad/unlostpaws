@@ -441,7 +441,7 @@ export function ListingsMap({ locale, type, petType }) {
         className="h-full w-full"
         scrollWheelZoom
       >
-        <TileLayer url={tiles.url} attribution={tiles.attribution} />
+        <TileLayer className="map-tiles" url={tiles.url} attribution={tiles.attribution} />
         <MapActionsBridge onBridge={handleMapBridge} />
         <MapZoomWatcher onZoomChange={handleZoomChange} />
         <InitialGeolocation onLocated={handleLocated} onDenied={handleDenied} />

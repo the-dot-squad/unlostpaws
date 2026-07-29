@@ -6,6 +6,7 @@ import { normalizeCountryCode } from "@/config/countries";
 import { buildGeoNearPipeline, kmToMeters, isValidCoordinates } from "@/lib/geo";
 import { makeVariantInsensitiveRegex } from "@/lib/text.js";
 import { cachedBrowse } from "@/lib/listings/cache";
+import { toPlainObject } from "@/lib/utils";
 
 /**
  * Build the MongoDB match object shared by geo and non-geo listing searches.
@@ -128,7 +129,7 @@ export async function searchListings({
         const total = result?.total?.[0]?.count ?? 0;
 
         return {
-          listings: listings.map(attachListingPublicId),
+          listings: listings.map((l) => attachListingPublicId(toPlainObject(l))),
           total,
           page: currentPage,
           limit,
@@ -149,7 +150,7 @@ export async function searchListings({
   ]);
 
   return {
-    listings: listings.map(attachListingPublicId),
+    listings: listings.map((l) => attachListingPublicId(toPlainObject(l))),
     total,
     page: currentPage,
     limit,

@@ -9,6 +9,8 @@ import { PetCard } from "@/components/pets/pet-card";
 import { EmptyState } from "@/components/marketing/empty-state";
 import { Plus, PawPrint } from "lucide-react";
 
+import { toPlainObject } from "@/lib/utils";
+
 export default async function MyPetsPage({ params }) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -19,12 +21,13 @@ export default async function MyPetsPage({ params }) {
   const session = await getSession();
 
   await connectDB();
-  const pets = (await OwnedPet.find({
+  const rawPets = await OwnedPet.find({
     userId: session.user.id,
     status: { $ne: "removed" },
   })
     .sort({ createdAt: -1 })
-    .lean()).map(resolveOwnedPetPublicId);
+    .lean();
+  const pets = rawPets.map((p) => resolveOwnedPetPublicId(toPlainObject(p)));
 
   return (
     <div className="space-y-6">
