@@ -214,7 +214,10 @@ export const env = {
   },
 
   uploadRateLimit: {
-    enabled: process.env.UPLOAD_RATE_LIMIT_ENABLED !== "false",
+    enabled:
+      process.env.UPLOAD_RATE_LIMIT_ENABLED !== undefined
+        ? process.env.UPLOAD_RATE_LIMIT_ENABLED === "true"
+        : !isDev,
     maxRequests: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_MAX_REQUESTS || 40)),
     windowSeconds: Math.max(1, Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_SECONDS || 60)),
     useMemoryFallback: isDev && process.env.UPLOAD_RATE_LIMIT_DEV_MEMORY !== "false",

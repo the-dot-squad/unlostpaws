@@ -1,6 +1,8 @@
 /** @file Listing lifecycle orchestration for actions and moderation. */
 
 import { cache } from "react";
+import { connectDB } from "@/config/db";
+import { Listing } from "@/models/listing";
 import { findListingByPublicId } from "@/lib/public-id";
 import { setListingStatus } from "@/lib/listings/status";
 import { computeExtendedExpiresAt } from "@/lib/listings/expiry";
@@ -79,8 +81,15 @@ export async function applyListingAdminUpdate(listing, fields) {
   return listing;
 }
 
+import mongoose from "mongoose";
+
 /** Cached listing fetch — shared by page render and generateMetadata. */
 export const getListingForPage = cache(async (publicId) => {
-  const doc = await findListingByPublicId(publicId);
+  if (!publicId) return null;
+  let doc = await findListingByPublicId(publicId);
+  if (!doc && mongoose.Types.ObjectId.isValid(publicId)) {
+    await connectDB();
+    doc = await Listing.findById(publicId);
+  }
   return doc?.toObject?.() ?? null;
 });

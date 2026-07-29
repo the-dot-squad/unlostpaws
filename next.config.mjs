@@ -68,6 +68,7 @@ const nextConfig = {
     return config;
   },
   images: {
+    qualities: [75, 85],
     loader: "custom",
     loaderFile: "./src/lib/images/image-loader.js",
     remotePatterns: [

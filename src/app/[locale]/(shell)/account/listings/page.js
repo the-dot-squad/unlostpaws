@@ -29,11 +29,16 @@ export default async function MyListingsPage({ params }) {
           {listings.map((listing) => {
             const isActive = listing.status === "active";
             const daysLeft = isActive ? daysUntilExpiry(listing.expiresAt) : 0;
+            const listingWithContact = {
+              ...listing,
+              contactPhone: session?.user?.phone || session?.user?.phoneNumber || listing.contactPhone || "",
+              contactEmail: session?.user?.email || listing.contactEmail || "",
+            };
 
             return (
               <ListingCard
                 key={listing._id.toString()}
-                listing={listing}
+                listing={listingWithContact}
                 locale={locale}
                 owner
                 typeLabel={t(`listingTypes.${listing.type}`)}

@@ -14,6 +14,8 @@ import { ReportDialog } from "@/components/listings/report-dialog";
 import { ProcessingStatusBadge } from "@/components/listings/processing-status-badge";
 import { ResolveButton } from "@/components/listings/resolve-button";
 import { ShareButton } from "@/components/listings/share-button";
+import { FlyerCustomizerButton } from "@/components/flyer/flyer-customizer-button";
+import { QRCodeButton } from "@/components/flyer/qr-code-button";
 import { ListingImageGallery } from "@/components/listings/listing-image-gallery";
 import { ListingLocationSection } from "@/components/listings/listing-location-section";
 import { ListingMetadataBox } from "@/components/listings/listing-metadata-box";
@@ -24,6 +26,7 @@ import { SiteContainer } from "@/components/layout/site-container";
 import { getAuthUserById } from "@/lib/auth/users";
 import { userPublicPath } from "@/lib/public-id";
 import {
+  listingPublicId,
   serializeListingImages,
   serializeListingLocation,
 } from "@/models/listing";
@@ -147,6 +150,13 @@ export default async function ListingDetailPage({ params, searchParams }) {
     title: listingTitle,
   });
 
+  const listingWithContact = {
+    ...listing,
+    publicId: listing.publicId || listingPublicId(listing),
+    contactPhone: ownerUser?.phone || ownerUser?.phoneNumber || listing.contactPhone || "",
+    contactEmail: ownerUser?.email || listing.contactEmail || "",
+  };
+
   return (
     <SiteContainer className="max-w-4xl space-y-6 py-8">
       <script
@@ -198,6 +208,8 @@ export default async function ListingDetailPage({ params, searchParams }) {
             breed={listing.breed}
             locationLabel={locationLabel}
           />
+          <QRCodeButton listing={listingWithContact} locale={locale} />
+          <FlyerCustomizerButton listing={listingWithContact} locale={locale} />
           {!isOwner && listing.status === "active" && (
             <ReportDialog
               listingId={id}
