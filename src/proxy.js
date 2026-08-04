@@ -5,7 +5,7 @@ import { rejectCrossSiteRequest } from "./lib/request-metadata";
 
 const intlMiddleware = createMiddleware(routing);
 
-/** Admin and public assets live outside the [locale] segment. */
+/** Admin, well-known, and public assets live outside the [locale] segment. */
 function redirectLocalePrefixedPath(request, pattern, targetPrefix) {
   const match = request.nextUrl.pathname.match(pattern);
   if (!match) return null;
@@ -31,6 +31,13 @@ export async function proxy(request) {
   );
   if (assetRedirect) return assetRedirect;
 
+  const wellKnownRedirect = redirectLocalePrefixedPath(
+    request,
+    /^\/(en|fa)(\/\.well-known(?:\/.*)?)$/,
+    ""
+  );
+  if (wellKnownRedirect) return wellKnownRedirect;
+
   if (pathname.startsWith("/api")) {
     const blockedApi = rejectCrossSiteRequest(request);
     if (blockedApi) return blockedApi;
@@ -38,6 +45,11 @@ export async function proxy(request) {
   }
 
   if (pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
+  // Publisher verification files must stay at the domain root (no locale).
+  if (pathname.startsWith("/.well-known")) {
     return NextResponse.next();
   }
 
