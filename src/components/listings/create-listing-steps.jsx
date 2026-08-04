@@ -1,12 +1,14 @@
 "use client";
 
 import { MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LISTING_TYPES, MIN_LISTING_IMAGES, PET_TYPES } from "@/config/constants/enums";
+import { shouldClearBreedForPetType } from "@/config/pet-attributes";
 import {
   Select,
   SelectContent,
@@ -15,11 +17,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CountrySelect } from "@/components/form/country-select";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { ImageUploader } from "@/components/listings/image-uploader";
 import { LocationPickerMap } from "@/components/map/location-picker";
 
 export function CreateListingDetailsStep({ form, update, t }) {
+  const tBreeds = useTranslations("breeds");
+
+  function handlePetTypeChange(nextType) {
+    update("petType", nextType);
+    if (shouldClearBreedForPetType(form.breed, nextType, (key) => tBreeds(key))) {
+      update("breed", "");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -39,7 +51,7 @@ export function CreateListingDetailsStep({ form, update, t }) {
       </div>
       <div className="space-y-2">
         <Label>{t("listings.petType")}</Label>
-        <Select value={form.petType} onValueChange={(v) => update("petType", v)}>
+        <Select value={form.petType} onValueChange={handlePetTypeChange}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -57,13 +69,21 @@ export function CreateListingDetailsStep({ form, update, t }) {
       </div>
       <div className="space-y-2">
         <Label>{t("listings.color")} *</Label>
-        <Input value={form.color} onChange={(e) => update("color", e.target.value)} required />
+        <ColorSuggest
+          value={form.color}
+          onChange={(v) => update("color", v)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <Label>
           {t("listings.breed")} ({t("common.optional")})
         </Label>
-        <Input value={form.breed} onChange={(e) => update("breed", e.target.value)} />
+        <BreedSuggest
+          value={form.breed}
+          onChange={(v) => update("breed", v)}
+          petType={form.petType}
+        />
       </div>
       <div className="space-y-2">
         <Label>

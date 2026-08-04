@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PET_TYPES } from "@/config/constants/enums";
+import { shouldClearBreedForPetType } from "@/config/pet-attributes";
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { PetPhotosUpload } from "./pet-photos-upload";
 import { PetPassportUpload } from "./pet-passport-upload";
 import { createOwnedPet, updateOwnedPet } from "@/lib/actions/owned-pets";
@@ -36,6 +38,7 @@ export function PetForm({ locale, pet = null }) {
   const t = useTranslations("myPets");
   const tCommon = useTranslations("common");
   const tPetTypes = useTranslations("petTypes");
+  const tBreeds = useTranslations("breeds");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -52,6 +55,16 @@ export function PetForm({ locale, pet = null }) {
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function updatePetType(nextType) {
+    setForm((f) => {
+      const next = { ...f, petType: nextType };
+      if (shouldClearBreedForPetType(f.breed, nextType, (key) => tBreeds(key))) {
+        next.breed = "";
+      }
+      return next;
+    });
   }
 
   async function handleSubmit(e) {
@@ -121,7 +134,7 @@ export function PetForm({ locale, pet = null }) {
 
                   <div className="space-y-2">
                     <Label>{t("petType")} *</Label>
-                    <Select value={form.petType} onValueChange={(v) => update("petType", v)}>
+                    <Select value={form.petType} onValueChange={updatePetType}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -140,9 +153,9 @@ export function PetForm({ locale, pet = null }) {
 
                   <div className="space-y-2">
                     <Label>{t("color")} *</Label>
-                    <Input
+                    <ColorSuggest
                       value={form.color}
-                      onChange={(e) => update("color", e.target.value)}
+                      onChange={(v) => update("color", v)}
                       required
                     />
                   </div>
@@ -154,7 +167,11 @@ export function PetForm({ locale, pet = null }) {
                         ({tCommon("optional")})
                       </span>
                     </Label>
-                    <Input value={form.breed} onChange={(e) => update("breed", e.target.value)} />
+                    <BreedSuggest
+                      value={form.breed}
+                      onChange={(v) => update("breed", v)}
+                      petType={form.petType}
+                    />
                   </div>
 
                   <div className="space-y-2 sm:col-span-2">

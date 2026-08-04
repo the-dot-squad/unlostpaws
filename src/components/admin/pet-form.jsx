@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OWNED_PET_STATUSES, PET_TYPES } from "@/config/constants/enums";
+import { shouldClearBreedForPetType } from "@/config/pet-attributes";
 import {
   Select,
   SelectContent,
@@ -17,13 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { adminUpdateOwnedPet } from "@/lib/actions/admin";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { AdminRequeueProcessingButton } from "@/components/admin/requeue-processing-button";
 import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 /** Admin form to edit registered pet details. */
 export function AdminPetForm({ pet, owner }) {
   const router = useRouter();
+  const tBreeds = useTranslations("breeds");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: pet.name,
@@ -38,6 +42,16 @@ export function AdminPetForm({ pet, owner }) {
 
   function update(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function updatePetType(nextType) {
+    setForm((f) => {
+      const next = { ...f, petType: nextType };
+      if (shouldClearBreedForPetType(f.breed, nextType, (key) => tBreeds(key))) {
+        next.breed = "";
+      }
+      return next;
+    });
   }
 
   async function handleSave() {
@@ -83,7 +97,7 @@ export function AdminPetForm({ pet, owner }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Pet type</Label>
-              <Select value={form.petType} onValueChange={(v) => update("petType", v)}>
+              <Select value={form.petType} onValueChange={updatePetType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PET_TYPES.map((pt) => (
@@ -108,11 +122,15 @@ export function AdminPetForm({ pet, owner }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Color</Label>
-              <Input value={form.color} onChange={(e) => update("color", e.target.value)} />
+              <ColorSuggest value={form.color} onChange={(v) => update("color", v)} />
             </div>
             <div className="space-y-2">
               <Label>Breed</Label>
-              <Input value={form.breed} onChange={(e) => update("breed", e.target.value)} />
+              <BreedSuggest
+                value={form.breed}
+                onChange={(v) => update("breed", v)}
+                petType={form.petType}
+              />
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LISTING_STATUSES, LISTING_TYPES, PET_TYPES } from "@/config/constants/enums";
+import { shouldClearBreedForPetType } from "@/config/pet-attributes";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminBackLink } from "@/components/admin/admin-back-link";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { LocationPicker } from "@/components/map/location-picker";
 import { AdminListingImagesPanel } from "@/components/admin/listing-images-panel";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
@@ -27,9 +29,19 @@ import { hasSetCoordinates } from "@/lib/geo";
 import { formatDate } from "@/lib/format";
 import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 /** Sub-component for editing listing details. */
 function DetailsCard({ form, update }) {
+  const tBreeds = useTranslations("breeds");
+
+  function handlePetTypeChange(nextType) {
+    update("petType", nextType);
+    if (shouldClearBreedForPetType(form.breed, nextType, (key) => tBreeds(key))) {
+      update("breed", "");
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -61,7 +73,7 @@ function DetailsCard({ form, update }) {
           </div>
           <div className="space-y-2">
             <Label>Pet type</Label>
-            <Select value={form.petType} onValueChange={(v) => update("petType", v)}>
+            <Select value={form.petType} onValueChange={handlePetTypeChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {PET_TYPES.map((pt) => (
@@ -75,11 +87,15 @@ function DetailsCard({ form, update }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Color</Label>
-            <Input value={form.color} onChange={(e) => update("color", e.target.value)} />
+            <ColorSuggest value={form.color} onChange={(v) => update("color", v)} />
           </div>
           <div className="space-y-2">
             <Label>Breed</Label>
-            <Input value={form.breed} onChange={(e) => update("breed", e.target.value)} />
+            <BreedSuggest
+              value={form.breed}
+              onChange={(v) => update("breed", v)}
+              petType={form.petType}
+            />
           </div>
         </div>
 

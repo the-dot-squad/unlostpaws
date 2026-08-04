@@ -5,7 +5,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2, MapPin, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { LISTING_TYPES, PET_TYPES } from "@/config/constants/enums";
@@ -19,6 +18,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { CountrySelect } from "@/components/form/country-select";
+import { ColorSuggest } from "@/components/form/breed-color-suggest";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
@@ -122,10 +122,10 @@ function SearchFields({ draft, updateDraft, t }) {
 
       <div className="space-y-1.5">
         <Label className="text-xs">{t("listings.color")}</Label>
-        <Input
+        <ColorSuggest
           className="h-9 bg-background"
           value={draft.color}
-          onChange={(e) => updateDraft("color", e.target.value)}
+          onChange={(v) => updateDraft("color", v)}
         />
       </div>
 
