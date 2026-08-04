@@ -164,7 +164,7 @@ export function MobileNavSheet({ session }) {
               </Button>
             ) : (
               <Button className="w-full" asChild onClick={() => setOpen(false)}>
-                <Link href={`${prefix}/sign-in`}>{t("nav.signIn")}</Link>
+                <Link href={`${prefix}/login`}>{t("nav.signIn")}</Link>
               </Button>
             )}
           </div>

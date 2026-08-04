@@ -46,7 +46,7 @@ export async function buildManualUnbanEmail({ ownerName, locale = "en" }) {
     key: "manualUnban",
     locale,
     bodyHtml: contentHtml,
-    ctaUrl: appUrl(locale, "/sign-in"),
+    ctaUrl: appUrl(locale, "/login"),
     text: t("emails.manualUnban.textFallback"),
   });
 }

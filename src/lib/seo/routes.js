@@ -16,7 +16,7 @@ export const PUBLIC_STATIC_PATHS = [
 ];
 
 /** Path prefixes that must not be indexed. */
-export const NOINDEX_PATH_PREFIXES = ["account", "sign-in", "listings/new"];
+export const NOINDEX_PATH_PREFIXES = ["account", "login", "listings/new"];
 
 const baseUrl = env.app.url.replace(/\/$/, "");
 

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
     locale,
     title: t("signInTitle"),
     description: t("signInDescription"),
-    path: "sign-in",
+    path: "login",
     noIndex: true,
   });
 }

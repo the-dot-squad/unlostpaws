@@ -95,7 +95,7 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <Button asChild size="sm">
-                <Link href={`${prefix}/sign-in`}>{t("nav.signIn")}</Link>
+                <Link href={`${prefix}/login`}>{t("nav.signIn")}</Link>
               </Button>
             )}
           </div>

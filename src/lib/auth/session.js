@@ -62,7 +62,7 @@ export async function requireAdmin() {
 }
 
 /**
- * Page guard — redirect unauthenticated or banned users to sign-in.
+ * Page guard — redirect unauthenticated or banned users to login.
  * @param {string} locale
  */
 export async function requireActiveSessionPage(locale) {
@@ -70,31 +70,31 @@ export async function requireActiveSessionPage(locale) {
   if (session?.user) {
     const status = resolveUserStatus(session.user);
     if (status !== "active") {
-      redirect(`/${locale}/sign-in?error=user_${status}`);
+      redirect(`/${locale}/login?error=user_${status}`);
     }
   }
   if (!session) {
-    redirect(`/${locale}/sign-in`);
+    redirect(`/${locale}/login`);
   }
   return session;
 }
 
-/** Page guard — redirect non-staff users to sign-in. */
+/** Page guard — redirect non-staff users to login. */
 export async function requireStaffPage() {
   const session = await getSession();
   const locale = session?.user?.locale || routing.defaultLocale;
 
   if (!session?.user) {
-    redirect(`/${locale}/sign-in`);
+    redirect(`/${locale}/login`);
   }
 
   const status = resolveUserStatus(session.user);
   if (status !== "active") {
-    redirect(`/${locale}/sign-in?error=user_${status}`);
+    redirect(`/${locale}/login?error=user_${status}`);
   }
 
   if (!isStaffRole(session.user.role)) {
-    redirect(`/${locale}/sign-in`);
+    redirect(`/${locale}/login`);
   }
 
   return session;
