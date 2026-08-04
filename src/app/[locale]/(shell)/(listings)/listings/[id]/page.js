@@ -214,7 +214,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
             <ReportDialog
               listingId={id}
               isSignedIn={Boolean(session)}
-              signInHref={`${prefix}/sign-in`}
+              signInHref={`${prefix}/login`}
             />
           )}
           {canEdit && (

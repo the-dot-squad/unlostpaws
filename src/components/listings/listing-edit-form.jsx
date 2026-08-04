@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CountrySelect } from "@/components/form/country-select";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { LocationPickerMap } from "@/components/map/location-picker";
 import { updateListing } from "@/lib/actions/listings";
 import { ListingExtensionPanel } from "@/components/listings/listing-extension-panel";
@@ -99,10 +100,10 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="color">{t("listings.color")}</Label>
-              <Input
+              <ColorSuggest
                 id="color"
                 value={form.color}
-                onChange={(e) => update("color", e.target.value)}
+                onChange={(v) => update("color", v)}
                 required
               />
             </div>
@@ -111,10 +112,11 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
               <Label htmlFor="breed">
                 {t("listings.breed")} ({t("common.optional")})
               </Label>
-              <Input
+              <BreedSuggest
                 id="breed"
                 value={form.breed}
-                onChange={(e) => update("breed", e.target.value)}
+                onChange={(v) => update("breed", v)}
+                petType={listing.petType}
               />
             </div>
 

@@ -14,14 +14,14 @@ import { encodeUserPublicId } from "@/lib/public-id";
 import { buildSocialProviders } from "./providers";
 
 /**
- * Build a locale-aware sign-in redirect for auth hook errors.
+ * Build a locale-aware login redirect for auth hook errors.
  *
  * @param {import("better-auth").MiddlewareContext} ctx
  * @param {string} error - Query param value for SignInForm (`errors.${error}`)
  * @param {string} [locale]
  */
-function redirectToSignIn(ctx, error, locale = defaultLocale) {
-  throw ctx.redirect(`/${locale}/sign-in?error=${error}`);
+function redirectToLogin(ctx, error, locale = defaultLocale) {
+  throw ctx.redirect(`/${locale}/login?error=${error}`);
 }
 
 /**
@@ -35,8 +35,8 @@ export function createAuthInstance(db) {
     secret: env.auth.secret,
     database: mongodbAdapter(db, { client: db.client }),
     socialProviders: buildSocialProviders(),
-    errorURL: `/${defaultLocale}/sign-in`,
-    disabledPaths: ["/sign-up/email", "/sign-in/email"],
+    errorURL: `/${defaultLocale}/login`,
+    disabledPaths: ["/sign-up/email", "/login/email"],
     user: {
       additionalFields: {
         phone: { type: "string", required: false, input: true },
@@ -88,7 +88,7 @@ export function createAuthInstance(db) {
       before: createAuthMiddleware(async (ctx) => {
         if (ctx.path === "/error") {
           const error = ctx.query.error || "generic";
-          redirectToSignIn(ctx, error);
+          redirectToLogin(ctx, error);
         }
       }),
       /**
@@ -108,7 +108,7 @@ export function createAuthInstance(db) {
         }
 
         const locale = newSession.user.locale || defaultLocale;
-        redirectToSignIn(ctx, `user_${status}`, locale);
+        redirectToLogin(ctx, `user_${status}`, locale);
       }),
     },
     experimental: { joins: true },

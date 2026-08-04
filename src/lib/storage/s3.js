@@ -99,6 +99,15 @@ export async function createPresignedUpload({
   const keyPrefix = isS3Storage() || hasS3Backend() ? prefix : "dev";
   const key = `${keyPrefix}/${userId}/${crypto.randomUUID()}.${extension}`;
 
+  if (prefix === "avatars") {
+    return {
+      key,
+      uploadUrl: UPLOAD_API_PATH,
+      publicUrl: getPublicUrl(key),
+      contentType,
+    };
+  }
+
   if (isS3Storage()) {
     const client = getS3Client();
     const command = new PutObjectCommand({

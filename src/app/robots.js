@@ -8,7 +8,7 @@ export default function robots() {
     "/api",
     ...locales.flatMap((locale) => [
       `/${locale}/account`,
-      `/${locale}/sign-in`,
+      `/${locale}/login`,
       `/${locale}/listings/new`,
     ]),
   ];
