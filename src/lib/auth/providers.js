@@ -2,18 +2,20 @@
 
 import { env } from "@/config/env";
 
-/** @typedef {"google" | "facebook" | "twitter"} OAuthProviderId */
+/** @typedef {"google" | "microsoft" | "facebook" | "twitter"} OAuthProviderId */
 
 /** @type {{ id: OAuthProviderId, label: string }[]} */
 export const OAUTH_PROVIDER_DEFS = [
   { id: "google", label: "Google" },
+  { id: "microsoft", label: "Microsoft" },
   { id: "facebook", label: "Facebook" },
   { id: "twitter", label: "X" },
 ];
 
-/** @type {Record<OAuthProviderId, { clientId: string; clientSecret: string; prompt?: string }>} */
+/** @type {Record<OAuthProviderId, { clientId: string; clientSecret: string; tenantId?: string; prompt?: string }>} */
 const OAUTH_CREDENTIALS = {
   google: env.auth.google,
+  microsoft: env.auth.microsoft,
   facebook: env.auth.facebook,
   twitter: env.auth.twitter,
 };
@@ -37,6 +39,16 @@ export function buildSocialProviders() {
       clientId: OAUTH_CREDENTIALS.google.clientId,
       clientSecret: OAUTH_CREDENTIALS.google.clientSecret,
       prompt: "select_account",
+    };
+  }
+
+  if (isProviderConfigured("microsoft")) {
+    socialProviders.microsoft = {
+      clientId: OAUTH_CREDENTIALS.microsoft.clientId,
+      clientSecret: OAUTH_CREDENTIALS.microsoft.clientSecret,
+      tenantId: OAUTH_CREDENTIALS.microsoft.tenantId || "common",
+      prompt: "select_account",
+      mapProfileToUser: () => ({ image: null }),
     };
   }
 

@@ -7,6 +7,7 @@ import { revokeUserSessions } from "./session";
 
 const PROVIDER_LABELS = {
   google: "Google",
+  microsoft: "Microsoft",
   facebook: "Facebook",
   twitter: "Twitter",
   github: "GitHub",

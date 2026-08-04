@@ -5,12 +5,13 @@ import { useTranslations } from "next-intl";
 import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GoogleIcon, FacebookIcon, XIcon } from "./provider-icons";
+import { GoogleIcon, MicrosoftIcon, FacebookIcon, XIcon } from "./provider-icons";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
 
 const PROVIDER_META = {
   google: { label: "Google", Icon: GoogleIcon },
+  microsoft: { label: "Microsoft", Icon: MicrosoftIcon },
   facebook: { label: "Facebook", Icon: FacebookIcon },
   twitter: { label: "X", Icon: XIcon },
 };
@@ -18,7 +19,7 @@ const PROVIDER_META = {
 /**
  * @param {object} props
  * @param {string} props.locale
- * @param {("google" | "facebook" | "twitter")[]} props.providerIds
+ * @param {("google" | "microsoft" | "facebook" | "twitter")[]} props.providerIds
  */
 export function SignInForm({ locale, providerIds, error }) {
   const t = useTranslations("auth");

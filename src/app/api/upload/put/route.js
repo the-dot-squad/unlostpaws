@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { uploadObject } from "@/lib/storage/s3";
 import { ALLOWED_IMAGE_MIMES, validateImageBuffer } from "@/lib/storage/images";
+import { processAvatarBuffer } from "@/lib/storage/avatar";
 import { enforceUploadRateLimits } from "@/lib/rate-limit";
 import {
   requireActiveSessionForApi,
@@ -44,15 +45,26 @@ export async function POST(request) {
     return NextResponse.json({ error: mimeCheck.reason }, { status: 400 });
   }
 
+  let uploadBody = buffer;
+  let uploadContentType = mimeCheck.mime;
+  let uploadKey = key;
+
+  if (prefix === "avatars") {
+    const processed = await processAvatarBuffer(buffer);
+    uploadBody = processed.buffer;
+    uploadContentType = processed.contentType;
+    uploadKey = key.replace(/\.[^.]+$/, `.${processed.extension}`);
+  }
+
   const { publicUrl } = await uploadObject({
-    key,
-    body: buffer,
-    contentType: mimeCheck.mime,
+    key: uploadKey,
+    body: uploadBody,
+    contentType: uploadContentType,
   });
 
   try {
     await upsertPendingUpload({
-      key,
+      key: uploadKey,
       url: publicUrl,
       userId: session.user.id,
       prefix,
@@ -61,5 +73,5 @@ export async function POST(request) {
     console.error("Failed to track direct upload in DB:", err);
   }
 
-  return NextResponse.json({ publicUrl, key });
+  return NextResponse.json({ publicUrl, key: uploadKey });
 }
