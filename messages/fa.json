@@ -738,7 +738,7 @@
     "gitHub": "مخزن گیت‌هاب",
     "donate": "حمایت مالی",
     "project": "پروژه",
-    "copyright": "© {year} {appName}. تمامی حقوق محفوظ است."
+    "copyright": "© {year} {appName} v{version}. تمامی حقوق محفوظ است."
   },
   "consent": {
     "consentModal": {

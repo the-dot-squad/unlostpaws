@@ -738,7 +738,7 @@
     "gitHub": "GitHub Repo",
     "donate": "Donate",
     "project": "Project",
-    "copyright": "© {year} {appName}. All rights reserved."
+    "copyright": "© {year} {appName} v{version}. All rights reserved."
   },
   "consent": {
     "consentModal": {

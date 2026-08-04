@@ -19,6 +19,7 @@ import { GithubIcon, SocialLinks } from "./social-links";
 import { getCachedGithubStars } from "@/lib/github";
 import { getAppSettings } from "@/lib/services/settings";
 import { getGithubRepoUrl, normalizeSocialLinkArray } from "@/lib/socials";
+import packageJson from "../../../package.json";
 
 const EXPLORE_LINKS = [
   { key: "listings", href: "/listings", icon: Bell },
@@ -80,7 +81,11 @@ export async function Footer({ locale = "en" }) {
             <p className="text-sm leading-relaxed text-muted-foreground">{t("footer.description")}</p>
 
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground/80">
-              {t("footer.copyright", { year, appName: t("common.appName") })}
+              {t("footer.copyright", {
+                year,
+                appName: t("common.appName"),
+                version: packageJson.version,
+              })}
             </p>
           </div>
 
