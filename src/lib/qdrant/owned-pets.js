@@ -106,8 +106,8 @@ export async function searchOwnedPets({
   await ensureCollections();
   const qdrant = getQdrantClient();
 
-  const hits = await qdrant.search(COLLECTION, {
-    vector,
+  const response = await qdrant.query(COLLECTION, {
+    query: vector,
     filter: {
       must: [
         { key: "userId", match: { value: userId } },
@@ -120,6 +120,8 @@ export async function searchOwnedPets({
     score_threshold: scoreThreshold,
     with_payload: true,
   });
+
+  const hits = response?.points ?? [];
 
   return hits.map((hit) => ({
     ownedPetId: fromPointId(hit.id),
@@ -146,8 +148,8 @@ export async function searchOwnedPetsGlobal({
   await ensureCollections();
   const qdrant = getQdrantClient();
 
-  const hits = await qdrant.search(COLLECTION, {
-    vector,
+  const response = await qdrant.query(COLLECTION, {
+    query: vector,
     filter: {
       must: [
         { key: "status", match: { value: "active" } },
@@ -159,6 +161,8 @@ export async function searchOwnedPetsGlobal({
     score_threshold: scoreThreshold,
     with_payload: true,
   });
+
+  const hits = response?.points ?? [];
 
   return hits.map((hit) => ({
     ownedPetId: fromPointId(hit.id),
