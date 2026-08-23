@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ContactButton } from "@/components/listings/contact-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { formatDateTime } from "@/lib/format";
 
 /** Minimum gap between created and updated before showing both timestamps. */
@@ -58,22 +59,32 @@ export async function ListingMetadataBox({
           {/* Poster identity and timestamps */}
           <div className="min-w-0 flex-1 space-y-5">
             <div className="flex items-center gap-4">
-              <UserAvatar name={posterName} imageUrl={owner?.image} size="md" />
+              <UserAvatar
+                name={posterName}
+                imageUrl={owner?.image}
+                size="md"
+                verified={Boolean(owner?.verified)}
+              />
               <div className="min-w-0 space-y-1">
                 <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <User className="size-3.5" aria-hidden />
                   {t("listings.postedBy")}
                 </p>
-                {owner?.profileHref ? (
-                  <Link
-                    href={owner.profileHref}
-                    className="truncate text-base font-semibold hover:text-primary hover:underline"
-                  >
-                    {posterName}
-                  </Link>
-                ) : (
-                  <p className="truncate text-base font-semibold">{posterName}</p>
-                )}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {owner?.profileHref ? (
+                    <Link
+                      href={owner.profileHref}
+                      className="truncate text-base font-semibold hover:text-primary hover:underline"
+                    >
+                      {posterName}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-base font-semibold">{posterName}</p>
+                  )}
+                  {owner?.verified ? (
+                    <VerifiedBadge size="sm" label={t("users.verifiedBadge")} />
+                  ) : null}
+                </div>
                 {owner?.countryLabel ? (
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="size-3.5 shrink-0" aria-hidden />

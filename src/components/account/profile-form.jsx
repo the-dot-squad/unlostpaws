@@ -18,11 +18,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { CountrySelect } from "@/components/form/country-select";
 import { AvatarUpload } from "@/components/account/avatar-upload";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { signOut } from "@/lib/auth/client";
 import { deleteMyAccount, updateProfile } from "@/lib/actions/profile";
 
 /**
- * Profile settings form — name, avatar, contact, language, and location.
+ * Profile settings form — name, avatar, contact, language, location, and verified handle.
  */
 export function ProfileForm({ user }) {
   const t = useTranslations();
@@ -30,6 +31,7 @@ export function ProfileForm({ user }) {
   const currentLocale = useLocale();
 
   const [name, setName] = useState(user.name || "");
+  const [username, setUsername] = useState(user.handle?.username || "");
   const [phone, setPhone] = useState(user.phone || "");
   const [locale, setLocale] = useState(user.locale || currentLocale);
   const [country, setCountry] = useState(user.country || "");
@@ -38,9 +40,19 @@ export function ProfileForm({ user }) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const isVerified = Boolean(user.verified);
+
   async function handleSave() {
     setLoading(true);
-    const result = await updateProfile({ name, phone, locale, country, city, image });
+    const result = await updateProfile({
+      name,
+      phone,
+      locale,
+      country,
+      city,
+      image,
+      username: isVerified ? username : undefined,
+    });
     setLoading(false);
 
     if (result.error) {
@@ -105,6 +117,43 @@ export function ProfileForm({ user }) {
             <Label htmlFor="name">{t("account.profile.name")}</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
+
+          {isVerified ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="username">{t("account.profile.handle")}</Label>
+                <VerifiedBadge size="sm" showLabel label={t("users.verifiedBadge")} />
+              </div>
+              <div className="relative">
+                <span className="absolute start-3 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
+                  @
+                </span>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  placeholder="your_handle"
+                  className="ps-8 font-mono text-sm"
+                  maxLength={30}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("account.profile.handleHint")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>{t("account.profile.publicId")}</Label>
+              <Input
+                value={user.handle?.publicId || user.publicId || ""}
+                disabled
+                className="bg-muted/50 font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("account.profile.publicIdHint")}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="email">{t("account.profile.email")}</Label>

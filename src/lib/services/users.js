@@ -66,5 +66,8 @@ export const getUserForPage = cache(async (publicId) => {
     createdAt: 1,
     banned: 1,
     publicId: 1,
+    role: 1,
+    verified: 1,
+    handle: 1,
   });
 });

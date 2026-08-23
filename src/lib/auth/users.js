@@ -25,11 +25,49 @@ export function getAuthUserId(user) {
   return null;
 }
 
-/** Attach a stable `id` field for admin UI and links. */
+/** Normalize handle whether stored as a JSON string, an object, or plain string. */
+export function normalizeUserHandle(handle, fallbackPublicId = "") {
+  if (!handle) {
+    return { username: "", publicId: fallbackPublicId || "" };
+  }
+  if (typeof handle === "string") {
+    try {
+      const parsed = JSON.parse(handle);
+      if (parsed && typeof parsed === "object") {
+        return {
+          username: String(parsed.username || "").trim().toLowerCase().replace(/^@/, ""),
+          publicId: String(parsed.publicId || fallbackPublicId || ""),
+        };
+      }
+    } catch {
+      return {
+        username: handle.trim().toLowerCase().replace(/^@/, ""),
+        publicId: fallbackPublicId || "",
+      };
+    }
+  }
+  if (typeof handle === "object") {
+    return {
+      username: String(handle.username || "").trim().toLowerCase().replace(/^@/, ""),
+      publicId: String(handle.publicId || fallbackPublicId || ""),
+    };
+  }
+  return { username: "", publicId: fallbackPublicId || "" };
+}
+
+/** Attach a stable `id` field for admin UI and links, and normalize handle and verified status. */
 export function normalizeAuthUser(user) {
   if (!user) return null;
   const id = getAuthUserId(user);
-  return { ...user, id };
+  const rawPublicId = user.publicId || "";
+  const handle = normalizeUserHandle(user.handle, rawPublicId || id);
+  return {
+    ...user,
+    id,
+    handle,
+    publicId: rawPublicId || handle.publicId || id,
+    verified: Boolean(user.verified || user.role === "verified"),
+  };
 }
 
 /**
@@ -53,7 +91,8 @@ export function authUserIdFilter(userId) {
 export async function getAuthUserById(userId) {
   const auth = await getAuth();
   const ctx = await auth.$context;
-  return ctx.internalAdapter.findUserById(userId);
+  const user = await ctx.internalAdapter.findUserById(userId);
+  return user ? normalizeAuthUser(user) : null;
 }
 
 /**
@@ -80,6 +119,8 @@ export async function getAuthUsersByIds(userIds) {
       _id: 1,
       id: 1,
       publicId: 1,
+      handle: 1,
+      verified: 1,
       name: 1,
       email: 1,
       status: 1,

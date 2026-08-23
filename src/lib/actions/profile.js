@@ -7,21 +7,29 @@ import { purgeUserAccount } from "@/lib/services/users";
 import { validate, updateProfileSchema } from "@/lib/validation";
 import { markUploadsAttached } from "@/lib/storage/cleanup";
 import { resolveStorageKey } from "@/lib/storage/urls";
+import { getMongoDb } from "@/config/db";
+import { encodeUserPublicId } from "@/lib/public-id";
 import { revalidatePath } from "next/cache";
 
 const ERROR_MESSAGES = {
   invalid_phone: "Invalid phone number",
   invalid_country: "Invalid country code",
+  invalid_username: "Invalid username. Must be 3-30 characters (letters, numbers, underscores).",
+  username_already_taken: "This username is already taken",
+  only_verified_can_set_username: "Only verified accounts can set a custom handle",
   invalid_input: "Invalid input",
 };
 
-/** Update the signed-in user's profile (name, contact, locale, location, avatar). */
-export async function updateProfile({ name, phone, locale, country, city, image }) {
+/** Update the signed-in user's profile (name, contact, locale, location, avatar, username). */
+export async function updateProfile({ name, phone, locale, country, city, image, username }) {
   return withAuthAction("updateProfile", async (session) => {
-    const parsed = validate(updateProfileSchema, { name, phone, locale, country, city, image });
+    const parsed = validate(updateProfileSchema, { name, phone, locale, country, city, image, username });
     if (!parsed.ok) {
       return { error: ERROR_MESSAGES[parsed.error] ?? ERROR_MESSAGES.invalid_input };
     }
+
+    const existingUser = await getAuthUserById(session.user.id);
+    if (!existingUser) return { error: "Account not found" };
 
     const updates = {};
     if (parsed.data.name !== undefined) updates.name = parsed.data.name;
@@ -31,6 +39,36 @@ export async function updateProfile({ name, phone, locale, country, city, image 
     if (parsed.data.city !== undefined) updates.city = parsed.data.city || "";
     if (parsed.data.image !== undefined) updates.image = parsed.data.image || "";
 
+    if (parsed.data.username !== undefined) {
+      const cleanUsername = parsed.data.username.trim().toLowerCase();
+      const isVerified = Boolean(existingUser.verified);
+
+      if (cleanUsername) {
+        if (!isVerified) {
+          return { error: ERROR_MESSAGES.only_verified_can_set_username };
+        }
+
+        const db = await getMongoDb();
+        const existingTaken = await db.collection("user").findOne({
+          "handle.username": cleanUsername,
+          $nor: [
+            ...(existingUser._id ? [{ _id: existingUser._id }] : []),
+            ...(existingUser.id ? [{ id: existingUser.id }] : []),
+          ],
+        });
+
+        if (existingTaken) {
+          return { error: ERROR_MESSAGES.username_already_taken };
+        }
+      }
+
+      const publicId = existingUser.publicId || existingUser.handle?.publicId || encodeUserPublicId(existingUser._id || session.user.id);
+      updates.handle = {
+        username: cleanUsername,
+        publicId,
+      };
+    }
+
     await updateAuthUserById(session.user.id, updates);
 
     if (parsed.data.image) {
@@ -39,6 +77,7 @@ export async function updateProfile({ name, phone, locale, country, city, image 
     }
 
     revalidatePath("/");
+    revalidatePath("/account/settings");
     return { success: true, locale: parsed.data.locale };
   });
 }

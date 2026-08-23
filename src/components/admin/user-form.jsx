@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminCountrySelect } from "@/components/admin/admin-country-select";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
@@ -33,7 +34,7 @@ function EditUserCard({ form, user, update }) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label>Email</Label>
-          <Input value={user.email} disabled className="bg-muted" />
+          <Input value={user.email || ""} disabled className="bg-muted" />
           <p className="text-xs text-muted-foreground">
             Email is managed by the auth provider and cannot be changed here.
           </p>
@@ -42,29 +43,29 @@ function EditUserCard({ form, user, update }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input value={form.name} onChange={(e) => update("name", e.target.value)} />
+            <Input value={form.name || ""} onChange={(e) => update("name", e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label>Phone</Label>
-            <Input value={form.phone} onChange={(e) => update("phone", e.target.value)} />
+            <Input value={form.phone || ""} onChange={(e) => update("phone", e.target.value)} />
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <AdminCountrySelect
-            value={form.country}
+            value={form.country || ""}
             onChange={(code) => update("country", code)}
           />
           <div className="space-y-2">
             <Label>City</Label>
-            <Input value={form.city} onChange={(e) => update("city", e.target.value)} />
+            <Input value={form.city || ""} onChange={(e) => update("city", e.target.value)} />
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Locale</Label>
-            <Select value={form.locale} onValueChange={(v) => update("locale", v)}>
+            <Select value={form.locale || "en"} onValueChange={(v) => update("locale", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
@@ -74,7 +75,7 @@ function EditUserCard({ form, user, update }) {
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={form.role} onValueChange={(v) => update("role", v)}>
+            <Select value={form.role || "user"} onValueChange={(v) => update("role", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {USER_ROLES.map((r) => (
@@ -88,19 +89,57 @@ function EditUserCard({ form, user, update }) {
           </div>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select value={form.status || "active"} onValueChange={(v) => update("status", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="banned">Banned</SelectItem>
+                <SelectItem value="deactivated">Deactivated</SelectItem>
+                <SelectItem value="deleted">Deleted (Soft Deleted)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Banned, deactivated, or deleted users cannot sign in or post.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="admin-verified-toggle">Verification</Label>
+            <div className="flex h-9 items-center justify-between rounded-md border bg-background px-3">
+              <span className="text-sm font-medium">
+                {form.verified ? "Verified account" : "Unverified"}
+              </span>
+              <Switch
+                id="admin-verified-toggle"
+                checked={Boolean(form.verified)}
+                onCheckedChange={(checked) => update("verified", checked)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Verified users get a blue badge and can set a custom @handle.
+            </p>
+          </div>
+        </div>
+
         <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={form.status} onValueChange={(v) => update("status", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="banned">Banned</SelectItem>
-              <SelectItem value="deactivated">Deactivated</SelectItem>
-              <SelectItem value="deleted">Deleted (Soft Deleted)</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="admin-username-input">Custom handle (@username)</Label>
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 font-mono text-sm text-muted-foreground">
+              @
+            </span>
+            <Input
+              id="admin-username-input"
+              value={form.username || ""}
+              onChange={(e) => update("username", e.target.value.toLowerCase().replace(/^@/, ""))}
+              placeholder="username (3-30 lowercase characters)"
+              className="ps-8 font-mono text-sm"
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
-            Banned, deactivated, or deleted users cannot sign in or post.
+            Unique public handle for profile URL (e.g. /@username).
           </p>
         </div>
 
@@ -126,26 +165,50 @@ function EditUserCard({ form, user, update }) {
 
 /** Sub-component for displaying user activity metrics. */
 function ActivityCard({ user, form }) {
+  const publicId = user.handle?.publicId || user.publicId;
+  const username = user.handle?.username;
+  const profileIdentifier = (form.verified && username) ? username : publicId;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Activity</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        {user.publicId ? (
+        {publicId ? (
           <div>
             <p className="text-xs font-medium uppercase text-muted-foreground">Public ID</p>
-            <p className="mt-1 font-mono text-xs">{user.publicId}</p>
-            <Link
-              href={`/${user.locale || "en"}/users/${user.publicId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs text-primary hover:underline"
-            >
-              View public profile
-            </Link>
+            <p className="mt-1 font-mono text-xs">{publicId}</p>
+            {profileIdentifier ? (
+              <Link
+                href={`/${user.locale || "en"}/@${profileIdentifier}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-xs text-primary hover:underline"
+              >
+                View public profile
+              </Link>
+            ) : null}
           </div>
         ) : null}
+        {username ? (
+          <div>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Handle</p>
+            <p className="mt-1 font-mono text-xs text-blue-600 dark:text-blue-400">@{username}</p>
+          </div>
+        ) : null}
+        <div>
+          <p className="text-xs font-medium uppercase text-muted-foreground">Verification</p>
+          <div className="mt-1">
+            {form.verified ? (
+              <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                Verified
+              </Badge>
+            ) : (
+              <Badge variant="outline">Unverified</Badge>
+            )}
+          </div>
+        </div>
         <div>
           <p className="text-xs font-medium uppercase text-muted-foreground">Role</p>
           <div className="mt-1"><AdminStatusBadge value={form.role} /></div>
@@ -215,7 +278,9 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
     country: user.country || "",
     city: user.city || "",
     locale: user.locale || "en",
-    role: user.role || "user",
+    role: (user.role && USER_ROLES.includes(user.role)) ? user.role : "user",
+    verified: Boolean(user.verified || user.role === "verified"),
+    username: user.handle?.username || "",
     status: user.status || (user.banned ? "banned" : "active"),
     banReason: "",
   });

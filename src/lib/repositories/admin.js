@@ -85,6 +85,11 @@ export function buildReportFilter(sp) {
 export function buildUserFilter(sp) {
   const filter = {};
   if (sp.role) filter.role = sp.role;
+  if (sp.verified === "yes") {
+    filter.verified = true;
+  } else if (sp.verified === "no") {
+    filter.verified = { $ne: true };
+  }
   if (sp.status) {
     if (sp.status === "active") {
       filter.status = { $in: ["active", null, undefined] };
@@ -99,8 +104,19 @@ export function buildUserFilter(sp) {
 
   const trimmed = sp.q?.trim();
   if (trimmed) {
+    const cleanUsername = trimmed.replace(/^@/, "");
     const regex = new RegExp(escapeRegex(trimmed), "i");
-    filter.$or = [{ name: regex }, { email: regex }, { phone: regex }, { publicId: regex }];
+    const handleRegex = new RegExp(escapeRegex(cleanUsername), "i");
+    filter.$or = [
+      { name: regex },
+      { email: regex },
+      { phone: regex },
+      { publicId: regex },
+      { "handle.username": handleRegex },
+      { "handle.publicId": regex },
+      { handle: handleRegex },
+      { username: handleRegex },
+    ];
   }
 
   return filter;

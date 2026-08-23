@@ -8,9 +8,11 @@ import {
   MIN_LISTING_IMAGES,
   PET_TYPES,
   REPORT_REASONS,
+  USER_ROLES,
 } from "@/config/constants/enums";
 import { FEED_FORMATS } from "@/config/constants/feeds";
 import { ALLOWED_IMAGE_EXTENSIONS } from "@/lib/storage/images";
+import { RESERVED_USERNAMES } from "@/config/constants/usernames";
 
 /**
  * @template T
@@ -212,6 +214,15 @@ export const adminListingSchema = withListingCoordinates(
   }),
 );
 
+/** Schema for usernames / handles (@username). */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .transform((val) => val.replace(/^@/, ""))
+  .refine((val) => !val || /^[a-z0-9_]{3,30}$/.test(val), { message: "invalid_username" })
+  .refine((val) => !val || !RESERVED_USERNAMES.includes(val), { message: "reserved_username" });
+
 /** Admin user edit payload. */
 export const adminUserSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -223,7 +234,12 @@ export const adminUserSchema = z.object({
     .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
   city: z.string().trim().max(100).optional(),
   locale: z.string().min(2).optional(),
-  role: z.enum(["user", "moderator", "admin"]),
+  role: z
+    .string()
+    .optional()
+    .transform((val) => (val && USER_ROLES.includes(val) ? val : "user")),
+  verified: z.coerce.boolean().optional().default(false),
+  username: usernameSchema.optional().or(z.literal("")),
   status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
   /** Optional note included in the manual ban email (admin edit form). */
   banReason: z.string().trim().max(500).optional(),
@@ -253,6 +269,7 @@ export const updateProfileSchema = z.object({
     .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
   city: z.string().trim().max(100).optional(),
   image: z.union([z.string().url(), z.literal("")]).optional(),
+  username: usernameSchema.optional().or(z.literal("")),
 });
 
 /**

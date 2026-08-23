@@ -7,6 +7,7 @@ import { AdminFilterToolbar } from "@/components/admin/filter-toolbar";
 import { AdminResultSummary } from "@/components/admin/result-summary";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
 import { UserActions } from "@/components/admin/user-actions";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { USER_ROLES } from "@/config/constants/enums";
 import {
   AdminDataTable,
@@ -32,16 +33,24 @@ export default async function AdminUsersPage({ searchParams }) {
     <div className="space-y-6">
       <AdminPageHeader
         title="Users"
-        description="Manage accounts, roles, and ban status. Only admins can edit users."
+        description="Manage accounts, roles, verification, and ban status. Only admins can edit users."
       />
 
       <AdminFilterToolbar
-        searchPlaceholder="Name, email, phone…"
+        searchPlaceholder="Name, email, phone, handle, public ID…"
         filters={[
           {
             key: "role",
             label: "Role",
             options: USER_ROLES.map((r) => ({ value: r, label: r })),
+          },
+          {
+            key: "verified",
+            label: "Verification",
+            options: [
+              { value: "yes", label: "Verified" },
+              { value: "no", label: "Unverified" },
+            ],
           },
           {
             key: "status",
@@ -74,9 +83,17 @@ export default async function AdminUsersPage({ searchParams }) {
             items.map((u) => (
               <AdminTableRow key={u.id}>
                 <AdminTableTd>
-                  <Link href={`/admin/users/${u.publicId}`} className="font-medium hover:underline">
-                    {u.name}
-                  </Link>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <Link href={`/admin/users/${u.publicId}`} className="font-medium hover:underline">
+                        {u.name}
+                      </Link>
+                      {u.verified ? <VerifiedBadge size="sm" /> : null}
+                    </div>
+                    {u.handle?.username ? (
+                      <span className="font-mono text-xs text-muted-foreground">@{u.handle.username}</span>
+                    ) : null}
+                  </div>
                 </AdminTableTd>
                 <AdminTableTd className="text-muted-foreground">{u.email}</AdminTableTd>
                 <AdminTableTd>

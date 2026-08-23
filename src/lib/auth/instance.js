@@ -43,11 +43,13 @@ export function createAuthInstance(db) {
         country: { type: "string", required: false, input: true },
         city: { type: "string", required: false, input: true },
         role: { type: "string", required: false, defaultValue: "user", input: false },
+        verified: { type: "boolean", required: false, defaultValue: false, input: false },
         locale: { type: "string", required: false, defaultValue: "en", input: true },
         listingLimitOverride: { type: "number", required: false, input: false },
         status: { type: "string", required: false, defaultValue: "active", input: false },
         quota: { type: "json", required: false, input: false },
         publicId: { type: "string", required: false, input: false },
+        handle: { type: "json", required: false, input: false },
       },
     },
     databaseHooks: {
@@ -60,12 +62,15 @@ export function createAuthInstance(db) {
                 ? new ObjectId(user.id)
                 : new ObjectId();
 
+            const publicId = user.publicId || encodeUserPublicId(_id);
+
             return {
               data: {
                 ...user,
                 _id,
                 id: _id.toString(),
                 role: "user",
+                verified: false,
                 status: "active",
                 quota: {
                   listing: {
@@ -76,7 +81,11 @@ export function createAuthInstance(db) {
                   },
                   violation: 0,
                 },
-                publicId: user.publicId || encodeUserPublicId(_id),
+                publicId,
+                handle: user.handle || {
+                  username: "",
+                  publicId,
+                },
               },
             };
           },

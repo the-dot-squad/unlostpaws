@@ -1,6 +1,7 @@
 /** @file Admin server actions — listings, users, pets, moderation, settings. */
 "use server";
 
+import { connectDB, getMongoDb } from "@/config/db";
 import { withAdminAction, withStaffAction } from "@/lib/auth/session";
 import { getBanGuardError } from "@/lib/auth/ban";
 import { getAuthUserById, normalizeAuthUser, updateAuthUserById } from "@/lib/auth/users";
@@ -187,9 +188,15 @@ export async function banUser(userId, banned, { reason } = {}) {
 export async function adminUpdateUser(userId, data) {
   return withAdminAction("adminUpdateUser", async () => {
     const parsed = validate(adminUserSchema, data);
-    if (!parsed.ok) return { error: "Validation failed" };
+    if (!parsed.ok) {
+      return {
+        error: parsed.error
+          ? `Validation failed: ${parsed.error}${parsed.field ? ` (${parsed.field})` : ""}`
+          : "Validation failed",
+      };
+    }
 
-    const { name, phone, country, city, locale, role, status, banReason } = parsed.data;
+    const { name, phone, country, city, locale, role, verified, username, status, banReason } = parsed.data;
 
     const existingUser = await getAuthUserById(userId);
     if (!existingUser) return { error: "User not found" };
@@ -201,8 +208,33 @@ export async function adminUpdateUser(userId, data) {
     });
     if (guardError) return { error: guardError };
 
+    const cleanUsername = (username || "").trim().toLowerCase().replace(/^@/, "");
+    if (cleanUsername) {
+      const db = await getMongoDb();
+      const existingWithUsername = await db.collection("user").findOne({
+        "handle.username": cleanUsername,
+        $nor: [
+          ...(existingUser._id ? [{ _id: existingUser._id }] : []),
+          ...(existingUser.id ? [{ id: existingUser.id }] : []),
+          { _id: userId },
+          { id: userId },
+        ],
+      });
+      if (existingWithUsername) {
+        return { error: "This username is already taken" };
+      }
+    }
+
     const prevStatus = existingUser.status || (existingUser.banned ? "banned" : "active");
     const nextStatus = status || "active";
+
+    const userPublicId = existingUser.publicId || existingUser.handle?.publicId;
+    const existingHandle = existingUser.handle || (userPublicId ? { username: "", publicId: userPublicId } : undefined);
+    const updatedHandle = existingHandle
+      ? { ...existingHandle, username: cleanUsername }
+      : userPublicId
+        ? { username: cleanUsername, publicId: userPublicId }
+        : undefined;
 
     await updateAuthUserById(userId, {
       name,
@@ -211,7 +243,9 @@ export async function adminUpdateUser(userId, data) {
       city: city || "",
       locale: locale || "en",
       role,
+      verified: Boolean(verified),
       status: nextStatus,
+      ...(updatedHandle ? { handle: updatedHandle } : {}),
     });
 
     await notifyManualStatusChange({
