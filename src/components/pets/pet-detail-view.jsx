@@ -6,6 +6,7 @@ import {
   Palette,
   PawPrint,
   Pencil,
+  QrCode,
   Tag,
   Text,
 } from "lucide-react";
@@ -19,8 +20,10 @@ import { ArchivePetButton } from "@/components/pets/archive-pet-button";
 import { RestorePetButton } from "@/components/pets/restore-pet-button";
 import { DeletePetButton } from "@/components/pets/delete-pet-button";
 import { PetDetailPhotos, PetPassportLink } from "@/components/pets/pet-detail-media";
+import { TagQrButton } from "@/components/tag/tag-qr-button";
 import { serializeOwnedPetMedia } from "@/models/owned-pet";
 import { formatDateTime } from "@/lib/format";
+import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
 import { cn } from "@/lib/utils";
 
 /** Minimum gap between created and updated before showing both timestamps. */
@@ -55,9 +58,11 @@ function TimestampRow({ label, iso, formatted }) {
 /**
  * Read-only pet profile for the account dashboard.
  */
-export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel }) {
+export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel, premium = false }) {
   const t = await getTranslations("myPets");
   const media = serializeOwnedPetMedia(pet);
+  const collar = normalizeDigitalCollar(pet);
+  const collarLive = premium && collar.enabled && pet.status === "active";
 
   const createdIso = new Date(pet.createdAt).toISOString();
   const updatedIso = pet.updatedAt ? new Date(pet.updatedAt).toISOString() : null;
@@ -113,12 +118,10 @@ export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel
       <Card>
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-            {/* Compact photos — fixed narrow column */}
             <div className="shrink-0 sm:w-[7.5rem]">
               <PetDetailPhotos media={media} petName={pet.name} />
             </div>
 
-            {/* Details — fills remaining space */}
             <div className="min-w-0 flex-1 space-y-5">
               <div>
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -150,6 +153,39 @@ export async function PetDetailView({ pet, locale, petTypeLabel, processingLabel
                   <p className="font-normal leading-relaxed text-muted-foreground">{pet.description}</p>
                 </DetailField>
               ) : null}
+
+              <Separator />
+
+              <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="flex items-center gap-1.5 text-sm font-medium">
+                      <QrCode className="size-4 text-primary" aria-hidden />
+                      {t("digitalCollar.title")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {collarLive
+                        ? t("digitalCollar.activeStatus")
+                        : premium
+                          ? t("digitalCollar.inactiveStatus")
+                          : t("digitalCollar.upsellBody")}
+                    </p>
+                  </div>
+                  {collarLive ? (
+                    <TagQrButton publicId={pet.publicId} locale={locale} />
+                  ) : !premium ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/${locale}/account/premium`}>{t("digitalCollar.upsellCta")}</Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/${locale}/account/pets/${pet.publicId}?edit=1`}>
+                        {t("digitalCollar.enableInEdit")}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
 
               <Separator />
 

@@ -22,8 +22,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { PetPhotosUpload } from "./pet-photos-upload";
 import { PetPassportUpload } from "./pet-passport-upload";
+import { DigitalCollarFields } from "./digital-collar-fields";
 import { createOwnedPet, updateOwnedPet } from "@/lib/actions/owned-pets";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
+import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
 
 const ERROR_KEYS = {
   INVALID_MICROCHIP: "invalidMicrochip",
@@ -32,9 +34,12 @@ const ERROR_KEYS = {
   PHOTO_REQUIRED: "photoRequired",
   NOT_FOUND: "notFound",
   CANNOT_EDIT_ARCHIVED: "cannotEditArchived",
+  premium_required: "digitalCollar.premiumRequired",
+  CONTACT_REQUIRED: "digitalCollar.contactRequired",
+  MEDICAL_ALERTS_TOO_LONG: "digitalCollar.medicalAlertsTooLong",
 };
 
-export function PetForm({ locale, pet = null }) {
+export function PetForm({ locale, pet = null, premium = false }) {
   const t = useTranslations("myPets");
   const tCommon = useTranslations("common");
   const tPetTypes = useTranslations("petTypes");
@@ -51,6 +56,7 @@ export function PetForm({ locale, pet = null }) {
     photo: pet?.photo || null,
     photo2: pet?.photo2 || null,
     passportPhoto: pet?.passportPhoto || null,
+    digitalCollar: normalizeDigitalCollar(pet),
   });
 
   function update(field, value) {
@@ -75,10 +81,19 @@ export function PetForm({ locale, pet = null }) {
       return;
     }
 
+    if (premium && form.digitalCollar.enabled && !form.digitalCollar.allowEmail && !form.digitalCollar.allowPhone) {
+      toast.error(t("digitalCollar.contactRequired"));
+      return;
+    }
+
     setLoading(true);
+    const payload = {
+      ...form,
+      digitalCollar: premium ? form.digitalCollar : undefined,
+    };
     const result = pet
-      ? await updateOwnedPet(pet.publicId, form)
-      : await createOwnedPet(form);
+      ? await updateOwnedPet(pet.publicId, payload)
+      : await createOwnedPet(payload);
     setLoading(false);
 
     if (result.error) {
@@ -108,7 +123,6 @@ export function PetForm({ locale, pet = null }) {
         <CardContent className="p-6 sm:p-8">
           <form onSubmit={handleSubmit}>
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-start">
-              {/* Details column */}
               <div className="order-2 space-y-4 lg:order-1">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
@@ -194,10 +208,18 @@ export function PetForm({ locale, pet = null }) {
                       onChange={(img) => update("passportPhoto", img)}
                     />
                   </div>
+
+                  <div className="sm:col-span-2">
+                    <DigitalCollarFields
+                      locale={locale}
+                      premium={premium}
+                      value={form.digitalCollar}
+                      onChange={(collar) => update("digitalCollar", collar)}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Photos column — sticky on desktop */}
               <div className="order-1 lg:sticky lg:top-6 lg:order-2">
                 <PetPhotosUpload
                   photo={form.photo}

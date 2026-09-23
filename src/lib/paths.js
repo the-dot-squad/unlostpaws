@@ -17,3 +17,8 @@ export function userPath(identifier, locale = "en") {
 export function ownedPetPath(publicId, locale = "en") {
   return `/${locale}/account/pets/${publicId}`;
 }
+
+/** Public Digital Collar emergency page. @param {string} publicId @param {string} [locale] */
+export function tagPath(publicId, locale = "en") {
+  return `/${locale}/tag/${publicId}`;
+}

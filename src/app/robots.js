@@ -10,6 +10,7 @@ export default function robots() {
       `/${locale}/account`,
       `/${locale}/login`,
       `/${locale}/listings/new`,
+      `/${locale}/tag`,
     ]),
   ];
 

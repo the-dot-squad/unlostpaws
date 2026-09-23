@@ -742,10 +742,71 @@
     "maxPetsReached": "You've reached the maximum number of registered pets",
     "photoRequired": "A photo is required",
     "notFound": "Pet not found",
+    "digitalCollar": {
+      "title": "Digital Collar",
+      "hint": "Puts a simple emergency page behind a QR on your pet's collar. The page stays out of search engines and is blocked from common bots, but anyone with the link can open it. Premium only.",
+      "upsellBody": "With Premium you can turn on an emergency page and print a collar QR for each pet.",
+      "upsellCta": "See Premium",
+      "enableInEdit": "Turn on while editing",
+      "activeStatus": "On. Someone who scans the QR can see care notes and get in touch.",
+      "inactiveStatus": "Off. Turn it on when you edit this pet.",
+      "medicalAlerts": "Care and safety notes",
+      "medicalAlertsPlaceholder": "Needs daily insulin. Shy around strangers. Wears a red harness.",
+      "medicalAlertsHint": "Shown on the emergency page. Keep it short for whoever finds your pet.",
+      "contactHint": "After a short security check, finders can reach you this way:",
+      "allowEmail": "Show my email",
+      "allowPhone": "Show my phone number",
+      "qrButton": "Collar QR",
+      "qrTitle": "Digital Collar QR",
+      "qrSubtitle": "Print this and stick it on your pet's collar tag.",
+      "downloadQr": "Download QR image",
+      "copyLink": "Copy link",
+      "openLink": "Open",
+      "copied": "Copied",
+      "linkCopied": "Emergency page link copied",
+      "copyFailed": "Could not copy the link",
+      "premiumRequired": "Digital Collar needs Premium",
+      "contactRequired": "Pick email and/or phone for the Digital Collar",
+      "medicalAlertsTooLong": "Care notes must be 500 characters or fewer"
+    },
     "status": {
       "active": "Active",
       "archived": "Archived",
       "removed": "Removed"
+    }
+  },
+  "tag": {
+    "metaTitle": "Pet emergency tag",
+    "metaDescription": "Emergency information for a registered pet on UnLostPaws.",
+    "eyebrow": "Digital Collar",
+    "subtitle": "If you found this pet, please get in touch with the owner.",
+    "petType": "Type",
+    "color": "Color",
+    "breed": "Breed",
+    "microchip": "Microchip",
+    "microchipYes": "Yes",
+    "microchipNo": "No",
+    "medicalAlerts": "Care and safety notes",
+    "foundTitle": "Found this pet?",
+    "foundHint": "A quick security check shows how to reach the owner so you can message them from your phone.",
+    "foundCta": "I found this pet",
+    "contactLoading": "Loading contact…",
+    "contactVerifying": "Checking…",
+    "contactRevealed": "Reach the owner",
+    "emailSubject": "I found your pet (Digital Collar scan)",
+    "inactiveTitle": "This Digital Collar is off right now",
+    "inactiveBody": "Owner contact and care notes are not available. Try a nearby shelter, or post a found-pet alert on UnLostPaws.",
+    "footerNote": "UnLostPaws Digital Collar. Contact details stay hidden until the security check.",
+    "contactErrors": {
+      "captchaRequired": "Please complete the security check.",
+      "captchaFailed": "Security check failed. Please try again.",
+      "captchaUnavailable": "Security check is temporarily unavailable.",
+      "captchaExpired": "Security check expired. Please try again.",
+      "notFound": "This tag was not found.",
+      "selfContact": "This is your own pet tag.",
+      "unavailable": "The owner has not enabled contact options.",
+      "inactive": "This Digital Collar is not active.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "map": {
@@ -1181,6 +1242,10 @@
       "trust": {
         "title": "Custom @handle",
         "body": "Choose a username for your public profile link."
+      },
+      "collar": {
+        "title": "Digital Collar QR",
+        "body": "An emergency page for each pet, with care notes and contact when someone scans the collar tag."
       },
       "support": {
         "title": "Support the site",

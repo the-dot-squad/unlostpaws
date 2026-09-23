@@ -182,6 +182,23 @@ export const updateListingSchema = withListingCoordinates(
   }),
 );
 
+/** Digital Collar settings nested on owned pets. */
+export const digitalCollarSchema = z
+  .object({
+    enabled: z.boolean().optional().default(false),
+    allowEmail: z.boolean().optional().default(true),
+    allowPhone: z.boolean().optional().default(false),
+    medicalAlerts: z
+      .string()
+      .max(500, "medical_alerts_too_long")
+      .optional()
+      .transform((value) => value?.trim() || ""),
+  })
+  .refine(({ enabled, allowEmail, allowPhone }) => !enabled || allowEmail || allowPhone, {
+    message: "contact_required",
+    path: ["allowEmail"],
+  });
+
 /** Owned-pet create/update payload (server action). */
 export const ownedPetSchema = z.object({
   name: z.string().min(1),
@@ -199,6 +216,7 @@ export const ownedPetSchema = z.object({
     .optional()
     .nullable()
     .transform((value) => (value?.url ? value : undefined)),
+  digitalCollar: digitalCollarSchema.optional(),
 });
 
 /** Admin listing edit — full field access including status. */
@@ -309,6 +327,11 @@ export const contactFormSchema = z.object({
 
 /** Turnstile-protected listing contact reveal. */
 export const listingContactSchema = z.object({
+  token: z.string().min(1, "captcha_required"),
+});
+
+/** Turnstile-protected Digital Collar contact reveal. */
+export const tagContactSchema = z.object({
   token: z.string().min(1, "captcha_required"),
 });
 

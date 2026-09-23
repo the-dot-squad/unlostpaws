@@ -10,6 +10,7 @@ import {
   Gift,
   HeartHandshake,
   Megaphone,
+  QrCode,
   Shield,
   Sparkles,
   Loader2,
@@ -365,6 +366,11 @@ function BenefitsGrid({ t, freeDay, premiumDay }) {
         icon={Shield}
         title={t("benefits.trust.title")}
         body={t("benefits.trust.body")}
+      />
+      <Benefit
+        icon={QrCode}
+        title={t("benefits.collar.title")}
+        body={t("benefits.collar.body")}
       />
       <Benefit
         icon={HeartHandshake}

@@ -33,6 +33,8 @@ export const RESERVED_USERNAMES = [
   "settings",
   "pets",
   "pet",
+  "tag",
+  "collar",
   "matches",
   "reports",
   "help",
