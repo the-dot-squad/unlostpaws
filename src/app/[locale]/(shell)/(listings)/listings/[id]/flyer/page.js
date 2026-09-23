@@ -34,7 +34,16 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
   const ownerUser = await getAuthUserById(listing.userId);
 
   const slug = listing.publicId || listingPublicId(listing);
-  const selectedImageIndex = img ? parseInt(img, 10) || 0 : 0;
+  const imageCount = listing.images?.length || 0;
+  // Support img=0 or img=0,2 (max two unique in-range indexes)
+  const selectedImageIndexes = String(img ?? "0")
+    .split(",")
+    .map((part) => parseInt(part.trim(), 10))
+    .filter((n, i, arr) => Number.isFinite(n) && n >= 0 && n < imageCount && arr.indexOf(n) === i)
+    .slice(0, 2);
+  if (selectedImageIndexes.length === 0) {
+    selectedImageIndexes.push(0);
+  }
   const showPhone = phone !== "0";
   const showEmail = email !== "0";
   const shouldAutoPrint = print === "true";
@@ -99,7 +108,7 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
         <PrintableFlyer
           listing={plainListing}
           locale={locale}
-          selectedImageIndex={selectedImageIndex}
+          selectedImageIndexes={selectedImageIndexes}
           customHeadline={headline}
           customNotes={notes}
           showPhone={showPhone}

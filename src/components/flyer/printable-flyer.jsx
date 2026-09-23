@@ -31,6 +31,7 @@ function formatAddressLines(address) {
 export function PrintableFlyer({
   listing,
   locale,
+  selectedImageIndexes,
   selectedImageIndex = 0,
   customHeadline,
   customNotes,
@@ -46,7 +47,17 @@ export function PrintableFlyer({
   const petTypeLabel = listing.petType ? tPetTypes(listing.petType) || listing.petType : "";
 
   const images = listing.images || [];
-  const selectedImage = images[selectedImageIndex]?.url || images[0]?.url;
+  const indexList =
+    Array.isArray(selectedImageIndexes) && selectedImageIndexes.length > 0
+      ? selectedImageIndexes
+      : [selectedImageIndex];
+  const selectedImages = indexList
+    .map((i) => images[i]?.url)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (selectedImages.length === 0 && images[0]?.url) {
+    selectedImages.push(images[0].url);
+  }
 
   // Resolve Phone and Email from possible listing schema properties
   const displayPhone = listing.contactPhone || listing.contact?.phone || listing.phone || "";
@@ -78,11 +89,67 @@ export function PrintableFlyer({
   const headline = customHeadline?.trim() || defaultHeadlineMap[listing.type] || t("headlineMissing");
 
   const isMissing = listing.type === "missing";
+  const hasTwoImages = selectedImages.length >= 2;
   const badgeColorClass = isMissing
     ? "bg-red-600 text-white"
     : listing.type === "found"
     ? "bg-emerald-600 text-white"
     : "bg-blue-600 text-white";
+
+  const petDetailsBox = (
+    <div
+      className={`flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-slate-50/80 p-5 ${
+        hasTwoImages ? "sm:flex-row sm:items-start sm:gap-6 sm:space-y-0 print:flex-row print:items-start print:gap-6 print:space-y-0" : ""
+      }`}
+    >
+      <div className={hasTwoImages ? "sm:flex-1 print:flex-1" : undefined}>
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          {t("details")}
+        </div>
+        <h2 className="mt-1 text-2xl font-extrabold capitalize text-slate-900">
+          {petTypeLabel} {listing.breed ? `· ${listing.breed}` : ""}
+        </h2>
+        <div className="mt-3 flex items-center gap-2 text-sm">
+          <span className="font-semibold text-slate-700">{t("color") || "Color"}:</span>
+          <span className="capitalize text-slate-900">{listing.color}</span>
+        </div>
+      </div>
+
+      <div className={`space-y-3 text-sm ${hasTwoImages ? "sm:flex-1 print:flex-1" : ""}`}>
+        {addressLines.line1 || addressLines.line2 ? (
+          <div className="flex items-start gap-2 text-slate-800">
+            <MapPin className="size-4 shrink-0 text-red-500 mt-0.5" />
+            <div>
+              <span className="block text-xs font-medium text-slate-500">{t("location")}</span>
+              {addressLines.line1 ? (
+                <p className="font-semibold text-slate-900 leading-tight">{addressLines.line1}</p>
+              ) : null}
+              {addressLines.line2 ? (
+                <p className="text-xs font-medium text-slate-600 mt-0.5">{addressLines.line2}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {dateFormatted ? (
+          <div className="flex items-start gap-2 text-slate-800">
+            <Calendar className="size-4 shrink-0 text-blue-500 mt-0.5" />
+            <div>
+              <span className="block text-xs font-medium text-slate-500">{t("date")}</span>
+              <span className="font-semibold">{dateFormatted}</span>
+            </div>
+          </div>
+        ) : null}
+
+        {isMissing ? (
+          <div className="flex items-center gap-2 rounded-lg bg-amber-100 border border-amber-300 p-2.5 text-amber-900 font-bold text-xs uppercase tracking-wide w-fit">
+            <Award className="size-4 text-amber-600 shrink-0" />
+            <span>{t("reward")}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -101,82 +168,54 @@ export function PrintableFlyer({
       </div>
 
       <div className="p-6 md:p-8 space-y-6 print:p-6 print:space-y-5">
-        {/* Main Hero Section: Image & Key Highlights */}
-        <div className="grid gap-6 md:grid-cols-12 print:grid-cols-12 print:gap-5 items-start">
-          {/* Pet Photo Frame */}
-          <div className="md:col-span-7 print:col-span-7">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 shadow-inner">
-              {selectedImage ? (
-                <Image
-                  src={selectedImage}
-                  alt={`${listing.type} ${listing.petType}`}
-                  fill
-                  priority
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  unoptimized={process.env.NODE_ENV === "development"}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-slate-400">
-                  No image available
+        {hasTwoImages ? (
+          /* Two images: full-width photo row, then full-width details row */
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 print:gap-3">
+              {selectedImages.slice(0, 2).map((url, i) => (
+                <div
+                  key={url || i}
+                  className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 shadow-inner"
+                >
+                  <Image
+                    src={url}
+                    alt={`${listing.type} ${listing.petType} ${i + 1}`}
+                    fill
+                    priority={i === 0}
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 40vw"
+                    unoptimized={process.env.NODE_ENV === "development"}
+                  />
                 </div>
-              )}
+              ))}
             </div>
+            {petDetailsBox}
           </div>
-
-          {/* Quick Pet Specs Box */}
-          <div className="md:col-span-5 print:col-span-5 flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-slate-50/80 p-5">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                {t("details")}
-              </div>
-              <h2 className="mt-1 text-2xl font-extrabold capitalize text-slate-900">
-                {petTypeLabel} {listing.breed ? `· ${listing.breed}` : ""}
-              </h2>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700">{t("color") || "Color"}:</span>
-                <span className="capitalize text-slate-900">{listing.color}</span>
-              </div>
-
-              {/* Detailed Address Lines 1 & 2 */}
-              {addressLines.line1 || addressLines.line2 ? (
-                <div className="flex items-start gap-2 text-slate-800">
-                  <MapPin className="size-4 shrink-0 text-red-500 mt-0.5" />
-                  <div>
-                    <span className="block text-xs font-medium text-slate-500">{t("location")}</span>
-                    {addressLines.line1 ? (
-                      <p className="font-semibold text-slate-900 leading-tight">{addressLines.line1}</p>
-                    ) : null}
-                    {addressLines.line2 ? (
-                      <p className="text-xs font-medium text-slate-600 mt-0.5">{addressLines.line2}</p>
-                    ) : null}
+        ) : (
+          /* One image: photo + details side by side */
+          <div className="grid gap-6 md:grid-cols-12 print:grid-cols-12 print:gap-5 items-start">
+            <div className="md:col-span-7 print:col-span-7">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 shadow-inner">
+                {selectedImages[0] ? (
+                  <Image
+                    src={selectedImages[0]}
+                    alt={`${listing.type} ${listing.petType}`}
+                    fill
+                    priority
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    unoptimized={process.env.NODE_ENV === "development"}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-400">
+                    No image available
                   </div>
-                </div>
-              ) : null}
-
-              {dateFormatted ? (
-                <div className="flex items-start gap-2 text-slate-800">
-                  <Calendar className="size-4 shrink-0 text-blue-500 mt-0.5" />
-                  <div>
-                    <span className="block text-xs font-medium text-slate-500">{t("date")}</span>
-                    <span className="font-semibold">{dateFormatted}</span>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Optional Reward Badge */}
-            {isMissing ? (
-              <div className="flex items-center gap-2 rounded-lg bg-amber-100 border border-amber-300 p-2.5 text-amber-900 font-bold text-xs uppercase tracking-wide">
-                <Award className="size-4 text-amber-600 shrink-0" />
-                <span>{t("reward")}</span>
+                )}
               </div>
-            ) : null}
+            </div>
+            <div className="md:col-span-5 print:col-span-5">{petDetailsBox}</div>
           </div>
-        </div>
+        )}
 
         {/* Custom Description & Notes Box */}
         {(customNotes || listing.description) ? (

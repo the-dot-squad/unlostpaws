@@ -1160,7 +1160,7 @@
   },
   "flyer": {
     "title": "Printable Poster",
-    "subtitle": "Customize and print a high-resolution poster for your pet alert.",
+    "subtitle": "Pick photos, tweak the headline, then print or save as PDF.",
     "actionButton": "Print Poster / QR",
     "qrCodeButton": "QR Code",
     "printPosterButton": "Print Poster",
@@ -1169,7 +1169,8 @@
     "copyLink": "Copy Link",
     "copied": "Copied",
     "linkCopied": "Link copied",
-    "selectImage": "Select Primary Photo",
+    "selectImage": "Choose up to 2 photos",
+    "customize": "Customize",
     "headline": "Poster Headline",
     "headlineMissing": "MISSING. HAVE YOU SEEN ME?",
     "headlineFound": "FOUND. IS THIS YOUR PET?",

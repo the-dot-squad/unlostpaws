@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { PrintableFlyer } from "@/components/flyer/printable-flyer";
-import { Printer, Image as ImageIcon } from "lucide-react";
+import { Printer, Image as ImageIcon, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const MAX_FLYER_IMAGES = 2;
 
 /**
  * FlyerCustomizerDialog Component
@@ -25,8 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }) {
   const images = listing?.images || [];
 
-  // State
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  // State — up to two selected photo indexes (order preserved; first is primary)
+  const [selectedImageIndexes, setSelectedImageIndexes] = useState([0]);
   const [customHeadline, setCustomHeadline] = useState("");
   const [customNotes, setCustomNotes] = useState("");
   const [showPhone, setShowPhone] = useState(true);
@@ -39,10 +41,25 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://unlostpaws.com";
   const targetUrl = `${baseUrl}/${locale}/listings/${slug}`;
 
+  const toggleImageIndex = (idx) => {
+    setSelectedImageIndexes((prev) => {
+      const selected = prev.includes(idx);
+      if (selected) {
+        if (prev.length <= 1) return prev;
+        return prev.filter((i) => i !== idx);
+      }
+      if (prev.length < MAX_FLYER_IMAGES) {
+        return [...prev, idx];
+      }
+      // Already at max 2: keep first (primary), replace second with the new pick
+      return [prev[0], idx];
+    });
+  };
+
   // Handle direct print action
   const handlePrint = () => {
     const params = new URLSearchParams();
-    params.set("img", selectedImageIndex.toString());
+    params.set("img", selectedImageIndexes.join(","));
     if (customHeadline) params.set("headline", customHeadline);
     if (customNotes) params.set("notes", customNotes);
     params.set("phone", showPhone ? "1" : "0");
@@ -71,7 +88,7 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
 
         <Tabs defaultValue="customize" className="w-full mt-2" dir={isRtl ? "rtl" : "ltr"}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="customize">{t("headline")}</TabsTrigger>
+            <TabsTrigger value="customize">{t("customize")}</TabsTrigger>
             <TabsTrigger value="preview">{t("preview")}</TabsTrigger>
           </TabsList>
 
@@ -82,20 +99,20 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5 font-semibold">
                   <ImageIcon className="size-4 text-muted-foreground" />
-                  {t("selectImage")} ({images.length})
+                  {t("selectImage")} ({selectedImageIndexes.length}/{MAX_FLYER_IMAGES})
                 </Label>
                 <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
                   {images.map((img, idx) => {
-                    const isSelected = selectedImageIndex === idx;
+                    const isSelected = selectedImageIndexes.includes(idx);
                     return (
                       <button
                         key={img.url || idx}
                         type="button"
-                        onClick={() => setSelectedImageIndex(idx)}
-                        className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
+                        onClick={() => toggleImageIndex(idx)}
+                        className={`relative aspect-square w-full overflow-hidden rounded-lg border-2 transition-colors ${
                           isSelected
-                            ? "border-primary ring-2 ring-primary/20 scale-95"
-                            : "border-border hover:border-primary/50 opacity-70 hover:opacity-100"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-border opacity-70 hover:border-primary/50 hover:opacity-100"
                         }`}
                       >
                         <Image
@@ -107,9 +124,9 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
                           unoptimized={process.env.NODE_ENV === "development"}
                         />
                         {isSelected ? (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <span className="rounded-full bg-primary text-white p-1 text-xs">✓</span>
-                          </div>
+                          <span className="absolute top-1 end-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                            <Check className="size-3" strokeWidth={3} />
+                          </span>
                         ) : null}
                       </button>
                     );
@@ -173,7 +190,7 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
               <PrintableFlyer
                 listing={listing}
                 locale={locale}
-                selectedImageIndex={selectedImageIndex}
+                selectedImageIndexes={selectedImageIndexes}
                 customHeadline={customHeadline}
                 customNotes={customNotes}
                 showPhone={showPhone}
