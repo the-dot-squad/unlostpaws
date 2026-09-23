@@ -104,7 +104,7 @@ function DialCodeSelect({ value, onChange, id }) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[7.5rem] shrink-0 justify-between px-2 font-mono text-sm"
+          className="w-[7.5rem] shrink-0 justify-between px-2 font-normal"
         >
           <span>{selected ? selected.dial : "+"}</span>
           <ChevronsUpDown className="size-3.5 opacity-50" />
@@ -275,8 +275,8 @@ export function PhoneField({ user, value, onChange }) {
     !user.phone;
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="space-y-2">
+      <div className="flex min-h-6 items-center justify-between gap-2">
         <Label htmlFor="phone-national">{t("label")}</Label>
         {verified ? (
           <Badge
@@ -295,8 +295,8 @@ export function PhoneField({ user, value, onChange }) {
       </div>
 
       {premium && verified && !changing ? (
-        <div className="space-y-2">
-          <Input value={displaySaved} disabled className="bg-muted/50 font-mono text-sm" />
+        <>
+          <Input value={displaySaved} disabled className="bg-muted/50" />
           <p className="text-[11px] leading-snug text-muted-foreground">{t("verifiedHint")}</p>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="outline" onClick={startChange}>
@@ -308,7 +308,7 @@ export function PhoneField({ user, value, onChange }) {
               </p>
             ) : null}
           </div>
-        </div>
+        </>
       ) : null}
 
       {showEditor ? (
@@ -334,7 +334,6 @@ export function PhoneField({ user, value, onChange }) {
                 setNationalAndSync(formatter.input(e.target.value));
               }}
               placeholder={t("nationalPlaceholder")}
-              className="font-mono text-sm"
             />
           </div>
 

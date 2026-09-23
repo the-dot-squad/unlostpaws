@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Camera, ExternalLink, Loader2 } from "lucide-react";
+import { Camera, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { uploadImageFile, ALLOWED_IMAGE_ACCEPT } from "@/lib/storage/upload-client";
 import { ALLOWED_IMAGE_EXTENSIONS } from "@/lib/storage/images";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ function getInitials(name) {
  * @param {string} [props.name]
  * @param {string} [props.imageUrl]
  * @param {(url: string) => void} props.onChange
- * @param {boolean} [props.verified]
+ * @param {boolean} [props.premium]
  * @param {string} [props.profileHref] Locale-prefixed public profile URL.
  * @param {string} [props.profileHandle] Display handle, e.g. @username.
  */
@@ -35,11 +35,12 @@ export function AvatarUpload({
   name,
   imageUrl,
   onChange,
-  verified = false,
+  premium = false,
   profileHref,
   profileHandle,
 }) {
   const t = useTranslations("account");
+  const tPremium = useTranslations("premium");
   const tUpload = useTranslations("upload");
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -80,23 +81,28 @@ export function AvatarUpload({
           className={cn(
             "size-20",
             uploading && "opacity-60",
-            verified && "ring-2 ring-blue-500/50 ring-offset-2 ring-offset-background"
+            premium &&
+              "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-background dark:ring-amber-400/70"
           )}
         >
           <AvatarImage src={imageUrl || undefined} alt={name || ""} />
-          <AvatarFallback className="text-lg">{getInitials(name)}</AvatarFallback>
-        </Avatar>
-        {profileHref ? (
-          <Link
-            href={profileHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={t("profile.viewPublicProfile")}
-            aria-label={t("profile.viewPublicProfile")}
-            className="absolute -bottom-0.5 -end-0.5 flex size-7 items-center justify-center rounded-full border border-border bg-background shadow-sm transition-colors hover:bg-accent hover:text-primary"
+          <AvatarFallback
+            className={cn(
+              "text-lg",
+              premium && "bg-amber-500/15 text-amber-900 dark:text-amber-100"
+            )}
           >
-            <ExternalLink className="size-3.5" aria-hidden="true" />
-          </Link>
+            {getInitials(name)}
+          </AvatarFallback>
+        </Avatar>
+        {premium ? (
+          <span
+            className="absolute -bottom-0.5 -end-0.5 flex size-6 items-center justify-center rounded-full bg-amber-500 text-amber-950 shadow-sm ring-2 ring-background"
+            title={tPremium("active.badge")}
+            aria-label={tPremium("active.badge")}
+          >
+            <Sparkles className="size-3.5" aria-hidden />
+          </span>
         ) : null}
         {uploading ? (
           <div className="absolute inset-0 flex items-center justify-center rounded-full">

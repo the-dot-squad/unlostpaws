@@ -122,7 +122,7 @@ export function ProfileForm({ user }) {
             name={name || user.name}
             imageUrl={image}
             onChange={setImage}
-            verified={publicVerified}
+            premium={premium}
             profileHref={profileHref}
             profileHandle={profileHandle}
           />
@@ -137,7 +137,9 @@ export function ProfileForm({ user }) {
         <CardContent className="space-y-5">
           <div className="grid items-start gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">{t("account.profile.name")}</Label>
+              <div className="flex min-h-6 items-center">
+                <Label htmlFor="name">{t("account.profile.name")}</Label>
+              </div>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {t("account.profile.nameHint")}
@@ -146,14 +148,14 @@ export function ProfileForm({ user }) {
 
             {premium ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex min-h-6 items-center justify-between gap-2">
                   <Label htmlFor="username">{t("account.profile.handle")}</Label>
                   {publicVerified ? (
                     <VerifiedBadge size="sm" showLabel label={t("users.verifiedBadge")} />
                   ) : null}
                 </div>
                 <div className="relative">
-                  <span className="absolute start-3 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
+                  <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                     @
                   </span>
                   <Input
@@ -161,7 +163,7 @@ export function ProfileForm({ user }) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                     placeholder="your_handle"
-                    className="ps-8 font-mono text-sm"
+                    className="ps-7"
                     maxLength={30}
                   />
                 </div>
@@ -171,11 +173,13 @@ export function ProfileForm({ user }) {
               </div>
             ) : (
               <div className="space-y-2">
-                <Label>{t("account.profile.publicId")}</Label>
+                <div className="flex min-h-6 items-center">
+                  <Label>{t("account.profile.publicId")}</Label>
+                </div>
                 <Input
                   value={user.handle?.publicId || user.publicId || ""}
                   disabled
-                  className="bg-muted/50 font-mono text-sm"
+                  className="bg-muted/50"
                 />
                 <p className="text-[11px] leading-snug text-muted-foreground">
                   {t("account.profile.publicIdHint")}
@@ -186,9 +190,13 @@ export function ProfileForm({ user }) {
 
           <div className="grid items-start gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("account.profile.email")}</Label>
+              <div className="flex min-h-6 items-center">
+                <Label htmlFor="email">{t("account.profile.email")}</Label>
+              </div>
               <Input id="email" value={user.email || ""} disabled className="bg-muted/50" />
-              <p className="text-xs text-muted-foreground">{t("account.profile.emailHint")}</p>
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                {t("account.profile.emailHint")}
+              </p>
             </div>
 
             <PhoneField user={user} value={phone} onChange={setPhone} />
@@ -202,10 +210,16 @@ export function ProfileForm({ user }) {
               id="profile-country"
             />
             <div className="space-y-2">
-              <Label htmlFor="city">{t("listings.city")}</Label>
+              <div className="flex min-h-6 items-center">
+                <Label htmlFor="city">{t("listings.city")}</Label>
+              </div>
               <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
           </div>
+
+          <Button onClick={handleSave} disabled={loading || deleting}>
+            {loading ? t("common.loading") : t("common.save")}
+          </Button>
         </CardContent>
       </Card>
 

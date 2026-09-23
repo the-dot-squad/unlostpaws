@@ -32,8 +32,12 @@ export function CountrySelect({ value, onChange, label, id = "country" }) {
   const selected = options.find((o) => o.code === value);
 
   return (
-    <div className="space-y-1">
-      {label && <Label htmlFor={id}>{label}</Label>}
+    <div className="space-y-2">
+      {label ? (
+        <div className="flex min-h-6 items-center">
+          <Label htmlFor={id}>{label}</Label>
+        </div>
+      ) : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
