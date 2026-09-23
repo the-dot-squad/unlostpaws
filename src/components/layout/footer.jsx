@@ -72,7 +72,7 @@ export async function Footer({ locale = "en" }) {
 
       <SiteContainer className="relative py-12 md:py-14">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_1fr] lg:gap-8">
-          <div className="col-span-2 flex flex-col gap-4 md:col-span-1 md:pe-4">
+          <div className="order-last col-span-2 flex flex-col gap-4 md:order-first md:col-span-1 md:pe-4">
             <Link href={prefix} className="inline-flex w-fit items-center gap-2.5 font-semibold">
               <AppLogo size="md" className="rounded-xl" />
               <span className="text-lg">{t("common.appName")}</span>

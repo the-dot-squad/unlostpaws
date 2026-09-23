@@ -55,7 +55,7 @@ export function normalizeUserHandle(handle, fallbackPublicId = "") {
   return { username: "", publicId: fallbackPublicId || "" };
 }
 
-/** Attach a stable `id` field for admin UI and links, and normalize handle and verified status. */
+/** Attach a stable `id` field for admin UI and links, and normalize handle. */
 export function normalizeAuthUser(user) {
   if (!user) return null;
   const id = getAuthUserId(user);
@@ -66,7 +66,6 @@ export function normalizeAuthUser(user) {
     id,
     handle,
     publicId: rawPublicId || handle.publicId || id,
-    verified: Boolean(user.verified || user.role === "verified"),
   };
 }
 
@@ -120,7 +119,11 @@ export async function getAuthUsersByIds(userIds) {
       id: 1,
       publicId: 1,
       handle: 1,
-      verified: 1,
+      premiumStatus: 1,
+      premiumPeriodEnd: 1,
+      premiumSource: 1,
+      phone: 1,
+      phoneVerified: 1,
       name: 1,
       email: 1,
       status: 1,
@@ -141,23 +144,27 @@ export async function getAuthUsersByIds(userIds) {
 
 /**
  * Update a user by ID via better-auth internal adapter.
- * Revokes active sessions only when `banned` transitions from false → true.
+ * Revokes active sessions when account status transitions away from active.
  */
 export async function updateAuthUserById(userId, data) {
   const auth = await getAuth();
   const ctx = await auth.$context;
 
-  let wasBanned;
-  const isBanning = data.status === "banned" || data.banned === true;
-  if (isBanning) {
-    const existing = await ctx.internalAdapter.findUserById(userId);
-    const existingStatus = existing?.status || (existing?.banned ? "banned" : "active");
-    wasBanned = existingStatus === "banned";
+  const existing = await ctx.internalAdapter.findUserById(userId);
+  const prevStatus = existing?.status || (existing?.banned ? "banned" : "active");
+
+  let nextStatus = prevStatus;
+  if (data.status !== undefined) {
+    nextStatus = data.status;
+  } else if (data.banned === true) {
+    nextStatus = "banned";
+  } else if (data.banned === false && prevStatus === "banned") {
+    nextStatus = "active";
   }
 
   const result = await ctx.internalAdapter.updateUser(userId, data);
 
-  if (isBanning && !wasBanned) {
+  if (prevStatus === "active" && nextStatus !== "active") {
     await revokeUserSessions(userId);
   }
 
