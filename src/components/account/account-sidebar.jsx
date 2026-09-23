@@ -24,6 +24,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { isPremium } from "@/lib/premium/entitlements";
 
 /** Navigation items for the account area. */
 function useAccountNav(locale) {
@@ -78,12 +79,36 @@ function NavLinks({ items, pathname, onNavigate }) {
 }
 
 function SidebarUser({ user }) {
+  const t = useTranslations("premium");
+  const premium = isPremium(user);
+
   return (
     <div className="flex items-center gap-3 px-2 py-3">
-      <Avatar className="size-9">
-        <AvatarImage src={user.image || undefined} alt={user.name || ""} />
-        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-      </Avatar>
+      <div className="relative shrink-0">
+        <Avatar
+          className={cn(
+            "size-9",
+            premium &&
+              "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-card dark:ring-amber-400/70"
+          )}
+        >
+          <AvatarImage src={user.image || undefined} alt={user.name || ""} />
+          <AvatarFallback
+            className={cn(premium && "bg-amber-500/15 text-amber-900 dark:text-amber-100")}
+          >
+            {getInitials(user.name)}
+          </AvatarFallback>
+        </Avatar>
+        {premium ? (
+          <span
+            className="absolute -bottom-0.5 -end-0.5 flex size-4 items-center justify-center rounded-full bg-amber-500 text-amber-950 shadow-sm ring-2 ring-card"
+            title={t("active.badge")}
+            aria-label={t("active.badge")}
+          >
+            <Sparkles className="size-2.5" aria-hidden />
+          </span>
+        ) : null}
+      </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{user.name}</p>
         <p className="truncate text-xs text-muted-foreground">{user.email}</p>

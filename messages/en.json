@@ -585,7 +585,7 @@
     "petsSubtitle": "Registered pets linked to your account for faster matching.",
     "noListings": "You haven't posted any alerts yet",
     "noMatches": "No possible matches yet. Post a missing pet alert to start matching.",
-    "pendingMatchesLabel": "Pending matches",
+    "pendingMatchesLabel": "Matches",
     "pendingMatches": "{count} new",
     "matchCount": "{count, plural, one {# match} other {# matches}}",
     "matchesSection": "Matches on your alerts",
@@ -1198,35 +1198,49 @@
   "premium": {
     "page": {
       "title": "Premium",
-      "subtitle": "Post more alerts, verify your profile, and help keep UnLostPaws running.",
-      "subtitleMember": "Thanks for being a member. Here is what you have access to.",
+      "subtitle": "Higher alert limits, a verified badge, and collar QR tags — paid once a year.",
+      "subtitleMember": "Your membership is active. Limits, badge, and collar tools are ready.",
       "checkoutSuccess": "You are on Premium. Open Profile settings to verify your phone and show the verified badge.",
       "checkoutPending": "Payment went through. Your access should appear in a minute. Refresh if it does not.",
       "checkoutCanceled": "Checkout was canceled. You can upgrade whenever you like."
     },
     "active": {
       "badge": "Premium",
-      "eyebrow": "Premium member",
+      "eyebrow": "Member",
       "title": "Thanks for supporting UnLostPaws",
-      "heroTitle": "Your Premium membership",
-      "heroSubtitle": "Everything below is included with your plan. Verify your phone in Profile settings to show the blue check on your profile and alerts.",
+      "heroTitle": "You're on Premium",
+      "heroSubtitle": "Higher daily limits are on. Verify your phone in Profile settings to show the blue check on your profile and alerts.",
+      "compactTitle": "Premium membership",
+      "compactDetails": "Details",
       "subtitle": "Verified badge, higher alert limits, and help keeping the site online.",
       "benefitsHeading": "What's included",
       "memberSince": "Member since",
       "validUntil": "Renews or ends",
+      "renews": "Renews",
+      "ends": "Ends",
+      "access": "Access",
+      "statRenews": "Renews {date}",
+      "statEnds": "Ends {date}",
+      "statGiftEnds": "Gift · Ends {date}",
+      "statGiftNoExpiry": "Gift · No expiry",
+      "statDaysSuffix": "days",
       "noExpiry": "Does not expire",
       "dateUnknown": "Not recorded",
-      "complimentary": "Gift from our team",
+      "complimentary": "Gift",
       "pastDue": "Payment past due",
       "manage": "Manage billing",
       "verifyPhoneTitle": "Get your verified badge",
-      "verifyPhoneBody": "Your membership is active. Verify your phone once to show the badge on your profile and alerts.",
+      "verifyPhoneBody": "Verify your phone once to show the badge on your profile and alerts.",
       "verifyPhoneCta": "Go to Profile settings"
     },
     "upsell": {
-      "eyebrow": "Upgrade",
-      "title": "Premium membership",
-      "subtitle": "Post more alerts, pick a public @handle, and verify your phone so people trust your posts. One annual fee helps us run matching, maps, and the rest of the site.",
+      "eyebrow": "Premium",
+      "title": "Hit your free limit? Keep posting.",
+      "subtitle": "Premium raises your daily alert cap, adds a phone-verified badge, a public @handle, and Digital Collar QR pages for each pet. One yearly payment keeps matching and maps online.",
+      "compactTitle": "Hit your free limit? Keep posting.",
+      "compactSubtitle": "More alerts per day, verified badge, and collar QR — {price}/year.",
+      "compactCta": "Join · {price}/yr",
+      "compactDetails": "What's included",
       "cta": "Join for {price}/year",
       "billingHint": "Secure checkout with Stripe. Cancel anytime from billing settings."
     },
@@ -1237,7 +1251,7 @@
       },
       "rate": {
         "title": "{to} alerts per day",
-        "body": "Free accounts get {from} per day. Premium gives you more room when every hour counts."
+        "body": "Free accounts get {from} per day. Premium gives you more room on busy days."
       },
       "trust": {
         "title": "Custom @handle",
@@ -1248,8 +1262,8 @@
         "body": "An emergency page for each pet, with care notes and contact when someone scans the collar tag."
       },
       "support": {
-        "title": "Support the site",
-        "body": "Your membership helps pay for hosting, photo matching, and the tools people use to find lost pets."
+        "title": "Keep the site running",
+        "body": "Membership pays for hosting, photo matching, and the tools people use to find lost pets."
       }
     },
     "preview": {
@@ -1265,12 +1279,12 @@
     "memberCard": {
       "label": "Your plan",
       "title": "Premium is active",
-      "subtitle": "Your higher limits are on now.",
+      "subtitle": "Higher limits are on now.",
       "phoneVerified": "Phone verified",
       "phonePending": "Verify phone for badge",
       "monthlyCap": "Monthly limit",
       "perMonth": "{count}/month",
-      "complimentaryNote": "This membership was granted by our team.",
+      "complimentaryNote": "This membership was gifted by our team.",
       "thankYou": "Thanks for being here."
     },
     "errors": {

@@ -5,11 +5,13 @@ import { getAccountDashboardData } from "@/lib/intelligence/matching/account";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/account/stat-card";
+import { PremiumStatCard } from "@/components/account/premium-stat-card";
 import { MatchListingSummary } from "@/components/account/match-listing-summary";
 import { PremiumPanel } from "@/components/account/premium-panel";
 import { getAuthUserById } from "@/lib/auth/users";
 import { getAppSettings } from "@/lib/services/settings";
-import { toPlainObject } from "@/lib/utils";
+import { isPremium } from "@/lib/premium/entitlements";
+import { toPlainObject, cn } from "@/lib/utils";
 import { FileText, Heart, GitCompare, Plus } from "lucide-react";
 
 export default async function AccountPage({ params }) {
@@ -26,6 +28,10 @@ export default async function AccountPage({ params }) {
       getAuthUserById(session.user.id),
       getAppSettings(),
     ]);
+
+  const plainUser = toPlainObject(user || session.user);
+  const premium = isPremium(plainUser);
+  const premiumPath = `${accountPrefix}/premium`;
 
   return (
     <div className="space-y-8">
@@ -45,15 +51,13 @@ export default async function AccountPage({ params }) {
         </Button>
       </div>
 
-      <PremiumPanel
-        user={toPlainObject(user || session.user)}
-        settings={toPlainObject(settings)}
-        compact
-        settingsPath={`/${locale}/account/settings`}
-      />
-
       {/* Stats row */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div
+        className={cn(
+          "grid w-full grid-cols-2 gap-3",
+          premium ? "lg:grid-cols-4" : "md:grid-cols-3"
+        )}
+      >
         <StatCard
           label={t("nav.myListings")}
           value={listingsCount}
@@ -72,6 +76,7 @@ export default async function AccountPage({ params }) {
           icon={GitCompare}
           href={`${accountPrefix}/matches`}
         />
+        {premium ? <PremiumStatCard user={plainUser} href={premiumPath} /> : null}
       </div>
 
       {/* Match alerts grouped by listing */}
@@ -102,6 +107,16 @@ export default async function AccountPage({ params }) {
           </div>
         )}
       </section>
+
+      {!premium ? (
+        <PremiumPanel
+          user={plainUser}
+          settings={toPlainObject(settings)}
+          compact
+          settingsPath={`/${locale}/account/settings`}
+          premiumPath={premiumPath}
+        />
+      ) : null}
     </div>
   );
 }

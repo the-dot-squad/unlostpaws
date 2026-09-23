@@ -39,8 +39,15 @@ import { cn } from "@/lib/utils";
  * @param {object} props.settings
  * @param {boolean} [props.compact]
  * @param {string} [props.settingsPath] — link target for phone verify hint
+ * @param {string} [props.premiumPath] — link to full Premium page
  */
-export function PremiumPanel({ user, settings, compact = false, settingsPath = "" }) {
+export function PremiumPanel({
+  user,
+  settings,
+  compact = false,
+  settingsPath = "",
+  premiumPath = "",
+}) {
   const t = useTranslations("premium");
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
@@ -103,9 +110,11 @@ export function PremiumPanel({ user, settings, compact = false, settingsPath = "
   }
 
   if (premium) {
+    // Compact membership lives in dashboard stats (`PremiumStatCard`).
+    if (compact) return null;
+
     return (
       <ActivePremiumPanel
-        compact={compact}
         user={user}
         locale={locale}
         t={t}
@@ -133,6 +142,7 @@ export function PremiumPanel({ user, settings, compact = false, settingsPath = "
       freeDay={freeDay}
       premiumDay={premiumDay}
       priceLabel={priceLabel}
+      premiumPath={premiumPath}
       pending={pending}
       busy={busy}
       onCheckout={() => run(startPremiumCheckout, "checkout")}
@@ -141,7 +151,6 @@ export function PremiumPanel({ user, settings, compact = false, settingsPath = "
 }
 
 function ActivePremiumPanel({
-  compact,
   user,
   locale,
   t,
@@ -160,33 +169,7 @@ function ActivePremiumPanel({
   const startedAt = user?.premiumStartedAt ? new Date(user.premiumStartedAt) : null;
   const periodEnd = user?.premiumPeriodEnd ? new Date(user.premiumPeriodEnd) : null;
   const pastDue = user?.premiumStatus === "past_due";
-
-  if (compact) {
-    return (
-      <section className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 via-background to-sky-500/10 p-5">
-        <div className="pointer-events-none absolute -right-6 -top-6 size-28 rounded-full bg-amber-400/20 blur-2xl" />
-        <div className="relative space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <VerifiedBadge size="sm" showLabel label={t("active.badge")} />
-            {isComplimentary ? (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <Gift className="size-3" />
-                {t("active.complimentary")}
-              </Badge>
-            ) : null}
-          </div>
-          <p className="font-semibold">{t("active.title")}</p>
-          <MembershipDates
-            t={t}
-            locale={locale}
-            startedAt={startedAt}
-            periodEnd={periodEnd}
-            compact
-          />
-        </div>
-      </section>
-    );
-  }
+  const isStripe = user?.premiumSource === "stripe";
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 via-background to-emerald-500/10 p-6 sm:p-10">
@@ -228,6 +211,7 @@ function ActivePremiumPanel({
               locale={locale}
               startedAt={startedAt}
               periodEnd={periodEnd}
+              isStripe={isStripe}
             />
 
             {!phoneVerified && settingsPath ? (
@@ -258,6 +242,7 @@ function ActivePremiumPanel({
             premiumMonth={premiumMonth}
             publicBadge={publicBadge}
             phoneVerified={phoneVerified}
+            isComplimentary={isComplimentary}
           />
         </div>
 
@@ -278,45 +263,70 @@ function UpsellPremiumPanel({
   freeDay,
   premiumDay,
   priceLabel,
+  premiumPath,
   pending,
   busy,
   onCheckout,
 }) {
+  if (compact) {
+    return (
+      <section className="rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/8 via-background to-sky-500/8 px-4 py-3.5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="min-w-0 space-y-1">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
+              <Sparkles className="size-3.5" />
+              {t("upsell.eyebrow")}
+            </div>
+            <p className="text-sm font-semibold leading-snug sm:text-base">
+              {t("upsell.compactTitle")}
+            </p>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              {t("upsell.compactSubtitle", { price: priceLabel })}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              className="bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
+              disabled={pending}
+              onClick={onCheckout}
+            >
+              {busy === "checkout" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="size-3.5" />
+              )}
+              {t("upsell.compactCta", { price: priceLabel })}
+            </Button>
+            {premiumPath ? (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={premiumPath}>{t("upsell.compactDetails")}</Link>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden rounded-2xl border bg-gradient-to-br from-sky-500/10 via-background to-amber-500/15",
-        compact ? "p-5" : "p-6 sm:p-10"
-      )}
-    >
+    <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-sky-500/10 via-background to-amber-500/15 p-6 sm:p-10">
       <div className="pointer-events-none absolute -left-10 top-0 size-40 animate-pulse rounded-full bg-sky-400/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-12 -right-8 size-48 rounded-full bg-amber-400/25 blur-3xl" />
 
-      <div className={cn("relative", compact ? "space-y-5" : "space-y-8")}>
-        <div
-          className={cn(
-            "grid gap-8",
-            !compact && "lg:grid-cols-[1.2fr_0.8fr] lg:items-center"
-          )}
-        >
+      <div className="relative space-y-8">
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-200">
               <Sparkles className="size-3.5" />
               {t("upsell.eyebrow")}
             </div>
-            <h2
-              className={cn(
-                "text-balance font-bold tracking-tight",
-                compact ? "text-xl" : "text-3xl sm:text-4xl"
-              )}
-            >
+            <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
               {t("upsell.title")}
             </h2>
-            <p className="max-w-prose text-pretty text-muted-foreground">{t("upsell.subtitle")}</p>
-
-            {compact ? (
-              <BenefitsGrid t={t} freeDay={freeDay} premiumDay={premiumDay} />
-            ) : null}
+            <p className="max-w-prose text-pretty text-muted-foreground">
+              {t("upsell.subtitle")}
+            </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
@@ -336,14 +346,10 @@ function UpsellPremiumPanel({
             </div>
           </div>
 
-          {!compact ? (
-            <PreviewCard t={t} freeDay={freeDay} premiumDay={premiumDay} priceLabel={priceLabel} />
-          ) : null}
+          <PreviewCard t={t} freeDay={freeDay} premiumDay={premiumDay} priceLabel={priceLabel} />
         </div>
 
-        {!compact ? (
-          <BenefitsGrid t={t} freeDay={freeDay} premiumDay={premiumDay} />
-        ) : null}
+        <BenefitsGrid t={t} freeDay={freeDay} premiumDay={premiumDay} />
       </div>
     </section>
   );
@@ -381,7 +387,12 @@ function BenefitsGrid({ t, freeDay, premiumDay }) {
   );
 }
 
-function MembershipDates({ t, locale, startedAt, periodEnd, compact = false }) {
+function periodEndLabel(t, isStripe, periodEnd) {
+  if (!periodEnd) return t("active.access");
+  return isStripe ? t("active.renews") : t("active.ends");
+}
+
+function MembershipDates({ t, locale, startedAt, periodEnd, isStripe, compact = false }) {
   return (
     <div
       className={cn(
@@ -404,7 +415,7 @@ function MembershipDates({ t, locale, startedAt, periodEnd, compact = false }) {
         <CalendarRange className="mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400" />
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t("active.validUntil")}
+            {periodEndLabel(t, isStripe, periodEnd)}
           </p>
           <p className="mt-0.5 text-sm font-semibold">
             {periodEnd ? formatDate(periodEnd, locale) : t("active.noExpiry")}
@@ -422,6 +433,7 @@ function MemberCard({
   premiumMonth,
   publicBadge,
   phoneVerified,
+  isComplimentary,
 }) {
   return (
     <div className="relative mx-auto w-full max-w-sm lg:mx-0 lg:ms-auto">
@@ -445,7 +457,9 @@ function MemberCard({
         </div>
 
         <p className="text-lg font-semibold">{t("memberCard.title")}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("memberCard.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isComplimentary ? t("memberCard.complimentaryNote") : t("memberCard.subtitle")}
+        </p>
 
         <div className="mt-6 space-y-2 rounded-xl bg-muted/50 p-4 text-sm">
           <div className="flex justify-between text-muted-foreground line-through decoration-muted-foreground/50">
