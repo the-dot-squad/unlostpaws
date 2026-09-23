@@ -540,6 +540,45 @@
     "dashboardSubtitle": "Here's an overview of your alerts, pets, and possible matches.",
     "phone": "Phone number",
     "phoneHint": "International format, e.g. +1 555 123 4567",
+    "phoneVerify": {
+      "label": "Phone number",
+      "nationalPlaceholder": "Phone number",
+      "statusVerified": "Phone verified",
+      "statusUnverified": "Not verified",
+      "verifiedHint": "Verified via SMS.",
+      "nonPremiumHint": "Verification available with Premium.",
+      "verifyHint": "Send a code to verify your number.",
+      "changeHint": "Verify the new number with a code.",
+      "changeNumber": "Change number",
+      "changeCooldown": "Next change available {date}",
+      "sendCode": "Send verification code",
+      "codeLabel": "Verification code",
+      "confirmCode": "Confirm",
+      "resend": "Resend code",
+      "resendIn": "Resend in {seconds}s",
+      "resendExhausted": "Resend used — enter the code from your messages.",
+      "cancelChange": "Cancel",
+      "codeSent": "Verification code sent",
+      "verifiedSuccess": "Phone number verified",
+      "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "invalid_phone": "Enter a valid phone number.",
+        "invalid_code": "Enter the verification code.",
+        "premium_required": "Phone verification requires Premium.",
+        "already_verified": "This phone number is already verified.",
+        "phone_already_verified": "This phone number is already verified on another account.",
+        "phone_change_cooldown": "You can change your verified phone again after {date}.",
+        "otp_daily_limit": "Too many attempts for this number today. Try again tomorrow.",
+        "otp_resend_wait": "Please wait before requesting another code.",
+        "otp_resend_exhausted": "You already used the resend for this code.",
+        "otp_not_started": "Send a verification code first.",
+        "otp_invalid": "Incorrect code. Please try again.",
+        "otp_expired": "Code expired or not found. Send a new one.",
+        "verify_unavailable": "Phone verification is temporarily unavailable.",
+        "verify_send_failed": "Could not send the code. Please try again.",
+        "verify_check_failed": "Could not verify the code. Please try again."
+      }
+    },
     "locale": "Preferred language",
     "profileUpdated": "Profile updated",
     "listingsSubtitle": "Pet alerts you've posted: missing, found, and sightings.",
@@ -561,19 +600,22 @@
     "nav": {
       "dashboard": "Dashboard",
       "profile": "Profile",
-      "openMenu": "Open account menu"
+      "openMenu": "Open account menu",
+      "premium": "Premium"
     },
     "profile": {
       "subtitle": "Manage your personal details, contact info, and preferences.",
       "photoTitle": "Profile photo",
       "photoDescription": "Your photo from sign-in or a custom upload.",
+      "viewPublicProfile": "View public profile",
       "personalTitle": "Personal details",
       "personalDescription": "Name and contact information used across the platform.",
       "name": "Display name",
+      "nameHint": "Shown on your profile and alerts.",
       "handle": "Public handle",
-      "handleHint": "Your unique public username for your verified account. Letters, numbers, and underscores (3-30 chars).",
+      "handleHint": "3–30 chars: letters, numbers, underscores.",
       "publicId": "Public ID",
-      "publicIdHint": "Your permanent system-generated identifier for public profile links.",
+      "publicIdHint": "Used in your public profile URL.",
       "email": "Email",
       "emailHint": "Managed by your sign-in provider and cannot be changed here.",
       "locationTitle": "Location",
@@ -1091,5 +1133,90 @@
     "backToListing": "Back to Listing",
     "color": "Color",
     "scanToContact": "Scan QR code above to view live alert & contact creator online."
+  },
+  "premium": {
+    "page": {
+      "title": "Premium",
+      "subtitle": "Post more alerts, verify your profile, and help keep UnLostPaws running.",
+      "subtitleMember": "Thanks for being a member. Here is what you have access to.",
+      "checkoutSuccess": "You are on Premium. Open Profile settings to verify your phone and show the verified badge.",
+      "checkoutPending": "Payment went through. Your access should appear in a minute. Refresh if it does not.",
+      "checkoutCanceled": "Checkout was canceled. You can upgrade whenever you like."
+    },
+    "active": {
+      "badge": "Premium",
+      "eyebrow": "Premium member",
+      "title": "Thanks for supporting UnLostPaws",
+      "heroTitle": "Your Premium membership",
+      "heroSubtitle": "Everything below is included with your plan. Verify your phone in Profile settings to show the blue check on your profile and alerts.",
+      "subtitle": "Verified badge, higher alert limits, and help keeping the site online.",
+      "benefitsHeading": "What's included",
+      "memberSince": "Member since",
+      "validUntil": "Renews or ends",
+      "noExpiry": "Does not expire",
+      "dateUnknown": "Not recorded",
+      "complimentary": "Gift from our team",
+      "pastDue": "Payment past due",
+      "manage": "Manage billing",
+      "verifyPhoneTitle": "Get your verified badge",
+      "verifyPhoneBody": "Your membership is active. Verify your phone once to show the badge on your profile and alerts.",
+      "verifyPhoneCta": "Go to Profile settings"
+    },
+    "upsell": {
+      "eyebrow": "Upgrade",
+      "title": "Premium membership",
+      "subtitle": "Post more alerts, pick a public @handle, and verify your phone so people trust your posts. One annual fee helps us run matching, maps, and the rest of the site.",
+      "cta": "Join for {price}/year",
+      "billingHint": "Secure checkout with Stripe. Cancel anytime from billing settings."
+    },
+    "benefits": {
+      "verified": {
+        "title": "Verified badge",
+        "body": "Verify your phone to show a blue check on your profile and alerts."
+      },
+      "rate": {
+        "title": "{to} alerts per day",
+        "body": "Free accounts get {from} per day. Premium gives you more room when every hour counts."
+      },
+      "trust": {
+        "title": "Custom @handle",
+        "body": "Choose a username for your public profile link."
+      },
+      "support": {
+        "title": "Support the site",
+        "body": "Your membership helps pay for hosting, photo matching, and the tools people use to find lost pets."
+      }
+    },
+    "preview": {
+      "label": "Example profile",
+      "badge": "Verified",
+      "name": "Alex Rivera",
+      "handle": "alexr",
+      "free": "Free",
+      "premium": "Premium",
+      "perDay": "{count}/day",
+      "perYear": "/year"
+    },
+    "memberCard": {
+      "label": "Your plan",
+      "title": "Premium is active",
+      "subtitle": "Your higher limits are on now.",
+      "phoneVerified": "Phone verified",
+      "phonePending": "Verify phone for badge",
+      "monthlyCap": "Monthly limit",
+      "perMonth": "{count}/month",
+      "complimentaryNote": "This membership was granted by our team.",
+      "thankYou": "Thanks for being here."
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "user_not_found": "Account not found.",
+      "already_premium": "You already have Premium.",
+      "billing_unavailable": "Billing is temporarily unavailable.",
+      "premium_disabled": "Premium is not available right now.",
+      "billing_misconfigured": "Billing is not configured yet.",
+      "checkout_failed": "Could not start checkout.",
+      "no_customer": "Subscribe first to manage billing."
+    }
   }
 }

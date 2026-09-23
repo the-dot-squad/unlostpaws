@@ -85,10 +85,31 @@ export function buildReportFilter(sp) {
 export function buildUserFilter(sp) {
   const filter = {};
   if (sp.role) filter.role = sp.role;
-  if (sp.verified === "yes") {
-    filter.verified = true;
-  } else if (sp.verified === "no") {
-    filter.verified = { $ne: true };
+  if (sp.premium === "yes") {
+    filter.premiumStatus = { $in: ["active", "past_due"] };
+    filter.$and = [
+      ...(filter.$and || []),
+      {
+        $or: [
+          { premiumPeriodEnd: null },
+          { premiumPeriodEnd: { $exists: false } },
+          { premiumPeriodEnd: { $gt: new Date() } },
+        ],
+      },
+    ];
+  } else if (sp.premium === "no") {
+    filter.$and = [
+      ...(filter.$and || []),
+      {
+        $or: [
+          { premiumStatus: { $nin: ["active", "past_due"] } },
+          {
+            premiumStatus: { $in: ["active", "past_due"] },
+            premiumPeriodEnd: { $lte: new Date() },
+          },
+        ],
+      },
+    ];
   }
   if (sp.status) {
     if (sp.status === "active") {

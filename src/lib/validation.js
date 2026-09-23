@@ -227,6 +227,7 @@ export const usernameSchema = z
 export const adminUserSchema = z.object({
   name: z.string().trim().min(1).max(100),
   phone: optionalPhoneSchema.optional(),
+  phoneVerified: z.boolean().optional(),
   country: z
     .string()
     .optional()
@@ -238,11 +239,26 @@ export const adminUserSchema = z.object({
     .string()
     .optional()
     .transform((val) => (val && USER_ROLES.includes(val) ? val : "user")),
-  verified: z.coerce.boolean().optional().default(false),
   username: usernameSchema.optional().or(z.literal("")),
   status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
   /** Optional note included in the manual ban email (admin edit form). */
   banReason: z.string().trim().max(500).optional(),
+});
+
+/** Start phone OTP — E.164 required. */
+export const startPhoneVerificationSchema = z.object({
+  phone: optionalPhoneSchema,
+}).refine((data) => Boolean(data.phone), { message: "invalid_phone", path: ["phone"] });
+
+/** Confirm phone OTP. */
+export const confirmPhoneVerificationSchema = z.object({
+  phone: optionalPhoneSchema,
+  code: z.string().trim().min(4).max(12),
+}).refine((data) => Boolean(data.phone), { message: "invalid_phone", path: ["phone"] });
+
+/** Admin complimentary Premium grant — years=0 means forever. */
+export const adminGrantPremiumSchema = z.object({
+  years: z.coerce.number().int().min(0).max(50),
 });
 
 /** Admin owned-pet edit payload. */
@@ -362,4 +378,15 @@ export const appSettingsSchema = z.object({
       }),
     )
     .default([]),
+  premiumEnabled: z.boolean(),
+  premiumPriceCents: positiveInt.max(1_000_000),
+  premiumCurrency: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{3}$/),
+  premiumMaxListingsPerDay: positiveInt.max(100),
+  premiumMaxListingsPerMonth: positiveInt.max(500),
+  stripePremiumProductId: z.string().trim().optional().default(""),
+  stripePremiumPriceId: z.string().trim().optional().default(""),
 });

@@ -30,19 +30,6 @@ const ML_VARIANTS = {
  */
 export function AdminStatusBadge({ value, className }) {
   if (!value) return null;
-  if (value === "verified") {
-    return (
-      <Badge
-        variant="outline"
-        className={cn(
-          "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 capitalize font-medium",
-          className
-        )}
-      >
-        Verified
-      </Badge>
-    );
-  }
   const variant = VARIANTS[value] || "outline";
 
   return (

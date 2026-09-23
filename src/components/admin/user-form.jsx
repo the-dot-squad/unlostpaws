@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { USER_ROLES } from "@/config/constants/enums";
 import {
   Select,
@@ -16,13 +17,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminCountrySelect } from "@/components/admin/admin-country-select";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
-import { adminDeleteUser, adminUpdateUser } from "@/lib/actions/admin";
+import {
+  adminDeleteUser,
+  adminUpdateUser,
+  adminGrantPremium,
+  adminRevokePremium,
+} from "@/lib/actions/admin";
+import { isPremium } from "@/lib/premium/entitlements";
 import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
+
+const GRANT_OPTIONS = [
+  { value: "0", label: "Forever" },
+  { value: "1", label: "1 year" },
+  { value: "2", label: "2 years" },
+  { value: "3", label: "3 years" },
+  { value: "5", label: "5 years" },
+];
 
 /** Sub-component for editing user profile information, role, and status. */
 function EditUserCard({ form, user, update }) {
@@ -48,6 +62,26 @@ function EditUserCard({ form, user, update }) {
           <div className="space-y-2">
             <Label>Phone</Label>
             <Input value={form.phone || ""} onChange={(e) => update("phone", e.target.value)} />
+            <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+              <div>
+                <Label htmlFor="admin-phone-verified" className="text-sm font-medium">
+                  Phone verified
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Required with Premium for the public verified badge.
+                </p>
+              </div>
+              <Switch
+                id="admin-phone-verified"
+                checked={Boolean(form.phoneVerified)}
+                onCheckedChange={(v) => update("phoneVerified", v)}
+              />
+            </div>
+            {user.phoneVerifiedAt ? (
+              <p className="text-xs text-muted-foreground">
+                Verified at {formatDate(user.phoneVerifiedAt)}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -89,39 +123,20 @@ function EditUserCard({ form, user, update }) {
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select value={form.status || "active"} onValueChange={(v) => update("status", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="banned">Banned</SelectItem>
-                <SelectItem value="deactivated">Deactivated</SelectItem>
-                <SelectItem value="deleted">Deleted (Soft Deleted)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Banned, deactivated, or deleted users cannot sign in or post.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="admin-verified-toggle">Verification</Label>
-            <div className="flex h-9 items-center justify-between rounded-md border bg-background px-3">
-              <span className="text-sm font-medium">
-                {form.verified ? "Verified account" : "Unverified"}
-              </span>
-              <Switch
-                id="admin-verified-toggle"
-                checked={Boolean(form.verified)}
-                onCheckedChange={(checked) => update("verified", checked)}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Verified users get a blue badge and can set a custom @handle.
-            </p>
-          </div>
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={form.status || "active"} onValueChange={(v) => update("status", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="banned">Banned</SelectItem>
+              <SelectItem value="deactivated">Deactivated</SelectItem>
+              <SelectItem value="deleted">Deleted (Soft Deleted)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Banned, deactivated, or deleted users cannot sign in or post.
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -139,7 +154,7 @@ function EditUserCard({ form, user, update }) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Unique public handle for profile URL (e.g. /@username).
+            Premium only. Unique public handle for profile URL (e.g. /@username).
           </p>
         </div>
 
@@ -163,11 +178,110 @@ function EditUserCard({ form, user, update }) {
   );
 }
 
+function PremiumCard({ user, onChanged }) {
+  const [years, setYears] = useState("1");
+  const [loading, setLoading] = useState(false);
+  const premium = isPremium(user);
+  const source = user.premiumSource || null;
+
+  async function handleGrant() {
+    setLoading(true);
+    const result = await adminGrantPremium(user.id, { years: Number(years) });
+    setLoading(false);
+    if (result?.success) {
+      toast.success("Premium granted");
+      onChanged();
+      return;
+    }
+    if (result?.error === "already_premium") {
+      toast.error("User already has Premium");
+      return;
+    }
+    toast.error(result?.error ?? "Could not grant Premium");
+  }
+
+  async function handleRevoke() {
+    if (!window.confirm("Revoke complimentary Premium for this user?")) return;
+    setLoading(true);
+    const result = await adminRevokePremium(user.id);
+    setLoading(false);
+    if (result?.success) {
+      toast.success("Premium revoked");
+      onChanged();
+      return;
+    }
+    if (result?.error === "stripe_premium_use_portal") {
+      toast.error("Paid Stripe Premium — cancel via Stripe Customer Portal");
+      return;
+    }
+    toast.error(result?.error ?? "Could not revoke Premium");
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Premium</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          {premium ? (
+            <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200">
+              Premium active
+            </Badge>
+          ) : (
+            <Badge variant="outline">No Premium</Badge>
+          )}
+          {premium && source ? (
+            <Badge variant="secondary" className="capitalize">
+              {source}
+            </Badge>
+          ) : null}
+        </div>
+        {premium ? (
+          <p className="text-xs text-muted-foreground">
+            {user.premiumPeriodEnd
+              ? `Until ${formatDate(user.premiumPeriodEnd)}`
+              : "Forever (no end date)"}
+          </p>
+        ) : null}
+
+        {!premium ? (
+          <div className="space-y-2">
+            <Label>Complimentary duration</Label>
+            <Select value={years} onValueChange={setYears}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {GRANT_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="button" size="sm" onClick={handleGrant} disabled={loading}>
+              {loading ? "Granting…" : "Grant Premium"}
+            </Button>
+          </div>
+        ) : source !== "stripe" ? (
+          <Button type="button" size="sm" variant="outline" onClick={handleRevoke} disabled={loading}>
+            {loading ? "Revoking…" : "Revoke Premium"}
+          </Button>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Paid via Stripe — manage cancelation in the Customer Portal.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Sub-component for displaying user activity metrics. */
-function ActivityCard({ user, form }) {
+function ActivityCard({ user }) {
   const publicId = user.handle?.publicId || user.publicId;
   const username = user.handle?.username;
-  const profileIdentifier = (form.verified && username) ? username : publicId;
+  const premium = isPremium(user);
+  const profileIdentifier = premium && username ? username : publicId;
 
   return (
     <Card>
@@ -198,20 +312,8 @@ function ActivityCard({ user, form }) {
           </div>
         ) : null}
         <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">Verification</p>
-          <div className="mt-1">
-            {form.verified ? (
-              <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                Verified
-              </Badge>
-            ) : (
-              <Badge variant="outline">Unverified</Badge>
-            )}
-          </div>
-        </div>
-        <div>
           <p className="text-xs font-medium uppercase text-muted-foreground">Role</p>
-          <div className="mt-1"><AdminStatusBadge value={form.role} /></div>
+          <div className="mt-1"><AdminStatusBadge value={user.role} /></div>
         </div>
         <div>
           <p className="text-xs font-medium uppercase text-muted-foreground">Listings today</p>
@@ -268,18 +370,18 @@ function SignInProvidersCard({ linkedAccounts }) {
   );
 }
 
-/** Admin form to edit user profile, role, and ban status. */
+/** Admin form to edit user profile, role, Premium, and ban status. */
 export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: user.name || "",
     phone: user.phone || "",
+    phoneVerified: Boolean(user.phoneVerified),
     country: user.country || "",
     city: user.city || "",
     locale: user.locale || "en",
     role: (user.role && USER_ROLES.includes(user.role)) ? user.role : "user",
-    verified: Boolean(user.verified || user.role === "verified"),
     username: user.handle?.username || "",
     status: user.status || (user.banned ? "banned" : "active"),
     banReason: "",
@@ -287,6 +389,10 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
 
   function update(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function refresh() {
+    router.refresh();
   }
 
   async function handleSave() {
@@ -348,9 +454,9 @@ export function AdminUserForm({ user, linkedAccounts = [], currentUserId }) {
           </div>
         </div>
 
-        {/* Sidebar — activity & auth */}
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <ActivityCard user={user} form={form} />
+          <PremiumCard user={user} onChanged={refresh} />
+          <ActivityCard user={user} />
           <SignInProvidersCard linkedAccounts={linkedAccounts} />
         </aside>
       </div>

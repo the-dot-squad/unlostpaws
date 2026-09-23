@@ -14,7 +14,8 @@ import { resolveReportCase as resolveReportCaseService } from "@/lib/services/mo
 import { getAppSettings, updateAppSettings as saveAppSettings } from "@/lib/services/settings";
 import { checkMicrochipUnique } from "@/lib/services/owned-pets";
 import { OwnedPet } from "@/models/owned-pet";
-import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema } from "@/lib/validation";
+import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema, adminGrantPremiumSchema } from "@/lib/validation";
+import { isPremium, premiumPeriodEndFromYears } from "@/lib/premium/entitlements";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
 import { listingPublicId as toListingPublicId } from "@/models/listing";
@@ -196,7 +197,8 @@ export async function adminUpdateUser(userId, data) {
       };
     }
 
-    const { name, phone, country, city, locale, role, verified, username, status, banReason } = parsed.data;
+    const { name, phone, phoneVerified, country, city, locale, role, username, status, banReason } =
+      parsed.data;
 
     const existingUser = await getAuthUserById(userId);
     if (!existingUser) return { error: "User not found" };
@@ -210,6 +212,9 @@ export async function adminUpdateUser(userId, data) {
 
     const cleanUsername = (username || "").trim().toLowerCase().replace(/^@/, "");
     if (cleanUsername) {
+      if (!isPremium(existingUser)) {
+        return { error: "Only Premium accounts can set a custom handle" };
+      }
       const db = await getMongoDb();
       const existingWithUsername = await db.collection("user").findOne({
         "handle.username": cleanUsername,
@@ -236,14 +241,22 @@ export async function adminUpdateUser(userId, data) {
         ? { username: cleanUsername, publicId: userPublicId }
         : undefined;
 
+    const nextPhone = phone ?? null;
+    const wantVerified = Boolean(phoneVerified) && Boolean(nextPhone);
+
     await updateAuthUserById(userId, {
       name,
-      phone: phone ?? null,
+      phone: nextPhone,
+      phoneVerified: wantVerified,
+      phoneVerifiedAt: wantVerified
+        ? existingUser.phoneVerified && existingUser.phone === nextPhone
+          ? existingUser.phoneVerifiedAt || new Date()
+          : new Date()
+        : null,
       country: country || "",
       city: city || "",
       locale: locale || "en",
       role,
-      verified: Boolean(verified),
       status: nextStatus,
       ...(updatedHandle ? { handle: updatedHandle } : {}),
     });
@@ -260,6 +273,67 @@ export async function adminUpdateUser(userId, data) {
     const user = await getAuthUserById(userId);
     revalidatePath("/admin/users");
     if (user?.publicId) revalidatePath(`/admin/users/${user.publicId}`);
+    return { success: true };
+  });
+}
+
+/**
+ * Complimentary Premium grant. years=0 → forever. Rejects if already Premium.
+ * @param {string} userId
+ * @param {{ years: number }} data
+ */
+export async function adminGrantPremium(userId, data) {
+  return withAdminAction("adminGrantPremium", async () => {
+    const parsed = validate(adminGrantPremiumSchema, data);
+    if (!parsed.ok) {
+      return {
+        error: parsed.error
+          ? `Validation failed: ${parsed.error}${parsed.field ? ` (${parsed.field})` : ""}`
+          : "Validation failed",
+      };
+    }
+
+    const user = await getAuthUserById(userId);
+    if (!user) return { error: "User not found" };
+    if (isPremium(user)) return { error: "already_premium" };
+
+    const periodEnd = premiumPeriodEndFromYears(parsed.data.years);
+    await updateAuthUserById(userId, {
+      premiumStatus: "active",
+      premiumSource: "admin",
+      premiumPeriodEnd: periodEnd,
+      premiumStartedAt: new Date(),
+    });
+
+    revalidatePath("/admin/users");
+    if (user.publicId) revalidatePath(`/admin/users/${user.publicId}`);
+    revalidatePath("/", "layout");
+    return { success: true };
+  });
+}
+
+/**
+ * Revoke admin-granted Premium only (paid Stripe members use the billing portal).
+ * @param {string} userId
+ */
+export async function adminRevokePremium(userId) {
+  return withAdminAction("adminRevokePremium", async () => {
+    const user = await getAuthUserById(userId);
+    if (!user) return { error: "User not found" };
+    if (!isPremium(user)) return { error: "not_premium" };
+    if (user.premiumSource === "stripe") {
+      return { error: "stripe_premium_use_portal" };
+    }
+
+    await updateAuthUserById(userId, {
+      premiumStatus: "canceled",
+      premiumSource: null,
+      premiumPeriodEnd: new Date(),
+    });
+
+    revalidatePath("/admin/users");
+    if (user.publicId) revalidatePath(`/admin/users/${user.publicId}`);
+    revalidatePath("/", "layout");
     return { success: true };
   });
 }
@@ -283,6 +357,13 @@ export async function updateAppSettings(data) {
   return withAdminAction("updateAppSettings", async () => {
     const result = await saveAppSettings(data);
     if (result.error) return { error: result.error };
+
+    try {
+      const { syncPremiumStripePrice } = await import("@/lib/stripe/premium");
+      await syncPremiumStripePrice();
+    } catch (err) {
+      console.error("[admin] premium Stripe price sync failed", err?.message || err);
+    }
 
     revalidatePath("/admin/settings");
     revalidatePath("/", "layout");

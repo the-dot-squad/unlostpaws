@@ -8,6 +8,7 @@ import { AdminResultSummary } from "@/components/admin/result-summary";
 import { AdminStatusBadge } from "@/components/admin/status-badge";
 import { UserActions } from "@/components/admin/user-actions";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
+import { showsVerifiedBadge } from "@/lib/premium/entitlements";
 import { USER_ROLES } from "@/config/constants/enums";
 import {
   AdminDataTable,
@@ -33,7 +34,7 @@ export default async function AdminUsersPage({ searchParams }) {
     <div className="space-y-6">
       <AdminPageHeader
         title="Users"
-        description="Manage accounts, roles, verification, and ban status. Only admins can edit users."
+        description="Manage accounts, roles, Premium, and ban status. Only admins can edit users."
       />
 
       <AdminFilterToolbar
@@ -45,11 +46,11 @@ export default async function AdminUsersPage({ searchParams }) {
             options: USER_ROLES.map((r) => ({ value: r, label: r })),
           },
           {
-            key: "verified",
-            label: "Verification",
+            key: "premium",
+            label: "Premium",
             options: [
-              { value: "yes", label: "Verified" },
-              { value: "no", label: "Unverified" },
+              { value: "yes", label: "Premium" },
+              { value: "no", label: "Free" },
             ],
           },
           {
@@ -88,7 +89,7 @@ export default async function AdminUsersPage({ searchParams }) {
                       <Link href={`/admin/users/${u.publicId}`} className="font-medium hover:underline">
                         {u.name}
                       </Link>
-                      {u.verified ? <VerifiedBadge size="sm" /> : null}
+                      {showsVerifiedBadge(u) ? <VerifiedBadge size="sm" /> : null}
                     </div>
                     {u.handle?.username ? (
                       <span className="font-mono text-xs text-muted-foreground">@{u.handle.username}</span>

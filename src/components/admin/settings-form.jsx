@@ -23,6 +23,89 @@ function RateLimitReadonlyField({ label, value, hint }) {
   );
 }
 
+function PremiumCard({ form, update }) {
+  const priceDollars = (Number(form.premiumPriceCents) || 0) / 100;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle>Premium</CardTitle>
+          <Badge variant={form.premiumEnabled ? "default" : "secondary"}>
+            {form.premiumEnabled ? "Enabled" : "Disabled"}
+          </Badge>
+        </div>
+        <CardDescription>
+          Annual subscription via Stripe Checkout. Grants verified badge and higher listing caps.
+          Admins can also grant complimentary Premium (forever or multi-year) from the user edit page.
+          Card, Apple Pay, Google Pay, and Amazon Pay are configured in the Stripe Dashboard
+          (dynamic payment methods — do not hardcode types in code).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        <div className="flex items-center justify-between rounded-lg border p-3 sm:col-span-2">
+          <div>
+            <Label htmlFor="premium-enabled">Offer Premium</Label>
+            <p className="text-xs text-muted-foreground">
+              When off, Checkout is blocked; existing subscribers keep access until Stripe cancels.
+            </p>
+          </div>
+          <Switch
+            id="premium-enabled"
+            checked={Boolean(form.premiumEnabled)}
+            onCheckedChange={(checked) => update("premiumEnabled", checked)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Annual price (USD cents)</Label>
+          <Input
+            type="number"
+            min={100}
+            step={100}
+            value={form.premiumPriceCents}
+            onChange={(e) => update("premiumPriceCents", e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Display: ${Number.isFinite(priceDollars) ? priceDollars.toFixed(2) : "—"} / year
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label>Currency (ISO)</Label>
+          <Input
+            value={form.premiumCurrency}
+            onChange={(e) => update("premiumCurrency", e.target.value)}
+            maxLength={3}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Premium max listings / day</Label>
+          <Input
+            type="number"
+            value={form.premiumMaxListingsPerDay}
+            onChange={(e) => update("premiumMaxListingsPerDay", e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Premium max listings / month</Label>
+          <Input
+            type="number"
+            value={form.premiumMaxListingsPerMonth}
+            onChange={(e) => update("premiumMaxListingsPerMonth", e.target.value)}
+          />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Stripe Price ID</Label>
+          <Input readOnly disabled value={form.stripePremiumPriceId || "— (created on save)"} />
+          <p className="text-xs text-muted-foreground">
+            Synced automatically when you save. Changing the price creates a new Stripe Price; existing
+            subscribers keep their prior Price.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function RateLimitsCard({ form, update, rateLimitEnv }) {
   const uploadValue = rateLimitEnv?.active
     ? `${rateLimitEnv.uploadMaxRequests} / ${rateLimitEnv.windowSeconds}s`
@@ -436,6 +519,13 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
     safetyMaxBlurScore: settings.safetyMaxBlurScore ?? 0.85,
     supportedPetTypes: settings.supportedPetTypes ?? PET_TYPES,
     socialLinks: Array.isArray(settings.socialLinks) ? settings.socialLinks : [],
+    premiumEnabled: settings.premiumEnabled ?? true,
+    premiumPriceCents: settings.premiumPriceCents ?? 2000,
+    premiumCurrency: settings.premiumCurrency ?? "usd",
+    premiumMaxListingsPerDay: settings.premiumMaxListingsPerDay ?? 5,
+    premiumMaxListingsPerMonth: settings.premiumMaxListingsPerMonth ?? 25,
+    stripePremiumProductId: settings.stripePremiumProductId ?? "",
+    stripePremiumPriceId: settings.stripePremiumPriceId ?? "",
   });
   const [loading, setLoading] = useState(false);
   const [newPlatformName, setNewPlatformName] = useState("");
@@ -486,6 +576,13 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
       safetyMinImageWidth: Number(form.safetyMinImageWidth),
       safetyMinImageHeight: Number(form.safetyMinImageHeight),
       safetyMaxBlurScore: Number(form.safetyMaxBlurScore),
+      premiumEnabled: Boolean(form.premiumEnabled),
+      premiumPriceCents: Number(form.premiumPriceCents),
+      premiumCurrency: String(form.premiumCurrency || "usd").toLowerCase(),
+      premiumMaxListingsPerDay: Number(form.premiumMaxListingsPerDay),
+      premiumMaxListingsPerMonth: Number(form.premiumMaxListingsPerMonth),
+      stripePremiumProductId: form.stripePremiumProductId || "",
+      stripePremiumPriceId: form.stripePremiumPriceId || "",
       socialLinks: socialsResult.socialLinks,
     });
     setLoading(false);
@@ -519,6 +616,7 @@ export function AdminSettingsForm({ settings, rateLimitEnv }) {
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <RateLimitsCard form={form} update={update} rateLimitEnv={rateLimitEnv} />
+        <PremiumCard form={form} update={update} />
         <ListingLifecycleCard form={form} update={update} />
         <ModerationCard form={form} update={update} />
         <ImageMatchingCard form={form} update={update} />
