@@ -35,7 +35,7 @@ export function ListingCard({
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
       <div className="relative aspect-[4/3] bg-muted">
         {thumb ? (
-          <Image src={thumb} alt={`${typeLabel} ${petTypeLabel} — ${listing.color}`} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+          <Image src={thumb} alt={`${typeLabel} ${petTypeLabel} · ${listing.color}`} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
         )}

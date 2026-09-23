@@ -73,15 +73,15 @@
     "heroSubtitle": "Post a missing, found, or sighting alert. Our community and smart matching help bring pets home.",
     "ctaReport": "Report a Pet",
     "ctaBrowse": "Browse Alerts",
-    "statsTitle": "Community impact at a glance",
-    "statsSubtitle": "Live counts from active alerts and successful reunions across the platform.",
+    "statsTitle": "What our community has done so far",
+    "statsSubtitle": "Live numbers from active alerts and pets that made it home.",
     "statsMissing": "Missing pets",
     "statsFound": "Found pets",
     "statsSurrender": "Surrender listings",
     "statsReunited": "Pets reunited",
     "statsUsers": "Community members",
     "featuresTitle": "How UnLostPaws helps",
-    "featuresSubtitle": "Everything you need to report, search, and reunite pets in your community.",
+    "featuresSubtitle": "Report a pet, search nearby and get told when there's a likely match.",
     "features": {
       "search": {
         "title": "Browse & filter alerts",
@@ -101,7 +101,7 @@
       },
       "about": {
         "title": "Who we are",
-        "description": "UnLostPaws is a community-driven platform built to help neighbors spot, share, and reunite lost pets.",
+        "description": "UnLostPaws is where neighbors post, share and spot lost pets so they get home sooner.",
         "link": "Learn about us"
       }
     },
@@ -410,7 +410,7 @@
     "updatedAt": "Updated",
     "anonymousPoster": "Community member",
     "share": "Share",
-    "shareSuccess": "Link copied to clipboard!",
+    "shareSuccess": "Link copied",
     "shareFailed": "Could not share link",
     "shareDialogTitle": "Share this alert",
     "shareFacebook": "Facebook",
@@ -423,13 +423,13 @@
     "editListing": "Edit alert",
     "sightingWidget": {
       "title": "Have you seen this pet?",
-      "description": "If you think you've spotted this missing pet, please submit a sighting. Make sure to take at least 2 clear photos from different angles to help us match and confirm their identity!",
+      "description": "Think you've seen this pet? Post a sighting with at least 2 clear photos from different angles so we can compare them.",
       "cta": "Submit Sighting"
     },
     "ownershipCta": {
       "badge": "Pet Owners",
       "title": "Have a pet at home? Register their microchip",
-      "description": "Save your pet's microchip details and photos now. If they ever wander off or get lost, we can help bring them back home much faster.",
+      "description": "Save your pet's microchip and photos now. If they ever go missing, we can match them faster, and a Premium collar tag lets finders reach you directly.",
       "button": "Register Your Pet"
     },
     "saveChanges": "Save changes",
@@ -472,17 +472,17 @@
     "createdProcessingFailed": "Alert posted, but photo analysis failed to start. Our team can requeue it if needed.",
     "suggestedPet": "This alert may match your registered pet: {name}",
     "viewSuggestedPet": "View registered pet",
-    "createSubtitle": "Three quick steps: pet details, location, then photos and contact.",
+    "createSubtitle": "Three quick steps: pet details, photos and contact, then location.",
     "colorRequired": "Please enter the pet's color.",
     "locationRequired": "Please pick a location on the map or use your current position.",
-    "contactRequired": "Enable at least one contact method — email or phone.",
+    "contactRequired": "Turn on at least one way to reach you: email or phone.",
     "contactHint": "Choose how other users can reach you. At least one method must be enabled.",
     "createErrors": {
       "captchaRequired": "Please complete the verification.",
       "captchaFailed": "Verification failed. Please try again.",
       "captchaExpired": "Verification expired. Please try again.",
       "captchaUnavailable": "Verification is temporarily unavailable.",
-      "contactRequired": "Enable at least one contact method — email or phone.",
+      "contactRequired": "Turn on at least one way to reach you: email or phone.",
       "imagesRequired": "Upload at least 2 clear photos.",
       "uploadLimit": "Photo limit reached for this session. Go back and verify again to continue.",
       "listingLimitDaily": "You've reached your daily limit for posting alerts. Try again tomorrow.",
@@ -556,7 +556,7 @@
       "confirmCode": "Confirm",
       "resend": "Resend code",
       "resendIn": "Resend in {seconds}s",
-      "resendExhausted": "Resend used — enter the code from your messages.",
+      "resendExhausted": "Code already resent. Enter the code from your messages.",
       "cancelChange": "Cancel",
       "codeSent": "Verification code sent",
       "verifiedSuccess": "Phone number verified",
@@ -745,7 +745,7 @@
     "digitalCollar": {
       "title": "Digital Collar",
       "hint": "Puts a simple emergency page behind a QR on your pet's collar. The page stays out of search engines and is blocked from common bots, but anyone with the link can open it. Premium only.",
-      "upsellBody": "With Premium you can turn on an emergency page and print a collar QR for each pet.",
+      "upsellBody": "If your pet gets lost, a stranger with a phone can reach you in seconds. Premium adds a scannable collar tag for every pet.",
       "upsellCta": "See Premium",
       "enableInEdit": "Turn on while editing",
       "activeStatus": "On. Someone who scans the QR can see care notes and get in touch.",
@@ -831,10 +831,10 @@
     "locationFound": "Centered on your location"
   },
   "footer": {
-    "description": "Every paw print tells a story. We help neighbors spot, share, and match lost pets (powered by community alerts, live maps, and smart photo matching) so more reunions happen close to home.",
+    "description": "UnLostPaws helps neighbors report, share and match lost pets. Alerts, a live map and photo matching bring more pets home, close to where they went missing.",
     "explore": "Explore",
     "support": "Support & policies",
-    "contactHint": "Questions, feedback, or a partnership idea? Reach out through our contact form — we're here to help.",
+    "contactHint": "Questions, feedback or a partnership idea? Write to us through the contact form.",
     "postAlertCta": "Post an alert",
     "about": "About us",
     "faq": "FAQ",
@@ -891,7 +891,7 @@
     "about": {
       "title": "About us",
       "heroSubtitle": "A community platform built to bring lost pets back to the people who love them.",
-      "intro": "UnLostPaws is a community-driven platform that helps reunite lost pets with their families.",
+      "intro": "UnLostPaws is where neighbors post, share and spot lost pets so they get home sooner.",
       "missionTitle": "Our mission",
       "mission": "We believe every lost pet deserves a chance to come home. By combining community alerts, geographic search, and smart photo matching, we make it easier for owners and finders to connect.",
       "howTitle": "How it works",
@@ -908,7 +908,7 @@
       "items": [
         {
           "q": "How do I report a lost or found pet?",
-          "a": "Sign in, go to Post Alert, and follow the four steps: upload photos, add pet details, set the location on the map, and choose how others can contact you."
+          "a": "Sign in, open Post Alert and follow three steps: describe the pet, add photos and how people can reach you, then pin the location on the map."
         },
         {
           "q": "Is UnLostPaws free to use?",
@@ -928,7 +928,7 @@
         },
         {
           "q": "How do I contact someone about an alert?",
-          "a": "Open the alert detail page and use the contact option if the poster allowed email or phone contact. You need to be signed in."
+          "a": "Open the alert and tap Show contact info. After a quick security check you'll see the email or phone the poster chose to share."
         }
       ]
     },
@@ -960,7 +960,7 @@
       "s3Title": "3. Location data",
       "s3": "Location is used for geographic search and map features. You control when location is shared via browser permissions.",
       "s4Title": "4. Photos",
-      "s4": "Uploaded photos are processed for duplicate detection and photo matching. Embeddings are stored securely for matching purposes.",
+      "s4": "Uploaded photos are checked for duplicates and compared with other alerts. We store a numeric fingerprint of each photo for matching, kept securely.",
       "s5Title": "5. Data retention",
       "s5": "Alerts expire automatically. You may request deletion of your account and associated data by contacting us.",
       "s6Title": "6. Contact",
@@ -984,7 +984,7 @@
         "messagePlaceholder": "How can we help you?",
         "submit": "Send message",
         "sending": "Sending...",
-        "success": "Message sent. Thank you! We'll be in touch soon.",
+        "success": "Message sent. Thanks, we'll get back to you soon.",
         "errors": {
           "name_too_short": "Please enter your name (at least 2 characters).",
           "name_too_long": "Name is too long.",
@@ -1020,19 +1020,19 @@
   "seo": {
     "defaultTitle": "Lost & Found Pets",
     "defaultDescription": "Help reunite pets with their families worldwide. Post and browse missing, found, and sighting alerts.",
-    "homeTitle": "UnLostPaws | AI-Powered Smart Lost & Found Pet Registry",
-    "homeDescription": "Reuniting families using smart technology. UnLostPaws uses advanced AI image recognition and geofenced mapping to scan, match, and bring lost pets home.",
-    "listingsTitle": "AI-Matched Pet Reports & Sighting Maps",
-    "listingsDescription": "Search pet alerts. Filter by breed, location, and color, or let our AI analyze photos and recommend instant matches.",
+    "homeTitle": "UnLostPaws | Find Lost Pets and Bring Them Home",
+    "homeDescription": "Post a missing or found pet in minutes. We compare photos across nearby alerts and tell you when one looks like your pet.",
+    "listingsTitle": "Lost and Found Pet Alerts Near You",
+    "listingsDescription": "Browse missing and found pets by breed, color and location. Photo matching flags alerts that look alike.",
     "mapTitle": "Pet Alerts Map",
     "mapDescription": "Explore active pet alerts on an interactive map and find reports near you.",
     "createListingTitle": "Post a Pet Alert",
-    "createListingDescription": "Report a missing, found, or sighted pet. Provide photos and details, and let our AI matching engine help search for them.",
+    "createListingDescription": "Report a missing, found or sighted pet. Add photos and we'll check them against other alerts for you.",
     "signInTitle": "Sign In to Your Account",
     "signInDescription": "Sign in to your UnLostPaws account to post pet alerts, view matches, manage settings, and help reunite pets.",
     "accountTitle": "My Account",
-    "listingDetailTitle": "{type} {color} {petType} Sighting in {location}",
-    "listingDetailDescription": "A {type} {petType} is reported in {location}. See photos and coordinates and help to find it.",
+    "listingDetailTitle": "{type} {color} {petType} in {location}",
+    "listingDetailDescription": "A {type} {petType} was reported in {location}. See the photos and map, and help bring it home.",
     "userProfileTitle": "{name}",
     "userProfileDescription": "View active pet alerts posted by {name} on UnLostPaws."
   },
@@ -1059,18 +1059,18 @@
       "strikeOf": "of"
     },
     "matchNotification": {
-      "subject": "Possible match for your missing pet — UnLostPaws",
+      "subject": "Possible match for your missing pet | UnLostPaws",
       "previewText": "Possible matches found for your missing pet: {missingTitle}.",
       "heading": "Possible Sighting Matches",
       "salutation": "Hi {ownerName},",
       "introLead": "We found possible matches for your missing pet alert:",
       "noMatches": "No listings found",
-      "outro": "Please review these alerts — they may help reunite you with your pet.",
+      "outro": "Take a look. One of these could be your pet.",
       "ctaLabel": "View All Matches",
       "textFallback": "Possible matches found for {missingTitle}. Visit {url}"
     },
     "corroborationMatch": {
-      "subject": "Possible related pet sighting — UnLostPaws",
+      "subject": "Possible related pet sighting | UnLostPaws",
       "previewText": "We found alerts that may show the same animal as yours.",
       "heading": "Possible Related Sighting",
       "salutation": "Hi {ownerName},",
@@ -1081,7 +1081,7 @@
       "textFallback": "Related pet sightings found. Visit {url}"
     },
     "moderationOutcome": {
-      "subject": "Update on your pet alert — UnLostPaws",
+      "subject": "Update on your pet alert | UnLostPaws",
       "previewText": "Your listing \"{listingTitle}\" has been reviewed. Action: {action}",
       "heading": "Listing Moderation Update",
       "salutation": "Hi {ownerName},",
@@ -1095,10 +1095,10 @@
       "strikeSuspendedSuffix": " Your account is now suspended.",
       "outro": "UnLostPaws works to maintain a safe, respectful environment. Please follow our community guidelines for future posts.",
       "ctaLabel": "View Account Status",
-      "textFallback": "Your alert \"{listingTitle}\" — Action: {action}{hasStrikes, select, true { (strike {strikes}/{threshold})} other {}}"
+      "textFallback": "Your alert \"{listingTitle}\". Action: {action}{hasStrikes, select, true { (strike {strikes}/{threshold})} other {}}"
     },
     "moderationWarning": {
-      "subject": "Community guidelines warning — UnLostPaws",
+      "subject": "Community guidelines warning | UnLostPaws",
       "previewText": "Warning: community guideline violation on \"{listingTitle}\" ({reason}).",
       "heading": "Community Guidelines Warning",
       "introLead": "We reviewed reports regarding your listing \"",
@@ -1115,7 +1115,7 @@
       "textFallback": "Warning: violation ({reason}) on \"{listingTitle}\". Strike {strikes}/{threshold}.{hasNote, select, true { Note: {note}} other {}}"
     },
     "moderationBan": {
-      "subject": "Account suspended — UnLostPaws",
+      "subject": "Account suspended | UnLostPaws",
       "previewText": "Your account has been suspended after {strikes} violations. Latest: \"{listingTitle}\"",
       "heading": "Account Suspended",
       "salutation": "Hi {ownerName},",
@@ -1130,7 +1130,7 @@
       "textFallback": "Account suspended after {strikes} violations. Latest: \"{listingTitle}\" ({reason})."
     },
     "manualBan": {
-      "subject": "Account suspended — UnLostPaws",
+      "subject": "Account suspended | UnLostPaws",
       "previewText": "Your account has been suspended by an administrator.",
       "heading": "Account Suspended",
       "suspendedNotice": "Your account has been suspended by an administrator.",
@@ -1140,7 +1140,7 @@
       "textFallback": "Your account has been suspended by an administrator."
     },
     "manualUnban": {
-      "subject": "Account restored — UnLostPaws",
+      "subject": "Account restored | UnLostPaws",
       "previewText": "Your account suspension has been lifted. You can sign in again.",
       "heading": "Account Restored",
       "restoredNotice": "Your account suspension has been lifted by an administrator.",
@@ -1149,7 +1149,7 @@
       "textFallback": "Your account suspension has been lifted. You can sign in again at UnLostPaws."
     },
     "reportReceived": {
-      "subject": "Report received — UnLostPaws",
+      "subject": "Report received | UnLostPaws",
       "previewText": "Thank you for your report. Our team will review it shortly.",
       "heading": "Report Received",
       "salutation": "Hi {reporterName},",
@@ -1168,13 +1168,13 @@
     "qrCodeSubtitle": "Scan or download this QR code to quickly share this alert.",
     "copyLink": "Copy Link",
     "copied": "Copied",
-    "linkCopied": "Link copied to clipboard!",
+    "linkCopied": "Link copied",
     "selectImage": "Select Primary Photo",
     "headline": "Poster Headline",
-    "headlineMissing": "MISSING PET - PLEASE HELP FIND",
-    "headlineFound": "FOUND PET - ARE YOU THE OWNER?",
-    "headlineSpotted": "PET SIGHTING - SPOTTED NEARBY",
-    "headlineSurrender": "PET ADOPTION / SURRENDER",
+    "headlineMissing": "MISSING. HAVE YOU SEEN ME?",
+    "headlineFound": "FOUND. IS THIS YOUR PET?",
+    "headlineSpotted": "SEEN NEARBY. HELP ME GET HOME.",
+    "headlineSurrender": "LOOKING FOR A NEW HOME",
     "showPhone": "Show Phone Number",
     "showEmail": "Show Email Address",
     "customNotes": "Custom Message or Distinct Marks",
@@ -1198,7 +1198,7 @@
   "premium": {
     "page": {
       "title": "Premium",
-      "subtitle": "Higher alert limits, a verified badge, and collar QR tags — paid once a year.",
+      "subtitle": "Get ready before your pet ever wanders off. A scannable collar tag, a verified badge and more alerts, for one yearly price.",
       "subtitleMember": "Your membership is active. Limits, badge, and collar tools are ready.",
       "checkoutSuccess": "You are on Premium. Open Profile settings to verify your phone and show the verified badge.",
       "checkoutPending": "Payment went through. Your access should appear in a minute. Refresh if it does not.",
@@ -1208,11 +1208,11 @@
       "badge": "Premium",
       "eyebrow": "Member",
       "title": "Thanks for supporting UnLostPaws",
-      "heroTitle": "You're on Premium",
-      "heroSubtitle": "Higher daily limits are on. Verify your phone in Profile settings to show the blue check on your profile and alerts.",
+      "heroTitle": "Welcome to Premium",
+      "heroSubtitle": "Your higher limits are on. Verify your phone in Profile settings to get the blue check on your profile and alerts.",
       "compactTitle": "Premium membership",
       "compactDetails": "Details",
-      "subtitle": "Verified badge, higher alert limits, and help keeping the site online.",
+      "subtitle": "A verified badge, higher alert limits and help keeping UnLostPaws free for everyone.",
       "benefitsHeading": "What's included",
       "memberSince": "Member since",
       "validUntil": "Renews or ends",
@@ -1235,13 +1235,13 @@
     },
     "upsell": {
       "eyebrow": "Premium",
-      "title": "Hit your free limit? Keep posting.",
-      "subtitle": "Premium raises your daily alert cap, adds a phone-verified badge, a public @handle, and Digital Collar QR pages for each pet. One yearly payment keeps matching and maps online.",
-      "compactTitle": "Hit your free limit? Keep posting.",
-      "compactSubtitle": "More alerts per day, verified badge, and collar QR — {price}/year.",
-      "compactCta": "Join · {price}/yr",
+      "title": "If they get lost, be found faster.",
+      "subtitle": "Anyone who scans your pet's collar can reach you in seconds. Premium also adds a verified badge, a custom @handle and more alerts per day.",
+      "compactTitle": "Reached today's limit? Keep posting.",
+      "compactSubtitle": "More alerts per day, a verified badge and collar QR tags. {price} a year.",
+      "compactCta": "Get Premium · {price}/yr",
       "compactDetails": "What's included",
-      "cta": "Join for {price}/year",
+      "cta": "Get Premium · {price}/year",
       "billingHint": "Secure checkout with Stripe. Cancel anytime from billing settings."
     },
     "benefits": {
@@ -1259,11 +1259,11 @@
       },
       "collar": {
         "title": "Digital Collar QR",
-        "body": "An emergency page for each pet, with care notes and contact when someone scans the collar tag."
+        "body": "An emergency page for each pet. Whoever scans the tag sees care notes and can contact you right away."
       },
       "support": {
-        "title": "Keep the site running",
-        "body": "Membership pays for hosting, photo matching, and the tools people use to find lost pets."
+        "title": "Keep UnLostPaws free for everyone",
+        "body": "Your membership pays for hosting and photo matching, so anyone can post a lost pet at no cost."
       }
     },
     "preview": {

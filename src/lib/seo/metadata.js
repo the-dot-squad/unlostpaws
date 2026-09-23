@@ -19,7 +19,7 @@ export function rootMetadata() {
   return {
     metadataBase,
     title: {
-      default: `${SITE_NAME} — Lost & Found Pets`,
+      default: `${SITE_NAME} | Lost & Found Pets`,
       template: `%s | ${SITE_NAME}`,
     },
     description: "Help reunite pets with their families worldwide",

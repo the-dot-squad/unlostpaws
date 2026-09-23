@@ -15,7 +15,7 @@ import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
 
 const PRODUCT_NAME = "UnLostPaws Premium";
 const PRODUCT_DESCRIPTION =
-  "Annual Premium membership — verified badge, higher alert limits, and support for reuniting pets.";
+  "Annual Premium membership: Digital Collar QR tags, a verified badge and higher alert limits.";
 
 const ACTIVE_STRIPE_SUBSCRIPTION_STATUSES = new Set([
   "active",

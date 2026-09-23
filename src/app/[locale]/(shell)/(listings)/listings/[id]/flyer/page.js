@@ -15,7 +15,7 @@ export async function generateMetadata({ params }) {
   if (!listing) return {};
 
   return {
-    title: `Print Poster — ${listing.type.toUpperCase()} ${listing.petType} (${listing.color}) | UnLostPaws`,
+    title: `Print Poster: ${listing.type.toUpperCase()} ${listing.petType} (${listing.color}) | UnLostPaws`,
     robots: { index: false, follow: false },
   };
 }

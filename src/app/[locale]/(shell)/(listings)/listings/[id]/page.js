@@ -198,7 +198,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
           </div>
 
           <h1 className="text-2xl font-bold capitalize">
-            {petTypeLabel} — {listing.color}
+            {petTypeLabel} · {listing.color}
           </h1>
           {listing.breed ? (
             <p className="text-muted-foreground">{listing.breed}</p>

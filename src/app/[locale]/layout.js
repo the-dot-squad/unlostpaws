@@ -24,7 +24,7 @@ export async function generateMetadata({ params }) {
   return buildPageMetadata({
     locale,
     title: {
-      default: `${siteName} — ${tSeo("defaultTitle")}`,
+      default: `${siteName} | ${tSeo("defaultTitle")}`,
       template: `%s | ${siteName}`,
     },
     description: tSeo("defaultDescription"),
