@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Shield, LogOut } from "lucide-react";
+import { User, Shield, LogOut, ChevronDown } from "lucide-react";
 import { SiteContainer } from "./site-container";
 import { AppLogo } from "./app-logo";
 import {
@@ -61,8 +61,10 @@ export function Header() {
             {showSessionMenu ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <User className="size-4" />
+                  <Button variant="outline" size="sm" className="gap-1.5 ps-2.5 pe-2">
+                    <User className="size-3.5" />
+                    <span>{t("nav.accountSection")}</span>
+                    <ChevronDown className="size-3.5 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
