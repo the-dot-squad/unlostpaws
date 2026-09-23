@@ -7,14 +7,14 @@
 [![Redis](https://img.shields.io/badge/Redis-Queue-DC382D?logo=redis)](https://redis.io/)
 [![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-D32F2F?logo=qdrant)](https://qdrant.tech/)
 
-**UnLostPaws** is an open-source, modern, and privacy-conscious lost-and-found pet platform. It combines precise geographic search, text normalization, and advanced AI-driven photo matching to reunite lost pets with their owners as quickly as possible.
+**UnLostPaws** is an open-source lost-and-found pet platform. It pairs geospatial search and fuzzy text matching with SigLIP2 photo matching so lost pets can be reunited with their owners sooner. Premium adds Digital Collar QR tags, phone-verified badges, and higher alert limits.
 
 ---
 
 ## 📖 Table of Contents
 
 - [Core Features](#-core-features)
-- [System Architecture](#-system-architecture)
+- [System Architecture](#-system-architecture--workflow)
 - [How It Works: The Ingestion Pipeline](#-how-it-works-the-ingestion-pipeline)
   - [1. Content Safety & Quality Checks](#1-content-safety--quality-checks)
   - [2. Abuse & Duplicate Prevention](#2-abuse--duplicate-prevention)
@@ -32,6 +32,8 @@
 - [Webhook & Internal API Authentication](#-webhook-&-internal-api-authentication)
 - [Email Provider Configuration](#-email-provider-configuration)
 - [Telegram Bot Integration](#-telegram-bot-integration)
+- [Premium Subscriptions (Stripe)](#-premium-subscriptions-stripe)
+- [Phone Verification (Prelude)](#-phone-verification-prelude)
 - [Quick Start Guide](#-quick-start-guide)
   - [Prerequisites](#prerequisites)
   - [1. Frontend App Setup](#1-frontend-app-setup)
@@ -45,16 +47,18 @@
 
 ## ✨ Core Features
 
-*   **AI-Driven Vision Matching:** Utilizes **SigLIP2** embeddings for visual similarity matching and image indexing via Qdrant Cloud.
-*   **Geospatial Searches:** MongoDB geo-indexing coordinates the proximity searches to alert owners when a matching pet is found nearby.
-*   **Automated Content Safety:** Image inspection checks for NSFW content (using **Falconsai**) and ensures images contain pets with minimum resolution/quality requirements.
-*   **Telegram Channel Alerts:** Auto-post approved pet alerts (missing/surrender listings) directly to a Telegram channel with photo arrays, localized text, and geo-navigation coordinates.
-*   **Dynamic Social Settings:** Administrator-manageable platform social media configurations rendering dynamically in layout components (footers, menus).
-*   **Granular User Quotas & Account Rules:** Strict nested quota tracking for uploads and listings, paired with automated session revocation and staff guards on account ban.
-*   **Persian & Arabic Text Normalization:** Multi-dialect character normalization ensures high fuzzy matching accuracy across language variations (breed, color).
-*   **Storage Optimization:** Automatic cron cleanup purges uploaded images that are not associated with any listings or active profiles.
-*   **Cloudflare Edge Image Optimization:** Custom Next.js image loader that dynamically formats and optimizes S3/R2 image requests through Cloudflare's Edge resizing tool in production.
-*   **Advanced Admin Management:** Custom settings dashboard to tune thresholds, review moderation queues, and oversee reports.
+*   **AI photo matching:** SigLIP2 embeddings in Qdrant Cloud find visually similar pets across Lost / Found / Spotted listings.
+*   **Geospatial search:** MongoDB geo indexes narrow candidates to pets reported nearby before the vector search runs.
+*   **Content safety:** NSFW screening (**Falconsai**), pet-relevance checks, and minimum resolution / blur gates before a listing goes live.
+*   **Premium (annual, Stripe):** Digital Collar QR tags, custom `@handle` profile URLs, higher daily/monthly listing caps, and a verified badge after phone OTP. Admins can gift complimentary Premium.
+*   **Digital Collar tags:** Each registered pet can get a scannable QR that opens a public emergency page (`/tag/[publicId]`). Contact details stay hidden until the finder passes a Turnstile check. Premium only; kept out of search indexes.
+*   **Printable flyers:** Listing owners can customize a poster (headline, photos, QR to the listing) and print or save as PDF from `/listings/[id]/flyer`.
+*   **Telegram channel alerts:** Approved missing / surrender listings with photos post to a channel with localized captions and map links.
+*   **Admin controls:** Thresholds, moderation queues, reports, social links, Premium enable/price, and complimentary grants.
+*   **Quotas & bans:** Nested upload/listing quotas, session revocation when an account is banned, and staff guards on moderated actions.
+*   **Persian & Arabic text normalization:** Dialect-aware character folding for breed/color fuzzy matching.
+*   **Storage cleanup:** Cron removes uploaded files that are not tied to listings or profiles.
+*   **Cloudflare image resizing:** Production S3/R2 images go through Cloudflare Edge resizing via a custom Next.js loader.
 
 ---
 
@@ -144,8 +148,8 @@ If the listing passes safety and spam gates:
 *   Images are permanently stored, and their vectors are indexed into **Qdrant Cloud**.
 *   **Cross-Type Match Generation:** The system searches Qdrant for active matching listings of the opposite type (e.g., matching a "Lost" listing against "Found" listings).
 *   **Hybrid Scoring:** The matching engine generates a score (0.0 to 1.0) using:
-    *   **Visual Similarity (60% weight):** Distance metrics between SigLIP2 embeddings.
-    *   **Metadata Fuzzy Match (40% weight):** A Jaccard similarity index calculated over tokenized breed and color fields.
+    *   **Visual Similarity (75% weight):** Cosine similarity between SigLIP2 embeddings.
+    *   **Metadata Fuzzy Match (25% weight):** Jaccard-style similarity over tokenized breed and color fields.
 *   If a match is found above the system confidence threshold, a notification is queued.
 
 ### 4. Automated Telegram Channel Alerts
@@ -206,15 +210,18 @@ In production, image optimization is delegated to Cloudflare's Edge Image Resizi
 
 ## 💻 Tech Stack
 
-*   **Frontend framework:** Next.js 16 (App Router, Internationalization with `next-intl`)
-*   **Styling:** CSS Variables + TailwindCSS
-*   **Database:** MongoDB via Mongoose (Geospatial indexing & core document models)
-*   **Vector Search:** Qdrant Cloud (Embedding indices and similarity lookups)
-*   **State / Queues:** Upstash Redis (Stateless HTTP REST Client for streams, rate limiting, and jobs)
-*   **Auth:** `better-auth` integration
-*   **Email Delivery:** Mailtrap, Mailjet, or ZeptoMail (modular client adapters)
-*   **Storage:** S3/Cloudflare R2 (production) & local directory storage (development)
-*   **Machine Learning Worker:** Python FastAPI, SigLIP2, Falconsai NSFW, pHash
+*   **Frontend:** Next.js 16 (App Router, `next-intl`)
+*   **Styling:** CSS variables + Tailwind CSS
+*   **Database:** MongoDB via Mongoose (geo indexes and core documents)
+*   **Vector search:** Qdrant Cloud
+*   **Queues / rate limits:** Upstash Redis (REST streams and counters)
+*   **Auth:** `better-auth` (email + Google / Facebook / X / Microsoft Entra ID)
+*   **Billing:** Stripe (annual Premium Checkout + Customer Portal)
+*   **Phone OTP:** Prelude (SMS / RCS)
+*   **Bot protection:** Cloudflare Turnstile on public forms and tag contact reveal
+*   **Email:** Mailtrap, Mailjet, or ZeptoMail
+*   **Storage:** S3 / Cloudflare R2 (production), local disk (development)
+*   **Vision worker:** Python FastAPI, SigLIP2, Falconsai NSFW, pHash
 
 ---
 
@@ -284,10 +291,11 @@ The ML vision worker and cron jobs authenticate via shared secrets. The platform
 | :--- | :--- | :--- | :--- |
 | `POST /api/webhooks/vision` | `WEBHOOK_SECRET` | `rejectInvalidInternalSecret` | Bearer, x-api-key, ?token |
 | `GET /api/cron/*` | `CRON_SECRET` | `rejectInvalidBearer` | Bearer only |
+| `POST /api/stripe/webhook` | `STRIPE_WEBHOOK_SECRET` | Stripe signature (`stripe-signature` header) | n/a |
 
 ### Worker Configuration
 
-Ensure the `WEBHOOK_SECRET` environment variable matches between the Next.js app (`.env.local`) and the vision worker (`.env`). The worker posts results to the webhook callback URL included in each Redis stream job payload.
+Keep `WEBHOOK_SECRET` identical in the Next.js app (`.env.local`) and the vision worker (`.env`). The worker posts results to the callback URL included in each Redis stream job.
 
 ---
 
@@ -322,14 +330,54 @@ Configure the following variables in your `.env.local` file:
 
 *Note: Both variables are required to enable posting. The bot must be added to the channel as an Administrator with permission to post messages.*
 
+---
+
+## 💳 Premium Subscriptions (Stripe)
+
+Premium is an optional annual plan. Without Stripe keys the rest of the app still runs; Premium checkout simply stays unavailable.
+
+### What members get
+*   **Digital Collar** QR for each owned pet (emergency page + contact reveal)
+*   **Custom `@handle`** on the public profile URL (e.g. `/@username`)
+*   **Higher listing caps** (defaults from admin settings: free 3/day · 15/month; Premium 5/day · 25/month)
+*   **Verified badge** once phone OTP succeeds (Premium + verified phone)
+
+### Environment variables
+| Variable | Required for billing | Description |
+| :--- | :---: | :--- |
+| `STRIPE_SECRET_KEY` | Yes | Stripe secret API key |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Yes | Publishable key for Checkout |
+| `STRIPE_WEBHOOK_SECRET` | Yes | Signing secret for `POST /api/stripe/webhook` |
+
+### Setup notes
+1. In Stripe, enable Card, Apple Pay, Google Pay, and Amazon Pay under Payment methods (dynamic methods — do not hardcode `payment_method_types` in code). Register your domain for wallets.
+2. Point a webhook at `POST /api/stripe/webhook` for `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, and `invoice.payment_failed`.
+3. Configure the Customer Portal so members can cancel at period end.
+4. In `/admin` → settings, turn Premium on, set price/currency, and save. On save the app creates or syncs the Stripe Product + annual Price and stores the IDs on `AppSettings`.
+5. Admins can grant complimentary Premium (forever or multi-year) from the user edit page without going through Checkout.
+
+---
+
+## 📱 Phone Verification (Prelude)
+
+Phone OTP is used for the public verified badge. It requires Premium (or an admin grant) and a Prelude API token.
+
+| Variable | Required for OTP | Description |
+| :--- | :---: | :--- |
+| `PRELUDE_API_TOKEN` | Yes | Token from [Prelude](https://app.prelude.so) → All Services → Configure → Keys |
+
+Verified numbers persist if Premium later lapses; the blue check only shows while Premium is active **and** the phone is verified. Members can change a verified number again after a 90-day cooldown.
+
+---
 
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
-*   Node.js (v18.x or above)
-*   MongoDB Instance
-*   Upstash Redis Account (REST API)
-*   Qdrant Cloud Account
+*   Node.js 20.9+ (Next.js 16)
+*   MongoDB
+*   Upstash Redis (REST API)
+*   Qdrant Cloud
+*   Optional: Stripe + Prelude if you want Premium checkout and phone OTP locally
 
 ### 1. Frontend App Setup
 
@@ -345,7 +393,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Edit your `.env.local` file with your connection strings (MongoDB, Upstash Redis, Qdrant, and storage credentials).
+Edit `.env.local` with MongoDB, Upstash Redis, Qdrant, and storage credentials. Add Stripe and Prelude keys only if you are testing Premium or phone OTP.
 
 ```bash
 # Run the development server (Webpack)
@@ -416,35 +464,35 @@ If you want to run the worker in Docker compiled from source:
 
 ## 🎛️ Admin Dashboard & Moderation
 
-An administrative dashboard is located at `/admin` to monitor and manage the system. To designate an admin user:
+The admin UI lives at `/admin`. To promote a user:
 
-1.  Register an account on the platform.
-2.  Open your MongoDB shell or manager and update the user document role:
+1.  Register an account.
+2.  In MongoDB:
     ```js
     db.user.updateOne({ email: "user@example.com" }, { $set: { role: "admin" } })
     ```
-3.  Navigate to `/admin` to:
-    *   Review safety, duplicate, and quality violation reports in the **Reports Queue**.
+3.  Open `/admin` to:
+    *   Work the **Reports Queue** (safety, duplicates, quality).
     *   Approve or block listings under review.
-    *   Toggle global settings (Enable/Disable safety assessments, tune thresholds, adjust matching constraints).
+    *   Tune matching / safety thresholds and social footer links.
+    *   Enable Premium, set annual price/currency, and sync Stripe product IDs.
+    *   Grant or revoke complimentary Premium on a user.
 
 ---
 
 ## 🛠️ Development Utilities
 
-Useful npm scripts provided in the project:
-
 ```bash
-# Erase all ML fingerprints, matched results, and Qdrant points (safe environment reset)
+# Clear ML fingerprints, matches, and Qdrant points
 npm run ml:reset
 
-# Wipe intelligence metadata databases
+# Wipe intelligence metadata collections
 npm run ml:reset-intelligence
 
-# Re-enqueue all active listings into the Redis Stream for reprocessing
+# Re-enqueue all active listings for vision reprocessing
 npm run ml:reprocess
 
-# Ping Qdrant Cloud with a tiny write/read/delete cycle to keep the free cluster active
+# Tiny Qdrant write/read/delete ping (keeps free-tier clusters awake)
 npm run qdrant:keepalive
 ```
 
@@ -452,15 +500,12 @@ npm run qdrant:keepalive
 
 ## 🤝 Contributing
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+1.  Fork the repo
+2.  Branch from `main` (`git checkout -b feature/your-change`)
+3.  Commit with a clear message
+4.  Open a pull request
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-Please ensure your code complies with the project's ESLint rules and includes relevant tests for any critical business logic.
+Please follow the existing ESLint rules. Add tests when you change matching, billing, or auth paths.
 
 ---
 
