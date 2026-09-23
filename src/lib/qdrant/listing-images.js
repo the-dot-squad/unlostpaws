@@ -200,13 +200,15 @@ export async function searchListingImages({
         radiusKm,
       });
 
-      const batch = await qdrant.search(COLLECTION, {
-        vector,
+      const response = await qdrant.query(COLLECTION, {
+        query: vector,
         filter,
         limit,
         score_threshold: scoreThreshold,
         with_payload: true,
       });
+
+      const batch = response?.points ?? [];
 
       for (const hit of batch) {
         results.push({
@@ -231,13 +233,15 @@ export async function searchListingImages({
     radiusKm,
   });
 
-  const hits = await qdrant.search(COLLECTION, {
-    vector,
+  const response = await qdrant.query(COLLECTION, {
+    query: vector,
     filter,
     limit,
     score_threshold: scoreThreshold,
     with_payload: true,
   });
+
+  const hits = response?.points ?? [];
 
   return hits.map((hit) => ({
     listingImageId: String(hit.id),
@@ -271,13 +275,15 @@ export async function searchListingImagesByUser({
     excludeListingId,
   });
 
-  const hits = await qdrant.search(COLLECTION, {
-    vector,
+  const response = await qdrant.query(COLLECTION, {
+    query: vector,
     filter,
     limit,
     score_threshold: scoreThreshold,
     with_payload: true,
   });
+
+  const hits = response?.points ?? [];
 
   return hits.map((hit) => ({
     listingImageId: String(hit.id),
@@ -312,13 +318,15 @@ export async function searchSameTypeListingImages({
     excludeListingId,
   });
 
-  const hits = await qdrant.search(COLLECTION, {
-    vector,
+  const response = await qdrant.query(COLLECTION, {
+    query: vector,
     filter,
     limit: limit + (excludeUserId ? 5 : 0),
     score_threshold: scoreThreshold,
     with_payload: true,
   });
+
+  const hits = response?.points ?? [];
 
   return hits
     .filter((hit) => !excludeUserId || hit.payload?.userId !== excludeUserId)

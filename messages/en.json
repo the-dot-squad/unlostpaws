@@ -540,6 +540,45 @@
     "dashboardSubtitle": "Here's an overview of your alerts, pets, and possible matches.",
     "phone": "Phone number",
     "phoneHint": "International format, e.g. +1 555 123 4567",
+    "phoneVerify": {
+      "label": "Phone number",
+      "nationalPlaceholder": "Phone number",
+      "statusVerified": "Phone verified",
+      "statusUnverified": "Not verified",
+      "verifiedHint": "Verified via SMS.",
+      "nonPremiumHint": "Verification available with Premium.",
+      "verifyHint": "Send a code to verify your number.",
+      "changeHint": "Verify the new number with a code.",
+      "changeNumber": "Change number",
+      "changeCooldown": "Next change available {date}",
+      "sendCode": "Send verification code",
+      "codeLabel": "Verification code",
+      "confirmCode": "Confirm",
+      "resend": "Resend code",
+      "resendIn": "Resend in {seconds}s",
+      "resendExhausted": "Resend used — enter the code from your messages.",
+      "cancelChange": "Cancel",
+      "codeSent": "Verification code sent",
+      "verifiedSuccess": "Phone number verified",
+      "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "invalid_phone": "Enter a valid phone number.",
+        "invalid_code": "Enter the verification code.",
+        "premium_required": "Phone verification requires Premium.",
+        "already_verified": "This phone number is already verified.",
+        "phone_already_verified": "This phone number is already verified on another account.",
+        "phone_change_cooldown": "You can change your verified phone again after {date}.",
+        "otp_daily_limit": "Too many attempts for this number today. Try again tomorrow.",
+        "otp_resend_wait": "Please wait before requesting another code.",
+        "otp_resend_exhausted": "You already used the resend for this code.",
+        "otp_not_started": "Send a verification code first.",
+        "otp_invalid": "Incorrect code. Please try again.",
+        "otp_expired": "Code expired or not found. Send a new one.",
+        "verify_unavailable": "Phone verification is temporarily unavailable.",
+        "verify_send_failed": "Could not send the code. Please try again.",
+        "verify_check_failed": "Could not verify the code. Please try again."
+      }
+    },
     "locale": "Preferred language",
     "profileUpdated": "Profile updated",
     "listingsSubtitle": "Pet alerts you've posted: missing, found, and sightings.",
@@ -561,15 +600,22 @@
     "nav": {
       "dashboard": "Dashboard",
       "profile": "Profile",
-      "openMenu": "Open account menu"
+      "openMenu": "Open account menu",
+      "premium": "Premium"
     },
     "profile": {
       "subtitle": "Manage your personal details, contact info, and preferences.",
       "photoTitle": "Profile photo",
       "photoDescription": "Your photo from sign-in or a custom upload.",
+      "viewPublicProfile": "View public profile",
       "personalTitle": "Personal details",
       "personalDescription": "Name and contact information used across the platform.",
       "name": "Display name",
+      "nameHint": "Shown on your profile and alerts.",
+      "handle": "Public handle",
+      "handleHint": "3–30 chars: letters, numbers, underscores.",
+      "publicId": "Public ID",
+      "publicIdHint": "Used in your public profile URL.",
       "email": "Email",
       "emailHint": "Managed by your sign-in provider and cannot be changed here.",
       "locationTitle": "Location",
@@ -696,10 +742,71 @@
     "maxPetsReached": "You've reached the maximum number of registered pets",
     "photoRequired": "A photo is required",
     "notFound": "Pet not found",
+    "digitalCollar": {
+      "title": "Digital Collar",
+      "hint": "Puts a simple emergency page behind a QR on your pet's collar. The page stays out of search engines and is blocked from common bots, but anyone with the link can open it. Premium only.",
+      "upsellBody": "With Premium you can turn on an emergency page and print a collar QR for each pet.",
+      "upsellCta": "See Premium",
+      "enableInEdit": "Turn on while editing",
+      "activeStatus": "On. Someone who scans the QR can see care notes and get in touch.",
+      "inactiveStatus": "Off. Turn it on when you edit this pet.",
+      "medicalAlerts": "Care and safety notes",
+      "medicalAlertsPlaceholder": "Needs daily insulin. Shy around strangers. Wears a red harness.",
+      "medicalAlertsHint": "Shown on the emergency page. Keep it short for whoever finds your pet.",
+      "contactHint": "After a short security check, finders can reach you this way:",
+      "allowEmail": "Show my email",
+      "allowPhone": "Show my phone number",
+      "qrButton": "Collar QR",
+      "qrTitle": "Digital Collar QR",
+      "qrSubtitle": "Print this and stick it on your pet's collar tag.",
+      "downloadQr": "Download QR image",
+      "copyLink": "Copy link",
+      "openLink": "Open",
+      "copied": "Copied",
+      "linkCopied": "Emergency page link copied",
+      "copyFailed": "Could not copy the link",
+      "premiumRequired": "Digital Collar needs Premium",
+      "contactRequired": "Pick email and/or phone for the Digital Collar",
+      "medicalAlertsTooLong": "Care notes must be 500 characters or fewer"
+    },
     "status": {
       "active": "Active",
       "archived": "Archived",
       "removed": "Removed"
+    }
+  },
+  "tag": {
+    "metaTitle": "Pet emergency tag",
+    "metaDescription": "Emergency information for a registered pet on UnLostPaws.",
+    "eyebrow": "Digital Collar",
+    "subtitle": "If you found this pet, please get in touch with the owner.",
+    "petType": "Type",
+    "color": "Color",
+    "breed": "Breed",
+    "microchip": "Microchip",
+    "microchipYes": "Yes",
+    "microchipNo": "No",
+    "medicalAlerts": "Care and safety notes",
+    "foundTitle": "Found this pet?",
+    "foundHint": "A quick security check shows how to reach the owner so you can message them from your phone.",
+    "foundCta": "I found this pet",
+    "contactLoading": "Loading contact…",
+    "contactVerifying": "Checking…",
+    "contactRevealed": "Reach the owner",
+    "emailSubject": "I found your pet (Digital Collar scan)",
+    "inactiveTitle": "This Digital Collar is off right now",
+    "inactiveBody": "Owner contact and care notes are not available. Try a nearby shelter, or post a found-pet alert on UnLostPaws.",
+    "footerNote": "UnLostPaws Digital Collar. Contact details stay hidden until the security check.",
+    "contactErrors": {
+      "captchaRequired": "Please complete the security check.",
+      "captchaFailed": "Security check failed. Please try again.",
+      "captchaUnavailable": "Security check is temporarily unavailable.",
+      "captchaExpired": "Security check expired. Please try again.",
+      "notFound": "This tag was not found.",
+      "selfContact": "This is your own pet tag.",
+      "unavailable": "The owner has not enabled contact options.",
+      "inactive": "This Digital Collar is not active.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "map": {
@@ -903,6 +1010,8 @@
   },
   "users": {
     "member": "Community member",
+    "verifiedMember": "Verified member",
+    "verifiedBadge": "Verified account",
     "memberSince": "Member since {date}",
     "activeListings": "Active alerts",
     "browseAll": "Browse all alerts",
@@ -1085,5 +1194,94 @@
     "backToListing": "Back to Listing",
     "color": "Color",
     "scanToContact": "Scan QR code above to view live alert & contact creator online."
+  },
+  "premium": {
+    "page": {
+      "title": "Premium",
+      "subtitle": "Post more alerts, verify your profile, and help keep UnLostPaws running.",
+      "subtitleMember": "Thanks for being a member. Here is what you have access to.",
+      "checkoutSuccess": "You are on Premium. Open Profile settings to verify your phone and show the verified badge.",
+      "checkoutPending": "Payment went through. Your access should appear in a minute. Refresh if it does not.",
+      "checkoutCanceled": "Checkout was canceled. You can upgrade whenever you like."
+    },
+    "active": {
+      "badge": "Premium",
+      "eyebrow": "Premium member",
+      "title": "Thanks for supporting UnLostPaws",
+      "heroTitle": "Your Premium membership",
+      "heroSubtitle": "Everything below is included with your plan. Verify your phone in Profile settings to show the blue check on your profile and alerts.",
+      "subtitle": "Verified badge, higher alert limits, and help keeping the site online.",
+      "benefitsHeading": "What's included",
+      "memberSince": "Member since",
+      "validUntil": "Renews or ends",
+      "noExpiry": "Does not expire",
+      "dateUnknown": "Not recorded",
+      "complimentary": "Gift from our team",
+      "pastDue": "Payment past due",
+      "manage": "Manage billing",
+      "verifyPhoneTitle": "Get your verified badge",
+      "verifyPhoneBody": "Your membership is active. Verify your phone once to show the badge on your profile and alerts.",
+      "verifyPhoneCta": "Go to Profile settings"
+    },
+    "upsell": {
+      "eyebrow": "Upgrade",
+      "title": "Premium membership",
+      "subtitle": "Post more alerts, pick a public @handle, and verify your phone so people trust your posts. One annual fee helps us run matching, maps, and the rest of the site.",
+      "cta": "Join for {price}/year",
+      "billingHint": "Secure checkout with Stripe. Cancel anytime from billing settings."
+    },
+    "benefits": {
+      "verified": {
+        "title": "Verified badge",
+        "body": "Verify your phone to show a blue check on your profile and alerts."
+      },
+      "rate": {
+        "title": "{to} alerts per day",
+        "body": "Free accounts get {from} per day. Premium gives you more room when every hour counts."
+      },
+      "trust": {
+        "title": "Custom @handle",
+        "body": "Choose a username for your public profile link."
+      },
+      "collar": {
+        "title": "Digital Collar QR",
+        "body": "An emergency page for each pet, with care notes and contact when someone scans the collar tag."
+      },
+      "support": {
+        "title": "Support the site",
+        "body": "Your membership helps pay for hosting, photo matching, and the tools people use to find lost pets."
+      }
+    },
+    "preview": {
+      "label": "Example profile",
+      "badge": "Verified",
+      "name": "Alex Rivera",
+      "handle": "alexr",
+      "free": "Free",
+      "premium": "Premium",
+      "perDay": "{count}/day",
+      "perYear": "/year"
+    },
+    "memberCard": {
+      "label": "Your plan",
+      "title": "Premium is active",
+      "subtitle": "Your higher limits are on now.",
+      "phoneVerified": "Phone verified",
+      "phonePending": "Verify phone for badge",
+      "monthlyCap": "Monthly limit",
+      "perMonth": "{count}/month",
+      "complimentaryNote": "This membership was granted by our team.",
+      "thankYou": "Thanks for being here."
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "user_not_found": "Account not found.",
+      "already_premium": "You already have Premium.",
+      "billing_unavailable": "Billing is temporarily unavailable.",
+      "premium_disabled": "Premium is not available right now.",
+      "billing_misconfigured": "Billing is not configured yet.",
+      "checkout_failed": "Could not start checkout.",
+      "no_customer": "Subscribe first to manage billing."
+    }
   }
 }

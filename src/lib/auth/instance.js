@@ -39,15 +39,26 @@ export function createAuthInstance(db) {
     disabledPaths: ["/sign-up/email", "/login/email"],
     user: {
       additionalFields: {
-        phone: { type: "string", required: false, input: true },
-        country: { type: "string", required: false, input: true },
-        city: { type: "string", required: false, input: true },
+        phone: { type: "string", required: false, input: false },
+        phoneVerified: { type: "boolean", required: false, defaultValue: false, input: false },
+        phoneVerifiedAt: { type: "date", required: false, input: false },
+        phoneChangedAt: { type: "date", required: false, input: false },
+        phoneOtp: { type: "json", required: false, input: false },
+        country: { type: "string", required: false, input: false },
+        city: { type: "string", required: false, input: false },
         role: { type: "string", required: false, defaultValue: "user", input: false },
-        locale: { type: "string", required: false, defaultValue: "en", input: true },
+        locale: { type: "string", required: false, defaultValue: "en", input: false },
         listingLimitOverride: { type: "number", required: false, input: false },
         status: { type: "string", required: false, defaultValue: "active", input: false },
         quota: { type: "json", required: false, input: false },
         publicId: { type: "string", required: false, input: false },
+        handle: { type: "json", required: false, input: false },
+        stripeCustomerId: { type: "string", required: false, input: false },
+        stripeSubscriptionId: { type: "string", required: false, input: false },
+        premiumStatus: { type: "string", required: false, defaultValue: "none", input: false },
+        premiumPeriodEnd: { type: "date", required: false, input: false },
+        premiumStartedAt: { type: "date", required: false, input: false },
+        premiumSource: { type: "string", required: false, input: false },
       },
     },
     databaseHooks: {
@@ -60,6 +71,8 @@ export function createAuthInstance(db) {
                 ? new ObjectId(user.id)
                 : new ObjectId();
 
+            const publicId = user.publicId || encodeUserPublicId(_id);
+
             return {
               data: {
                 ...user,
@@ -67,6 +80,14 @@ export function createAuthInstance(db) {
                 id: _id.toString(),
                 role: "user",
                 status: "active",
+                phoneVerified: false,
+                phoneVerifiedAt: null,
+                phoneChangedAt: null,
+                phoneOtp: null,
+                premiumStatus: "none",
+                premiumSource: null,
+                premiumPeriodEnd: null,
+                premiumStartedAt: null,
                 quota: {
                   listing: {
                     today: 0,
@@ -76,7 +97,11 @@ export function createAuthInstance(db) {
                   },
                   violation: 0,
                 },
-                publicId: user.publicId || encodeUserPublicId(_id),
+                publicId,
+                handle: user.handle || {
+                  username: "",
+                  publicId,
+                },
               },
             };
           },

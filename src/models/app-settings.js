@@ -64,6 +64,14 @@ const appSettingsSchema = new mongoose.Schema(
       ],
       default: [],
     },
+    /** Premium annual subscription — self-serve verified + higher listing caps. */
+    premiumEnabled: { type: Boolean, default: true },
+    premiumPriceCents: { type: Number, default: 2000 },
+    premiumCurrency: { type: String, default: "usd" },
+    premiumMaxListingsPerDay: { type: Number, default: 5 },
+    premiumMaxListingsPerMonth: { type: Number, default: 25 },
+    stripePremiumProductId: { type: String, default: "" },
+    stripePremiumPriceId: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/account/stat-card";
 import { MatchListingSummary } from "@/components/account/match-listing-summary";
+import { PremiumPanel } from "@/components/account/premium-panel";
+import { getAuthUserById } from "@/lib/auth/users";
+import { getAppSettings } from "@/lib/services/settings";
+import { toPlainObject } from "@/lib/utils";
 import { FileText, Heart, GitCompare, Plus } from "lucide-react";
 
 export default async function AccountPage({ params }) {
@@ -16,9 +20,12 @@ export default async function AccountPage({ params }) {
   const prefix = `/${locale}`;
   const accountPrefix = `${prefix}/account`;
 
-  const { listingsCount, petsCount, pendingMatches, matchGroups } = await getAccountDashboardData(
-    session.user.id
-  );
+  const [{ listingsCount, petsCount, pendingMatches, matchGroups }, user, settings] =
+    await Promise.all([
+      getAccountDashboardData(session.user.id),
+      getAuthUserById(session.user.id),
+      getAppSettings(),
+    ]);
 
   return (
     <div className="space-y-8">
@@ -37,6 +44,13 @@ export default async function AccountPage({ params }) {
           </Link>
         </Button>
       </div>
+
+      <PremiumPanel
+        user={toPlainObject(user || session.user)}
+        settings={toPlainObject(settings)}
+        compact
+        settingsPath={`/${locale}/account/settings`}
+      />
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-3">

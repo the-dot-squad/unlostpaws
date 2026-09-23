@@ -25,11 +25,48 @@ export function getAuthUserId(user) {
   return null;
 }
 
-/** Attach a stable `id` field for admin UI and links. */
+/** Normalize handle whether stored as a JSON string, an object, or plain string. */
+export function normalizeUserHandle(handle, fallbackPublicId = "") {
+  if (!handle) {
+    return { username: "", publicId: fallbackPublicId || "" };
+  }
+  if (typeof handle === "string") {
+    try {
+      const parsed = JSON.parse(handle);
+      if (parsed && typeof parsed === "object") {
+        return {
+          username: String(parsed.username || "").trim().toLowerCase().replace(/^@/, ""),
+          publicId: String(parsed.publicId || fallbackPublicId || ""),
+        };
+      }
+    } catch {
+      return {
+        username: handle.trim().toLowerCase().replace(/^@/, ""),
+        publicId: fallbackPublicId || "",
+      };
+    }
+  }
+  if (typeof handle === "object") {
+    return {
+      username: String(handle.username || "").trim().toLowerCase().replace(/^@/, ""),
+      publicId: String(handle.publicId || fallbackPublicId || ""),
+    };
+  }
+  return { username: "", publicId: fallbackPublicId || "" };
+}
+
+/** Attach a stable `id` field for admin UI and links, and normalize handle. */
 export function normalizeAuthUser(user) {
   if (!user) return null;
   const id = getAuthUserId(user);
-  return { ...user, id };
+  const rawPublicId = user.publicId || "";
+  const handle = normalizeUserHandle(user.handle, rawPublicId || id);
+  return {
+    ...user,
+    id,
+    handle,
+    publicId: rawPublicId || handle.publicId || id,
+  };
 }
 
 /**
@@ -53,7 +90,8 @@ export function authUserIdFilter(userId) {
 export async function getAuthUserById(userId) {
   const auth = await getAuth();
   const ctx = await auth.$context;
-  return ctx.internalAdapter.findUserById(userId);
+  const user = await ctx.internalAdapter.findUserById(userId);
+  return user ? normalizeAuthUser(user) : null;
 }
 
 /**
@@ -80,6 +118,12 @@ export async function getAuthUsersByIds(userIds) {
       _id: 1,
       id: 1,
       publicId: 1,
+      handle: 1,
+      premiumStatus: 1,
+      premiumPeriodEnd: 1,
+      premiumSource: 1,
+      phone: 1,
+      phoneVerified: 1,
       name: 1,
       email: 1,
       status: 1,
@@ -100,23 +144,27 @@ export async function getAuthUsersByIds(userIds) {
 
 /**
  * Update a user by ID via better-auth internal adapter.
- * Revokes active sessions only when `banned` transitions from false → true.
+ * Revokes active sessions when account status transitions away from active.
  */
 export async function updateAuthUserById(userId, data) {
   const auth = await getAuth();
   const ctx = await auth.$context;
 
-  let wasBanned;
-  const isBanning = data.status === "banned" || data.banned === true;
-  if (isBanning) {
-    const existing = await ctx.internalAdapter.findUserById(userId);
-    const existingStatus = existing?.status || (existing?.banned ? "banned" : "active");
-    wasBanned = existingStatus === "banned";
+  const existing = await ctx.internalAdapter.findUserById(userId);
+  const prevStatus = existing?.status || (existing?.banned ? "banned" : "active");
+
+  let nextStatus = prevStatus;
+  if (data.status !== undefined) {
+    nextStatus = data.status;
+  } else if (data.banned === true) {
+    nextStatus = "banned";
+  } else if (data.banned === false && prevStatus === "banned") {
+    nextStatus = "active";
   }
 
   const result = await ctx.internalAdapter.updateUser(userId, data);
 
-  if (isBanning && !wasBanned) {
+  if (prevStatus === "active" && nextStatus !== "active") {
     await revokeUserSessions(userId);
   }
 

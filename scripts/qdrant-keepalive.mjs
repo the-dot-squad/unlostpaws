@@ -64,11 +64,12 @@ async function main() {
   await client.upsert(COLLECTION, { wait: true, points });
   console.log(`Upserted ${points.length} probe point(s)`);
 
-  const hits = await client.search(COLLECTION, {
-    vector: points[0].vector,
+  const response = await client.query(COLLECTION, {
+    query: points[0].vector,
     limit: POINT_COUNT,
     with_payload: true,
   });
+  const hits = response?.points ?? [];
   console.log(`Search returned ${hits.length} hit(s)`);
 
   await client.delete(COLLECTION, {

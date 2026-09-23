@@ -2,9 +2,11 @@
  * Public IDs for user-facing URLs.
  */
 
+import { ObjectId } from "mongodb";
 import { connectDB, getMongoDb } from "@/config/db";
 import { env } from "@/config/env";
 import { normalizeAuthUser } from "@/lib/auth/users";
+import { isPremium } from "@/lib/premium/entitlements";
 import { Listing } from "@/models/listing";
 import { OwnedPet } from "@/models/owned-pet";
 import { createPublicIdCodec } from "./codec.js";
@@ -71,12 +73,73 @@ export function encodeUserPublicId(userId) {
   return encodePublicId("user", userId);
 }
 
-/** @param {string} publicId @param {object} [projection] MongoDB projection */
-export async function findUserByPublicId(publicId, projection) {
-  if (!isValidPublicId("user", publicId)) return null;
+/**
+ * Resolves the preferred public URL identifier for a user.
+ * - If Premium and has a custom username, returns their username.
+ * - Otherwise returns their generated publicId.
+ * @param {object} user
+ * @returns {string}
+ */
+export function getUserPublicIdentifier(user) {
+  if (!user) return "";
+  if (isPremium(user) && user.handle?.username) {
+    return user.handle.username;
+  }
+  return user.handle?.publicId || user.publicId || user.id || "";
+}
 
+/**
+ * Resolves the user's handle/publicId display string.
+ * - If Premium and has custom username -> "@username"
+ * - Otherwise -> "usr_..." (publicId)
+ * @param {object} user
+ * @returns {string}
+ */
+export function getUserHandleDisplay(user) {
+  if (!user) return "";
+  if (isPremium(user) && user.handle?.username) {
+    return `@${user.handle.username}`;
+  }
+  return user.handle?.publicId || user.publicId || "";
+}
+
+export { RESERVED_USERNAMES } from "@/config/constants/usernames";
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export async function findUserByPublicId(identifier, projection) {
+  if (!identifier || typeof identifier !== "string") return null;
+
+  const raw = identifier.trim();
+  const clean = raw.toLowerCase().replace(/^@/, "");
   const db = await getMongoDb();
-  const user = await db.collection("user").findOne({ publicId }, { projection });
+
+  const safeClean = escapeRegex(clean);
+  const safeRaw = escapeRegex(raw);
+
+  const clauses = [
+    { publicId: raw },
+    { publicId: clean },
+    { "handle.publicId": raw },
+    { "handle.publicId": clean },
+    { "handle.username": clean },
+    { "handle.username": { $regex: new RegExp(`^${safeClean}$`, "i") } },
+    { handle: { $regex: new RegExp(`"username"\\s*:\\s*"${safeClean}"`, "i") } },
+    { handle: { $regex: new RegExp(`"publicId"\\s*:\\s*"${safeRaw}"`, "i") } },
+    { handle: clean },
+    { handle: raw },
+    { username: clean },
+    { _id: raw },
+    { id: raw },
+  ];
+
+  if (ObjectId.isValid(clean)) {
+    clauses.push({ _id: new ObjectId(clean) }, { id: clean });
+  }
+
+  const user = await db.collection("user").findOne({ $or: clauses }, { projection });
   return user ? normalizeAuthUser(user) : null;
 }
 

@@ -4,4 +4,5 @@ export const TURNSTILE_ACTIONS = {
   LISTING_CONTACT: "listing_contact",
   LISTING_REPORT: "listing_report",
   CONTACT_FORM: "contact_form",
+  TAG_CONTACT: "tag_contact",
 };

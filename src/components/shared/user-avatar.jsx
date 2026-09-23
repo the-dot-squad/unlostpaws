@@ -23,9 +23,15 @@ const SIZES = {
  * User profile avatar with initials fallback.
  * Uses a native <img> (via Radix) so OAuth provider URLs work without next/image remote config.
  */
-export function UserAvatar({ name, imageUrl, size = "md", className }) {
+export function UserAvatar({ name, imageUrl, size = "md", verified = false, className }) {
   return (
-    <Avatar className={cn(SIZES[size], className)}>
+    <Avatar
+      className={cn(
+        SIZES[size],
+        verified && "ring-2 ring-blue-500/50 ring-offset-2 ring-offset-background",
+        className
+      )}
+    >
       {imageUrl ? <AvatarImage src={imageUrl} alt={name || ""} /> : null}
       <AvatarFallback className="font-medium text-muted-foreground">
         {getInitials(name)}

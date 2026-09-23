@@ -7,12 +7,18 @@ export function listingPath(publicId, locale = "en") {
   return `/${locale}/listings/${publicId}`;
 }
 
-/** @param {string} publicId @param {string} [locale] */
-export function userPath(publicId, locale = "en") {
-  return `/${locale}/users/${publicId}`;
+/** @param {string} identifier @param {string} [locale] */
+export function userPath(identifier, locale = "en") {
+  const clean = String(identifier || "").replace(/^@/, "");
+  return `/${locale}/@${clean}`;
 }
 
 /** @param {string} publicId @param {string} [locale] */
 export function ownedPetPath(publicId, locale = "en") {
   return `/${locale}/account/pets/${publicId}`;
+}
+
+/** Public Digital Collar emergency page. @param {string} publicId @param {string} [locale] */
+export function tagPath(publicId, locale = "en") {
+  return `/${locale}/tag/${publicId}`;
 }

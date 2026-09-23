@@ -8,9 +8,11 @@ import {
   MIN_LISTING_IMAGES,
   PET_TYPES,
   REPORT_REASONS,
+  USER_ROLES,
 } from "@/config/constants/enums";
 import { FEED_FORMATS } from "@/config/constants/feeds";
 import { ALLOWED_IMAGE_EXTENSIONS } from "@/lib/storage/images";
+import { RESERVED_USERNAMES } from "@/config/constants/usernames";
 
 /**
  * @template T
@@ -180,6 +182,23 @@ export const updateListingSchema = withListingCoordinates(
   }),
 );
 
+/** Digital Collar settings nested on owned pets. */
+export const digitalCollarSchema = z
+  .object({
+    enabled: z.boolean().optional().default(false),
+    allowEmail: z.boolean().optional().default(true),
+    allowPhone: z.boolean().optional().default(false),
+    medicalAlerts: z
+      .string()
+      .max(500, "medical_alerts_too_long")
+      .optional()
+      .transform((value) => value?.trim() || ""),
+  })
+  .refine(({ enabled, allowEmail, allowPhone }) => !enabled || allowEmail || allowPhone, {
+    message: "contact_required",
+    path: ["allowEmail"],
+  });
+
 /** Owned-pet create/update payload (server action). */
 export const ownedPetSchema = z.object({
   name: z.string().min(1),
@@ -197,6 +216,7 @@ export const ownedPetSchema = z.object({
     .optional()
     .nullable()
     .transform((value) => (value?.url ? value : undefined)),
+  digitalCollar: digitalCollarSchema.optional(),
 });
 
 /** Admin listing edit — full field access including status. */
@@ -212,10 +232,20 @@ export const adminListingSchema = withListingCoordinates(
   }),
 );
 
+/** Schema for usernames / handles (@username). */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .transform((val) => val.replace(/^@/, ""))
+  .refine((val) => !val || /^[a-z0-9_]{3,30}$/.test(val), { message: "invalid_username" })
+  .refine((val) => !val || !RESERVED_USERNAMES.includes(val), { message: "reserved_username" });
+
 /** Admin user edit payload. */
 export const adminUserSchema = z.object({
   name: z.string().trim().min(1).max(100),
   phone: optionalPhoneSchema.optional(),
+  phoneVerified: z.boolean().optional(),
   country: z
     .string()
     .optional()
@@ -223,10 +253,30 @@ export const adminUserSchema = z.object({
     .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
   city: z.string().trim().max(100).optional(),
   locale: z.string().min(2).optional(),
-  role: z.enum(["user", "moderator", "admin"]),
+  role: z
+    .string()
+    .optional()
+    .transform((val) => (val && USER_ROLES.includes(val) ? val : "user")),
+  username: usernameSchema.optional().or(z.literal("")),
   status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
   /** Optional note included in the manual ban email (admin edit form). */
   banReason: z.string().trim().max(500).optional(),
+});
+
+/** Start phone OTP — E.164 required. */
+export const startPhoneVerificationSchema = z.object({
+  phone: optionalPhoneSchema,
+}).refine((data) => Boolean(data.phone), { message: "invalid_phone", path: ["phone"] });
+
+/** Confirm phone OTP. */
+export const confirmPhoneVerificationSchema = z.object({
+  phone: optionalPhoneSchema,
+  code: z.string().trim().min(4).max(12),
+}).refine((data) => Boolean(data.phone), { message: "invalid_phone", path: ["phone"] });
+
+/** Admin complimentary Premium grant — years=0 means forever. */
+export const adminGrantPremiumSchema = z.object({
+  years: z.coerce.number().int().min(0).max(50),
 });
 
 /** Admin owned-pet edit payload. */
@@ -253,6 +303,7 @@ export const updateProfileSchema = z.object({
     .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
   city: z.string().trim().max(100).optional(),
   image: z.union([z.string().url(), z.literal("")]).optional(),
+  username: usernameSchema.optional().or(z.literal("")),
 });
 
 /**
@@ -276,6 +327,11 @@ export const contactFormSchema = z.object({
 
 /** Turnstile-protected listing contact reveal. */
 export const listingContactSchema = z.object({
+  token: z.string().min(1, "captcha_required"),
+});
+
+/** Turnstile-protected Digital Collar contact reveal. */
+export const tagContactSchema = z.object({
   token: z.string().min(1, "captcha_required"),
 });
 
@@ -345,4 +401,15 @@ export const appSettingsSchema = z.object({
       }),
     )
     .default([]),
+  premiumEnabled: z.boolean(),
+  premiumPriceCents: positiveInt.max(1_000_000),
+  premiumCurrency: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z]{3}$/),
+  premiumMaxListingsPerDay: positiveInt.max(100),
+  premiumMaxListingsPerMonth: positiveInt.max(500),
+  stripePremiumProductId: z.string().trim().optional().default(""),
+  stripePremiumPriceId: z.string().trim().optional().default(""),
 });

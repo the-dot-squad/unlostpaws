@@ -12,6 +12,16 @@ const imageSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const digitalCollarSchema = new mongoose.Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    allowEmail: { type: Boolean, default: true },
+    allowPhone: { type: Boolean, default: false },
+    medicalAlerts: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const ownedPetSchema = new mongoose.Schema(
   {
     publicId: { type: String, unique: true, sparse: true, index: true },
@@ -25,6 +35,7 @@ const ownedPetSchema = new mongoose.Schema(
     photo: { type: imageSchema, required: true },
     photo2: { type: imageSchema },
     passportPhoto: { type: imageSchema },
+    digitalCollar: { type: digitalCollarSchema, default: () => ({}) },
     hasEmbedding: { type: Boolean, default: false },
     embeddingModel: { type: String, default: "" },
     worker: {

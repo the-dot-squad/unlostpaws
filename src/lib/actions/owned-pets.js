@@ -6,7 +6,7 @@ import { requireOwnedPet } from "@/lib/actions/require-owned";
 import { OwnedPet } from "@/models/owned-pet";
 import { getAppSettings } from "@/lib/services/settings";
 import { checkMicrochipUnique } from "@/lib/services/owned-pets";
-import { validate, ownedPetSchema } from "@/lib/validation";
+import { validate, ownedPetSchema, tagContactSchema } from "@/lib/validation";
 import {
   enqueueOwnedPetProcessing,
   markProcessingFailed,
@@ -16,12 +16,46 @@ import { revalidatePath } from "next/cache";
 import { deleteOwnedPetVector } from "@/lib/qdrant";
 import { encodeOwnedPetPublicId } from "@/lib/public-id";
 import { markUploadsAttached } from "@/lib/storage/cleanup";
+import { isPremium } from "@/lib/premium/entitlements";
+import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
+import { revealTagContact } from "@/lib/pets/reveal-tag-contact";
+import { runTurnstileAction } from "@/lib/turnstile";
+import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
+import { connectDB } from "@/config/db";
 
 function mapOwnedPetValidationError(parsed) {
   if (parsed.ok) return null;
   if (parsed.error === "invalid_format") return "INVALID_MICROCHIP";
+  if (parsed.error === "contact_required") return "CONTACT_REQUIRED";
+  if (parsed.error === "medical_alerts_too_long") return "MEDICAL_ALERTS_TOO_LONG";
   if (parsed.error === "required") return "REQUIRED";
   return "PHOTO_REQUIRED";
+}
+
+/**
+ * Apply Digital Collar fields when Premium; reject enable without Premium.
+ * @param {object} user
+ * @param {object | undefined} collarInput
+ * @returns {{ error?: string, collar?: ReturnType<typeof normalizeDigitalCollar> }}
+ */
+function resolveDigitalCollarWrite(user, collarInput) {
+  if (collarInput === undefined) return {};
+
+  const collar = normalizeDigitalCollar({ digitalCollar: collarInput });
+  if (!isPremium(user)) {
+    if (collar.enabled) {
+      return { error: "premium_required" };
+    }
+    return {};
+  }
+
+  return { collar };
+}
+
+/** @param {string} publicId */
+function revalidateTagPage(publicId) {
+  if (!publicId) return;
+  revalidatePath(`/tag/${publicId}`);
 }
 
 async function setOwnedPetStatus(session, publicId, status) {
@@ -33,6 +67,7 @@ async function setOwnedPetStatus(session, publicId, status) {
   await syncOwnedPetStatus(owned.pet._id, status);
 
   revalidatePath("/");
+  revalidateTagPage(owned.pet.publicId);
   return { success: true };
 }
 
@@ -46,6 +81,8 @@ export async function createOwnedPet(data) {
     }
 
     const petData = parsed.data;
+    const collarWrite = resolveDigitalCollarWrite(session.user, petData.digitalCollar);
+    if (collarWrite.error) return { error: collarWrite.error };
 
     const settings = await getAppSettings();
     const count = await OwnedPet.countDocuments({
@@ -73,6 +110,7 @@ export async function createOwnedPet(data) {
       photo: petData.photo,
       photo2: petData.photo2,
       passportPhoto: petData.passportPhoto,
+      ...(collarWrite.collar ? { digitalCollar: collarWrite.collar } : {}),
       status: "active",
       processingStatus: "pending",
     });
@@ -116,6 +154,8 @@ export async function updateOwnedPet(publicId, data) {
     }
 
     const petData = parsed.data;
+    const collarWrite = resolveDigitalCollarWrite(session.user, petData.digitalCollar);
+    if (collarWrite.error) return { error: collarWrite.error };
 
     const isUnique = await checkMicrochipUnique(petData.microchipId, pet._id);
     if (!isUnique) {
@@ -133,6 +173,9 @@ export async function updateOwnedPet(publicId, data) {
     pet.photo = petData.photo;
     pet.photo2 = petData.photo2;
     pet.passportPhoto = petData.passportPhoto;
+    if (collarWrite.collar) {
+      pet.digitalCollar = collarWrite.collar;
+    }
 
     if (photoChanged) {
       pet.processingStatus = "pending";
@@ -155,6 +198,7 @@ export async function updateOwnedPet(publicId, data) {
     await markUploadsAttached(s3Keys);
 
     revalidatePath("/");
+    revalidateTagPage(publicId);
     return { success: true };
   });
 }
@@ -172,4 +216,18 @@ export async function restoreOwnedPet(publicId) {
 /** Soft-remove a pet (sets status to removed, deletes vectors). */
 export async function removeOwnedPet(publicId) {
   return withAuthAction("removeOwnedPet", (session) => setOwnedPetStatus(session, publicId, "removed"));
+}
+
+/** Public Digital Collar contact reveal with Turnstile verification. */
+export async function revealTagContactAction(tagPublicId, token) {
+  return runTurnstileAction(tagContactSchema, { token }, TURNSTILE_ACTIONS.TAG_CONTACT, async () => {
+    await connectDB();
+    const result = await revealTagContact(tagPublicId);
+
+    if (!result.ok) {
+      return { error: result.error };
+    }
+
+    return { success: true, contact: result.contact };
+  });
 }

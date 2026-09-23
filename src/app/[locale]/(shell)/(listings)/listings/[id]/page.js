@@ -24,7 +24,8 @@ import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { Pencil, Camera } from "lucide-react";
 import { SiteContainer } from "@/components/layout/site-container";
 import { getAuthUserById } from "@/lib/auth/users";
-import { userPublicPath } from "@/lib/public-id";
+import { showsVerifiedBadge } from "@/lib/premium/entitlements";
+import { userPublicPath, getUserPublicIdentifier } from "@/lib/public-id";
 import {
   listingPublicId,
   serializeListingImages,
@@ -90,12 +91,16 @@ export default async function ListingDetailPage({ params, searchParams }) {
   const petTypeLabel = t(`petTypes.${listing.petType}`);
 
   const ownerUser = await getAuthUserById(listing.userId);
+  const ownerPublicId = ownerUser ? getUserPublicIdentifier(ownerUser) : null;
   const owner = ownerUser
     ? {
         name: ownerUser.name,
         image: ownerUser.image,
         countryLabel: getCountryName(ownerUser.country, locale),
-        profileHref: ownerUser.publicId ? userPublicPath(ownerUser.publicId, locale) : null,
+        profileHref: ownerPublicId ? userPublicPath(ownerPublicId, locale) : null,
+        verified: showsVerifiedBadge(ownerUser),
+        handle: ownerUser.handle,
+        publicId: ownerUser.publicId,
       }
     : null;
 

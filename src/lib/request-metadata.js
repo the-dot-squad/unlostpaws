@@ -62,6 +62,7 @@ const UNGUARDED_API_PREFIXES = [
   "/api/auth",
   "/api/cron/",
   "/api/webhooks/",
+  "/api/stripe/webhook",
   "/api/csp-report",
 ];
 

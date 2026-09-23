@@ -2,6 +2,7 @@
 
 export const ANALYTICS_EVENTS = {
   LISTING_CONTACT_REVEAL: "listing_contact_reveal",
+  TAG_CONTACT_REVEAL: "tag_contact_reveal",
   CONTACT_FORM_SUBMIT: "contact_form_submit",
   LISTING_REPORT_SUBMIT: "listing_report_submit",
   LISTING_SEARCH: "listing_search",

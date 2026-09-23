@@ -65,6 +65,13 @@ export const getUserForPage = cache(async (publicId) => {
     city: 1,
     createdAt: 1,
     banned: 1,
+    status: 1,
     publicId: 1,
+    role: 1,
+    premiumStatus: 1,
+    premiumPeriodEnd: 1,
+    premiumSource: 1,
+    phoneVerified: 1,
+    handle: 1,
   });
 });

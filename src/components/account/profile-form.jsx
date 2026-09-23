@@ -15,14 +15,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { CountrySelect } from "@/components/form/country-select";
 import { AvatarUpload } from "@/components/account/avatar-upload";
+import { PhoneField } from "@/components/account/phone-field";
+import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { signOut } from "@/lib/auth/client";
 import { deleteMyAccount, updateProfile } from "@/lib/actions/profile";
+import { isPremium, showsVerifiedBadge } from "@/lib/premium/entitlements";
+import { userPath } from "@/lib/paths";
 
 /**
- * Profile settings form — name, avatar, contact, language, and location.
+ * Profile settings form — name, avatar, contact, language, location, and verified handle.
  */
 export function ProfileForm({ user }) {
   const t = useTranslations();
@@ -30,6 +33,7 @@ export function ProfileForm({ user }) {
   const currentLocale = useLocale();
 
   const [name, setName] = useState(user.name || "");
+  const [username, setUsername] = useState(user.handle?.username || "");
   const [phone, setPhone] = useState(user.phone || "");
   const [locale, setLocale] = useState(user.locale || currentLocale);
   const [country, setCountry] = useState(user.country || "");
@@ -38,9 +42,29 @@ export function ProfileForm({ user }) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const premium = isPremium(user);
+  const publicVerified = showsVerifiedBadge(user);
+  const savedUsername = user.handle?.username;
+  const publicId = user.handle?.publicId || user.publicId || "";
+  const profileIdentifier = premium && savedUsername ? savedUsername : publicId;
+  const profileHandle = profileIdentifier
+    ? premium && savedUsername
+      ? `@${savedUsername}`
+      : `@${publicId}`
+    : "";
+  const profileHref = profileIdentifier ? userPath(profileIdentifier, currentLocale) : null;
+
   async function handleSave() {
     setLoading(true);
-    const result = await updateProfile({ name, phone, locale, country, city, image });
+    const result = await updateProfile({
+      name,
+      phone: premium && user.phone && user.phoneVerified ? user.phone : phone,
+      locale,
+      country,
+      city,
+      image,
+      username: premium ? username : undefined,
+    });
     setLoading(false);
 
     if (result.error) {
@@ -50,7 +74,6 @@ export function ProfileForm({ user }) {
 
     toast.success(t("account.profileUpdated"));
 
-    // Switch site locale when the user changes their preferred language.
     if (result.locale && result.locale !== currentLocale) {
       router.push(`/${result.locale}/account/settings`);
       router.refresh();
@@ -72,15 +95,19 @@ export function ProfileForm({ user }) {
     const result = await deleteMyAccount();
     setDeleting(false);
 
-    if (result?.success) {
-      toast.success(t("account.profile.deleteAccountSuccess"));
-      await signOut();
-      router.push(`/${currentLocale}`);
-      router.refresh();
+    if (result?.error) {
+      toast.error(result.error);
       return;
     }
 
-    toast.error(result?.error ?? t("account.profile.deleteAccountError"));
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push(`/${currentLocale}`);
+          router.refresh();
+        },
+      },
+    });
   }
 
   return (
@@ -91,7 +118,14 @@ export function ProfileForm({ user }) {
           <CardDescription>{t("account.profile.photoDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <AvatarUpload name={name} imageUrl={image} onChange={setImage} />
+          <AvatarUpload
+            name={name || user.name}
+            imageUrl={image}
+            onChange={setImage}
+            verified={publicVerified}
+            profileHref={profileHref}
+            profileHandle={profileHandle}
+          />
         </CardContent>
       </Card>
 
@@ -100,48 +134,77 @@ export function ProfileForm({ user }) {
           <CardTitle>{t("account.profile.personalTitle")}</CardTitle>
           <CardDescription>{t("account.profile.personalDescription")}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">{t("account.profile.name")}</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        <CardContent className="space-y-5">
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">{t("account.profile.name")}</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                {t("account.profile.nameHint")}
+              </p>
+            </div>
+
+            {premium ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="username">{t("account.profile.handle")}</Label>
+                  {publicVerified ? (
+                    <VerifiedBadge size="sm" showLabel label={t("users.verifiedBadge")} />
+                  ) : null}
+                </div>
+                <div className="relative">
+                  <span className="absolute start-3 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
+                    @
+                  </span>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                    placeholder="your_handle"
+                    className="ps-8 font-mono text-sm"
+                    maxLength={30}
+                  />
+                </div>
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {t("account.profile.handleHint")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>{t("account.profile.publicId")}</Label>
+                <Input
+                  value={user.handle?.publicId || user.publicId || ""}
+                  disabled
+                  className="bg-muted/50 font-mono text-sm"
+                />
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {t("account.profile.publicIdHint")}
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">{t("account.profile.email")}</Label>
-            <Input id="email" value={user.email || ""} disabled className="bg-muted/50" />
-            <p className="text-xs text-muted-foreground">{t("account.profile.emailHint")}</p>
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("account.profile.email")}</Label>
+              <Input id="email" value={user.email || ""} disabled className="bg-muted/50" />
+              <p className="text-xs text-muted-foreground">{t("account.profile.emailHint")}</p>
+            </div>
+
+            <PhoneField user={user} value={phone} onChange={setPhone} />
           </div>
 
-          <Separator />
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">{t("account.phone")}</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 555 123 4567"
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <CountrySelect
+              value={country}
+              onChange={setCountry}
+              label={t("listings.country")}
+              id="profile-country"
             />
-            <p className="text-xs text-muted-foreground">{t("account.phoneHint")}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("account.profile.locationTitle")}</CardTitle>
-          <CardDescription>{t("account.profile.locationDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <CountrySelect
-            value={country}
-            onChange={setCountry}
-            label={t("listings.country")}
-            id="profile-country"
-          />
-          <div className="space-y-2">
-            <Label htmlFor="city">{t("listings.city")}</Label>
-            <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="city">{t("listings.city")}</Label>
+              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+            </div>
           </div>
         </CardContent>
       </Card>

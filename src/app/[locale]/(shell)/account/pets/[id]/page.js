@@ -5,7 +5,7 @@ import { findOwnedPetByPublicId, resolveOwnedPetPublicId } from "@/lib/public-id
 import { PetForm } from "@/components/pets/pet-form";
 import { PetDetailView } from "@/components/pets/pet-detail-view";
 import { getSession } from "@/lib/auth/session";
-
+import { isPremium } from "@/lib/premium/entitlements";
 import { toPlainObject } from "@/lib/utils";
 
 export default async function PetDetailPage({ params, searchParams }) {
@@ -15,6 +15,7 @@ export default async function PetDetailPage({ params, searchParams }) {
   const tPetTypes = await getTranslations("petTypes");
   const session = await getSession();
   const sp = await searchParams;
+  const premium = isPremium(session?.user);
 
   await connectDB();
   const petDoc = await findOwnedPetByPublicId(id, {
@@ -33,7 +34,7 @@ export default async function PetDetailPage({ params, searchParams }) {
     }
     return (
       <div className="py-2">
-        <PetForm locale={locale} pet={pet} />
+        <PetForm locale={locale} pet={pet} premium={premium} />
       </div>
     );
   }
@@ -43,6 +44,7 @@ export default async function PetDetailPage({ params, searchParams }) {
       <PetDetailView
         pet={pet}
         locale={locale}
+        premium={premium}
         petTypeLabel={tPetTypes(pet.petType)}
         processingLabel={
           pet.processingStatus && pet.processingStatus !== "ready"
