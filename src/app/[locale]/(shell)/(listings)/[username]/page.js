@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import { SiteContainer } from "@/components/layout/site-container";
 import { ListingCard } from "@/components/listings/listing-card";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, User } from "lucide-react";
+import { CalendarRange, MapPin } from "lucide-react";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { formatDate } from "@/lib/format";
@@ -76,6 +76,7 @@ export default async function UserProfilePage({ params }) {
     isPremium(user) && user.handle?.username
       ? `@${user.handle.username}`
       : `@${user.handle?.publicId || user.publicId}`;
+  const premium = isPremium(user);
 
   return (
     <SiteContainer className="max-w-5xl space-y-8 py-8">
@@ -85,40 +86,41 @@ export default async function UserProfilePage({ params }) {
             name={user.name}
             imageUrl={user.image}
             size="lg"
-            verified={showsVerifiedBadge(user)}
+            premium={premium}
           />
 
           <div className="min-w-0 space-y-2">
-            <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <User className="size-3.5" aria-hidden />
-              {showsVerifiedBadge(user) ? t("users.verifiedMember") : t("users.member")}
-            </p>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold">{user.name || t("listings.anonymousPoster")}</h1>
+              <h1 className="text-2xl font-bold">
+                {user.name || t("listings.anonymousPoster")}
+              </h1>
               {showsVerifiedBadge(user) ? (
                 <VerifiedBadge size="md" label={t("users.verifiedBadge")} />
               ) : null}
             </div>
-            <p
-              className={
-                isPremium(user)
-                  ? "font-mono text-sm font-semibold text-blue-600 dark:text-blue-400"
-                  : "font-mono text-xs text-muted-foreground"
-              }
-            >
-              {displayHandle}
-            </p>
-            {locationLine ? (
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="size-3.5 shrink-0" aria-hidden />
-                {locationLine}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <p
+                className={
+                  premium
+                    ? "font-mono text-sm font-semibold text-blue-600 dark:text-blue-400"
+                    : "font-mono text-xs text-muted-foreground"
+                }
+              >
+                {displayHandle}
               </p>
-            ) : null}
-            {user.createdAt ? (
-              <p className="text-sm text-muted-foreground">
-                {t("users.memberSince", { date: formatDate(user.createdAt, locale) })}
-              </p>
-            ) : null}
+              {locationLine ? (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <MapPin className="size-3.5 shrink-0" aria-hidden />
+                  {locationLine}
+                </p>
+              ) : null}
+              {user.createdAt ? (
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <CalendarRange className="size-3.5 shrink-0" aria-hidden />
+                  {t("users.memberSince", { date: formatDate(user.createdAt, locale) })}
+                </p>
+              ) : null}
+            </div>
           </div>
         </CardContent>
       </Card>
