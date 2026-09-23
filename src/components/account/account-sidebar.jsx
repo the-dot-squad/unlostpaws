@@ -9,6 +9,7 @@ import {
   Heart,
   GitCompare,
   Settings,
+  Sparkles,
   Menu,
 } from "lucide-react";
 import { AppLogo } from "@/components/layout/app-logo";
@@ -34,6 +35,7 @@ function useAccountNav(locale) {
     { href: `${prefix}/listings`, label: t("nav.myListings"), icon: FileText },
     { href: `${prefix}/pets`, label: t("nav.myPets"), icon: Heart },
     { href: `${prefix}/matches`, label: t("nav.matches"), icon: GitCompare },
+    { href: `${prefix}/premium`, label: t("account.nav.premium"), icon: Sparkles },
     { href: `${prefix}/settings`, label: t("account.nav.profile"), icon: Settings },
   ];
 }

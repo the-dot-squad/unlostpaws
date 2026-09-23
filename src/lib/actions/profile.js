@@ -10,13 +10,16 @@ import { resolveStorageKey } from "@/lib/storage/urls";
 import { getMongoDb } from "@/config/db";
 import { encodeUserPublicId } from "@/lib/public-id";
 import { revalidatePath } from "next/cache";
+import { isPremium, phoneChangeAvailableAt } from "@/lib/premium/entitlements";
 
 const ERROR_MESSAGES = {
   invalid_phone: "Invalid phone number",
   invalid_country: "Invalid country code",
   invalid_username: "Invalid username. Must be 3-30 characters (letters, numbers, underscores).",
   username_already_taken: "This username is already taken",
-  only_verified_can_set_username: "Only verified accounts can set a custom handle",
+  only_premium_can_set_username: "Only Premium accounts can set a custom handle",
+  use_phone_verify_flow: "Premium members must verify a new phone number with a code",
+  phone_change_cooldown: "You cannot change your phone number yet. Please wait until the cooldown ends.",
   invalid_input: "Invalid input",
 };
 
@@ -33,19 +36,52 @@ export async function updateProfile({ name, phone, locale, country, city, image,
 
     const updates = {};
     if (parsed.data.name !== undefined) updates.name = parsed.data.name;
-    if (parsed.data.phone !== undefined) updates.phone = parsed.data.phone || "";
     if (parsed.data.locale) updates.locale = parsed.data.locale;
     if (parsed.data.country !== undefined) updates.country = parsed.data.country || "";
     if (parsed.data.city !== undefined) updates.city = parsed.data.city || "";
     if (parsed.data.image !== undefined) updates.image = parsed.data.image || "";
 
+    if (parsed.data.phone !== undefined) {
+      const nextPhone = parsed.data.phone || "";
+      const prevPhone = existingUser.phone || "";
+      const premium = isPremium(existingUser);
+
+      if (premium) {
+        if (!nextPhone) {
+          if (existingUser.phoneVerified && phoneChangeAvailableAt(existingUser)) {
+            return { error: ERROR_MESSAGES.phone_change_cooldown };
+          }
+          updates.phone = "";
+          updates.phoneVerified = false;
+          updates.phoneVerifiedAt = null;
+          updates.phoneOtp = null;
+        } else if (nextPhone === prevPhone) {
+          // no-op
+        } else if (!prevPhone || !existingUser.phoneVerified) {
+          updates.phone = nextPhone;
+          updates.phoneVerified = false;
+          updates.phoneVerifiedAt = null;
+          updates.phoneOtp = null;
+        } else {
+          return { error: ERROR_MESSAGES.use_phone_verify_flow };
+        }
+      } else {
+        updates.phone = nextPhone;
+        if (nextPhone !== prevPhone) {
+          updates.phoneVerified = false;
+          updates.phoneVerifiedAt = null;
+          updates.phoneOtp = null;
+        }
+      }
+    }
+
     if (parsed.data.username !== undefined) {
       const cleanUsername = parsed.data.username.trim().toLowerCase();
-      const isVerified = Boolean(existingUser.verified);
+      const premium = isPremium(existingUser);
 
       if (cleanUsername) {
-        if (!isVerified) {
-          return { error: ERROR_MESSAGES.only_verified_can_set_username };
+        if (!premium) {
+          return { error: ERROR_MESSAGES.only_premium_can_set_username };
         }
 
         const db = await getMongoDb();

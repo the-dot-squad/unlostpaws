@@ -13,6 +13,7 @@ import {
 } from "./upload-limits";
 import { MAX_LISTING_IMAGES } from "@/config/constants/enums";
 import { getMongoDb } from "@/config/db";
+import { listingCapsForUser } from "@/lib/premium/entitlements";
 
 function isSameDay(a, b) {
   return (
@@ -77,8 +78,9 @@ export async function checkListingRateLimit(userId) {
   if (!listingQuota.todayReset || !isSameDay(new Date(listingQuota.todayReset), now)) today = 0;
   if (!listingQuota.monthReset || !isSameMonth(new Date(listingQuota.monthReset), now)) month = 0;
 
-  if (today >= settings.maxListingsPerDay) return { allowed: false, reason: "daily" };
-  if (month >= settings.maxListingsPerMonth) return { allowed: false, reason: "monthly" };
+  const caps = listingCapsForUser(user, settings);
+  if (today >= caps.maxListingsPerDay) return { allowed: false, reason: "daily" };
+  if (month >= caps.maxListingsPerMonth) return { allowed: false, reason: "monthly" };
 
   return { allowed: true, listingsToday: today, listingsThisMonth: month };
 }
@@ -166,7 +168,10 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
   if (!hasRedis()) return { allowed: true };
 
   try {
-    const cap = (await getAppSettings()).maxListingsPerDay * MAX_LISTING_IMAGES;
+    const settings = await getAppSettings();
+    const user = await getAuthUserById(userId);
+    const caps = listingCapsForUser(user, settings);
+    const cap = caps.maxListingsPerDay * MAX_LISTING_IMAGES;
     if ((await getDailyUploadCount(userId, prefix)) >= cap) {
       return { allowed: false, error: "upload_daily_limit", status: 429 };
     }

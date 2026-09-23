@@ -13,6 +13,7 @@ import { MapPin, User } from "lucide-react";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VerifiedBadge } from "@/components/shared/verified-badge";
 import { formatDate } from "@/lib/format";
+import { isPremium, showsVerifiedBadge } from "@/lib/premium/entitlements";
 
 export async function generateMetadata({ params }) {
   const { locale, username } = await params;
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }) {
 
   const name = user.name || "Member";
   const canonicalId =
-    user.verified && user.handle?.username
+    isPremium(user) && user.handle?.username
       ? user.handle.username
       : user.handle?.publicId || user.publicId;
 
@@ -54,7 +55,7 @@ export default async function UserProfilePage({ params }) {
   // 1. If verified user has a custom handle, redirect publicId /@usr_... -> /@handle
   // 2. If accessed without leading @ (e.g. /en/davod or /en/usr_...), redirect -> /en/@canonicalId
   const canonicalId =
-    user.verified && user.handle?.username
+    isPremium(user) && user.handle?.username
       ? user.handle.username
       : user.handle?.publicId || user.publicId;
 
@@ -72,7 +73,7 @@ export default async function UserProfilePage({ params }) {
   const countryLabel = getCountryName(user.country, locale);
   const locationLine = [user.city, countryLabel].filter(Boolean).join(", ");
   const displayHandle =
-    user.verified && user.handle?.username
+    isPremium(user) && user.handle?.username
       ? `@${user.handle.username}`
       : `@${user.handle?.publicId || user.publicId}`;
 
@@ -84,23 +85,23 @@ export default async function UserProfilePage({ params }) {
             name={user.name}
             imageUrl={user.image}
             size="lg"
-            verified={Boolean(user.verified)}
+            verified={showsVerifiedBadge(user)}
           />
 
           <div className="min-w-0 space-y-2">
             <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <User className="size-3.5" aria-hidden />
-              {user.verified ? t("users.verifiedMember") : t("users.member")}
+              {showsVerifiedBadge(user) ? t("users.verifiedMember") : t("users.member")}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{user.name || t("listings.anonymousPoster")}</h1>
-              {user.verified ? (
+              {showsVerifiedBadge(user) ? (
                 <VerifiedBadge size="md" label={t("users.verifiedBadge")} />
               ) : null}
             </div>
             <p
               className={
-                user.verified
+                isPremium(user)
                   ? "font-mono text-sm font-semibold text-blue-600 dark:text-blue-400"
                   : "font-mono text-xs text-muted-foreground"
               }

@@ -6,6 +6,7 @@ import { ObjectId } from "mongodb";
 import { connectDB, getMongoDb } from "@/config/db";
 import { env } from "@/config/env";
 import { normalizeAuthUser } from "@/lib/auth/users";
+import { isPremium } from "@/lib/premium/entitlements";
 import { Listing } from "@/models/listing";
 import { OwnedPet } from "@/models/owned-pet";
 import { createPublicIdCodec } from "./codec.js";
@@ -74,14 +75,14 @@ export function encodeUserPublicId(userId) {
 
 /**
  * Resolves the preferred public URL identifier for a user.
- * - If verified and has a custom username, returns their username.
+ * - If Premium and has a custom username, returns their username.
  * - Otherwise returns their generated publicId.
  * @param {object} user
  * @returns {string}
  */
 export function getUserPublicIdentifier(user) {
   if (!user) return "";
-  if (user.verified && user.handle?.username) {
+  if (isPremium(user) && user.handle?.username) {
     return user.handle.username;
   }
   return user.handle?.publicId || user.publicId || user.id || "";
@@ -89,14 +90,14 @@ export function getUserPublicIdentifier(user) {
 
 /**
  * Resolves the user's handle/publicId display string.
- * - If verified and has custom username -> "@username"
+ * - If Premium and has custom username -> "@username"
  * - Otherwise -> "usr_..." (publicId)
  * @param {object} user
  * @returns {string}
  */
 export function getUserHandleDisplay(user) {
   if (!user) return "";
-  if (user.verified && user.handle?.username) {
+  if (isPremium(user) && user.handle?.username) {
     return `@${user.handle.username}`;
   }
   return user.handle?.publicId || user.publicId || "";

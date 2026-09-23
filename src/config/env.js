@@ -103,6 +103,14 @@ function assertProductionSecrets() {
     missing.push("PUBLIC_ID_SALT (insecure dev default)");
   }
 
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (stripeSecretKey) {
+    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+    if (!stripeWebhookSecret) missing.push("STRIPE_WEBHOOK_SECRET");
+    const preludeToken = process.env.PRELUDE_API_TOKEN?.trim();
+    if (!preludeToken) missing.push("PRELUDE_API_TOKEN");
+  }
+
   if (missing.length) {
     throw new Error(`Production requires secure env vars: ${missing.join(", ")}`);
   }
@@ -243,6 +251,22 @@ export const env = {
     channelId: process.env.TELEGRAM_CHANNEL_ID?.trim() || "",
     get enabled() {
       return Boolean(this.botToken && this.channelId);
+    },
+  },
+
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY?.trim() || "",
+    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() || "",
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET?.trim() || "",
+    get configured() {
+      return Boolean(this.secretKey);
+    },
+  },
+
+  prelude: {
+    apiToken: process.env.PRELUDE_API_TOKEN?.trim() || "",
+    get configured() {
+      return Boolean(this.apiToken);
     },
   },
 };
