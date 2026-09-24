@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GoogleIcon, MicrosoftIcon, FacebookIcon, XIcon } from "./provider-icons";
-import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
+import { ANALYTICS_EVENTS, AUTH_INTENT_STORAGE_KEY } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
 
 const PROVIDER_META = {
@@ -66,6 +66,11 @@ export function SignInForm({ locale, providerIds, error }) {
             variant="outline"
             className="h-11 w-full justify-start gap-3"
             onClick={() => {
+              try {
+                sessionStorage.setItem(AUTH_INTENT_STORAGE_KEY, id);
+              } catch {
+                // ignore
+              }
               trackEvent(ANALYTICS_EVENTS.SIGN_IN_CLICK, { provider: id });
               authClient.signIn.social({
                 provider: id,

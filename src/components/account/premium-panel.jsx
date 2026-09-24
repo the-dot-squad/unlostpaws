@@ -30,6 +30,8 @@ import {
 } from "@/lib/premium/entitlements";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
+import { trackEvent } from "@/lib/analytics/track";
 
 /**
  * Premium upsell / manage panel for the account area.
@@ -77,6 +79,13 @@ export function PremiumPanel({
     setBusy(key);
     startTransition(async () => {
       try {
+        if (key === "checkout") {
+          trackEvent(ANALYTICS_EVENTS.BEGIN_CHECKOUT, {
+            currency: currency.toLowerCase(),
+            value: priceCents / 100,
+            item_id: "premium",
+          });
+        }
         const result = await action(locale);
         if (result?.error) {
           const messageKey = `errors.${result.error}`;

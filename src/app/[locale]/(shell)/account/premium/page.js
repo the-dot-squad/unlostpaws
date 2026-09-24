@@ -4,6 +4,7 @@ import { getAuthUserById } from "@/lib/auth/users";
 import { getAppSettings } from "@/lib/services/settings";
 import { isPremium } from "@/lib/premium/entitlements";
 import { PremiumPanel } from "@/components/account/premium-panel";
+import { PremiumPurchaseBeacon } from "@/components/analytics/premium-purchase-beacon";
 import { toPlainObject } from "@/lib/utils";
 
 export default async function AccountPremiumPage({ params, searchParams }) {
@@ -22,9 +23,17 @@ export default async function AccountPremiumPage({ params, searchParams }) {
   const premium = isPremium(user);
   const plainUser = toPlainObject(user || session.user);
   const plainSettings = toPlainObject(settings);
+  const priceCents = plainSettings?.premiumPriceCents ?? 2000;
+  const currency = (plainSettings?.premiumCurrency || "usd").toUpperCase();
 
   return (
     <div className="space-y-6">
+      <PremiumPurchaseBeacon
+        premium={premium}
+        checkout={checkout}
+        currency={currency}
+        value={priceCents / 100}
+      />
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
         <p className="mt-1 text-muted-foreground">

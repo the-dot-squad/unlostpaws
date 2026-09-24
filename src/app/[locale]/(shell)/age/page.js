@@ -4,8 +4,10 @@ import { requireActiveSessionPage } from "@/lib/auth/session";
 import { getAuthUserById } from "@/lib/auth/users";
 import { hasConfirmedAge } from "@/lib/auth/age";
 import { AgeConfirmForm } from "@/components/auth/age-confirm-form";
+import { AuthAnalyticsBeacon } from "@/components/analytics/auth-analytics-beacon";
 import { SiteContainer } from "@/components/layout/site-container";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { toPlainObject } from "@/lib/utils";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -33,6 +35,7 @@ export default async function AgeConfirmPage({ params }) {
 
   return (
     <SiteContainer className="flex min-h-[70vh] items-center justify-center py-12">
+      <AuthAnalyticsBeacon createdAt={toPlainObject(user)?.createdAt} />
       <AgeConfirmForm />
     </SiteContainer>
   );

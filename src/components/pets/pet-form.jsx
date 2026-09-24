@@ -31,6 +31,8 @@ import {
   MAX_MICROCHIP_INPUT,
   MAX_NAME,
 } from "@/config/constants/field-limits";
+import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
+import { trackEvent } from "@/lib/analytics/track";
 
 const ERROR_KEYS = {
   INVALID_MICROCHIP: "invalidMicrochip",
@@ -111,6 +113,13 @@ export function PetForm({ locale, pet = null, premium = false }) {
         const key = ERROR_KEYS[result.error];
         toast.error(key ? t(key) : result.error);
         return;
+      }
+
+      if (!pet) {
+        trackEvent(ANALYTICS_EVENTS.PET_CREATE, {
+          pet_type: form.petType,
+          digital_collar: Boolean(premium && form.digitalCollar?.enabled),
+        });
       }
 
       toast.success(pet ? t("updated") : t("created"));
