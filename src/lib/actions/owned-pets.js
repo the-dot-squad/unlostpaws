@@ -29,6 +29,15 @@ function mapOwnedPetValidationError(parsed) {
   if (parsed.error === "contact_required") return "CONTACT_REQUIRED";
   if (parsed.error === "medical_alerts_too_long") return "MEDICAL_ALERTS_TOO_LONG";
   if (parsed.error === "required") return "REQUIRED";
+  if (
+    parsed.error === "name_too_long" ||
+    parsed.error === "breed_too_long" ||
+    parsed.error === "color_too_long" ||
+    parsed.error === "description_too_long" ||
+    parsed.error === "too_long"
+  ) {
+    return "VALIDATION_FAILED";
+  }
   return "PHOTO_REQUIRED";
 }
 

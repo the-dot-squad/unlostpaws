@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { MAX_NOTE } from "@/config/constants/field-limits";
 
 /**
  * Digital Collar settings block for pet create/edit forms.
@@ -63,7 +64,7 @@ export function DigitalCollarFields({ locale, premium, value, onChange }) {
               value={value.medicalAlerts || ""}
               onChange={(e) => update("medicalAlerts", e.target.value)}
               rows={3}
-              maxLength={500}
+              maxLength={MAX_NOTE}
               placeholder={t("medicalAlertsPlaceholder")}
             />
             <p className="text-xs text-muted-foreground">{t("medicalAlertsHint")}</p>

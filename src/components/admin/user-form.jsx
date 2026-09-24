@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { USER_ROLES } from "@/config/constants/enums";
+import { MAX_CITY, MAX_NAME, MAX_NOTE, MAX_USERNAME } from "@/config/constants/field-limits";
 import {
   Select,
   SelectContent,
@@ -57,7 +58,11 @@ function EditUserCard({ form, user, update }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input value={form.name || ""} onChange={(e) => update("name", e.target.value)} />
+            <Input
+              value={form.name || ""}
+              onChange={(e) => update("name", e.target.value)}
+              maxLength={MAX_NAME}
+            />
           </div>
           <div className="space-y-2">
             <Label>Phone</Label>
@@ -92,7 +97,11 @@ function EditUserCard({ form, user, update }) {
           />
           <div className="space-y-2">
             <Label>City</Label>
-            <Input value={form.city || ""} onChange={(e) => update("city", e.target.value)} />
+            <Input
+              value={form.city || ""}
+              onChange={(e) => update("city", e.target.value)}
+              maxLength={MAX_CITY}
+            />
           </div>
         </div>
 
@@ -151,6 +160,7 @@ function EditUserCard({ form, user, update }) {
               onChange={(e) => update("username", e.target.value.toLowerCase().replace(/^@/, ""))}
               placeholder="username (3-30 lowercase characters)"
               className="ps-8 font-mono text-sm"
+              maxLength={MAX_USERNAME}
             />
           </div>
           <p className="text-xs text-muted-foreground">
@@ -166,7 +176,7 @@ function EditUserCard({ form, user, update }) {
               value={form.banReason}
               onChange={(e) => update("banReason", e.target.value)}
               placeholder="Included in the suspension email when banning"
-              maxLength={500}
+              maxLength={MAX_NOTE}
             />
             <p className="text-xs text-muted-foreground">
               Only sent when changing status to banned.

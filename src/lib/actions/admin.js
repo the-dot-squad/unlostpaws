@@ -14,7 +14,7 @@ import { resolveReportCase as resolveReportCaseService } from "@/lib/services/mo
 import { getAppSettings, updateAppSettings as saveAppSettings } from "@/lib/services/settings";
 import { checkMicrochipUnique } from "@/lib/services/owned-pets";
 import { OwnedPet } from "@/models/owned-pet";
-import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema, adminGrantPremiumSchema } from "@/lib/validation";
+import { validate, adminListingSchema, adminUserSchema, adminOwnedPetSchema, adminGrantPremiumSchema, adminListingStatusSchema, adminOwnedPetStatusSchema, adminUserRoleSchema, adminBanUserSchema, adminOwnedPetNoteSchema, resolveReportCaseSchema } from "@/lib/validation";
 import { isPremium, premiumPeriodEndFromYears } from "@/lib/premium/entitlements";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { findListingByPublicId } from "@/lib/public-id";
@@ -34,10 +34,13 @@ function revalidateAdmin() {
 /** Change listing status (activate, remove, etc.). */
 export async function updateListingStatus(listingPublicId, status) {
   return withStaffAction("updateListingStatus", async () => {
+    const parsed = validate(adminListingStatusSchema, { status });
+    if (!parsed.ok) return { error: "Validation failed" };
+
     const listing = await findListingByPublicId(listingPublicId);
     if (!listing) return { error: "Listing not found" };
 
-    await setListingStatus(listing, status);
+    await setListingStatus(listing, parsed.data.status);
     revalidateAdmin();
     return { success: true };
   });
@@ -107,15 +110,18 @@ export async function adminExtendListing(listingPublicId) {
 /** Resolve a moderation case (all open reports for listing + reason). */
 export async function resolveReportCase({ listingId, reason, action, note }) {
   return withStaffAction("resolveReportCase", async (session) => {
-    if (action === "purge_listing" && session.user.role !== "admin") {
+    const parsed = validate(resolveReportCaseSchema, { listingId, reason, action, note });
+    if (!parsed.ok) return { error: "Validation failed" };
+
+    if (parsed.data.action === "purge_listing" && session.user.role !== "admin") {
       return { error: "forbidden" };
     }
 
     const result = await resolveReportCaseService({
-      listingId,
-      reason,
-      action,
-      note,
+      listingId: parsed.data.listingId,
+      reason: parsed.data.reason,
+      action: parsed.data.action,
+      note: parsed.data.note,
       adminUserId: session.user.id,
     });
 
@@ -123,7 +129,9 @@ export async function resolveReportCase({ listingId, reason, action, note }) {
 
     if (
       result.ownerUserId &&
-      (action === "confirm_violation" || action === "remove_listing" || action === "purge_listing")
+      (parsed.data.action === "confirm_violation" ||
+        parsed.data.action === "remove_listing" ||
+        parsed.data.action === "purge_listing")
     ) {
       const owner = await getAuthUserById(result.ownerUserId);
       if (owner?.publicId) revalidatePath(`/admin/users/${owner.publicId}`);
@@ -138,7 +146,10 @@ export async function resolveReportCase({ listingId, reason, action, note }) {
 /** Promote or demote a user's role. Admin-only. */
 export async function updateUserRole(userId, role) {
   return withAdminAction("updateUserRole", async () => {
-    await updateAuthUserById(userId, { role });
+    const parsed = validate(adminUserRoleSchema, { role });
+    if (!parsed.ok) return { error: "Validation failed" };
+
+    await updateAuthUserById(userId, { role: parsed.data.role });
     const user = await getAuthUserById(userId);
     revalidatePath("/admin/users");
     if (user?.publicId) revalidatePath(`/admin/users/${user.publicId}`);
@@ -156,6 +167,9 @@ export async function updateUserRole(userId, role) {
  */
 export async function banUser(userId, banned, { reason } = {}) {
   return withAdminAction("banUser", async () => {
+    const parsed = validate(adminBanUserSchema, { reason });
+    if (!parsed.ok) return { error: "Validation failed" };
+
     const user = await getAuthUserById(userId);
     if (!user) return { error: "User not found" };
 
@@ -176,7 +190,7 @@ export async function banUser(userId, banned, { reason } = {}) {
       email: user.email,
       ownerName: user.name,
       locale: user.locale || "en",
-      reason,
+      reason: parsed.data.reason,
     });
 
     revalidatePath("/admin/users");
@@ -374,15 +388,18 @@ export async function updateAppSettings(data) {
 /** Quick status change for registered pets. */
 export async function updateOwnedPetStatus(petPublicId, status) {
   return withStaffAction("updateOwnedPetStatus", async () => {
+    const parsed = validate(adminOwnedPetStatusSchema, { status });
+    if (!parsed.ok) return { error: "Validation failed" };
+
     const pet = await OwnedPet.findOne({ publicId: petPublicId });
     if (!pet) return { error: "Pet not found" };
 
     const prevStatus = pet.status;
-    pet.status = status;
+    pet.status = parsed.data.status;
     await pet.save();
 
-    if (prevStatus !== status) {
-      await syncOwnedPetStatus(pet._id, status);
+    if (prevStatus !== parsed.data.status) {
+      await syncOwnedPetStatus(pet._id, parsed.data.status);
     }
 
     revalidatePath("/admin/pets");
@@ -394,7 +411,10 @@ export async function updateOwnedPetStatus(petPublicId, status) {
 /** Save an admin note on a registered pet. */
 export async function updateOwnedPetAdminNote(petPublicId, adminNote) {
   return withStaffAction("updateOwnedPetAdminNote", async () => {
-    await OwnedPet.findOneAndUpdate({ publicId: petPublicId }, { adminNote });
+    const parsed = validate(adminOwnedPetNoteSchema, { adminNote });
+    if (!parsed.ok) return { error: "Validation failed" };
+
+    await OwnedPet.findOneAndUpdate({ publicId: petPublicId }, { adminNote: parsed.data.adminNote });
     revalidatePath("/admin/pets");
     revalidatePath(`/admin/pets/${petPublicId}`);
     return { success: true };

@@ -28,6 +28,7 @@ import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { submitListingReportAction } from "@/lib/actions/listings";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
+import { MAX_REPORT_DETAILS } from "@/config/constants/field-limits";
 import { Flag, LogIn } from "lucide-react";
 
 const REPORT_ERROR_KEYS = {
@@ -158,7 +159,7 @@ export function ReportDialog({ listingId, isSignedIn, signInHref }) {
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
                 placeholder={t("reportDetailsPlaceholder")}
-                maxLength={2000}
+                maxLength={MAX_REPORT_DETAILS}
                 rows={4}
               />
             </div>

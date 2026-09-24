@@ -23,6 +23,7 @@ import { signOut } from "@/lib/auth/client";
 import { deleteMyAccount, updateProfile } from "@/lib/actions/profile";
 import { isPremium, showsVerifiedBadge } from "@/lib/premium/entitlements";
 import { userPath } from "@/lib/paths";
+import { MAX_CITY, MAX_NAME, MAX_USERNAME } from "@/config/constants/field-limits";
 
 /**
  * Profile settings form — name, avatar, contact, language, location, and verified handle.
@@ -140,7 +141,12 @@ export function ProfileForm({ user }) {
               <div className="flex min-h-6 items-center">
                 <Label htmlFor="name">{t("account.profile.name")}</Label>
               </div>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={MAX_NAME}
+              />
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {t("account.profile.nameHint")}
               </p>
@@ -164,7 +170,7 @@ export function ProfileForm({ user }) {
                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                     placeholder="your_handle"
                     className="ps-7"
-                    maxLength={30}
+                    maxLength={MAX_USERNAME}
                   />
                 </div>
                 <p className="text-[11px] leading-snug text-muted-foreground">
@@ -213,7 +219,12 @@ export function ProfileForm({ user }) {
               <div className="flex min-h-6 items-center">
                 <Label htmlFor="city">{t("listings.city")}</Label>
               </div>
-              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+              <Input
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                maxLength={MAX_CITY}
+              />
             </div>
           </div>
 

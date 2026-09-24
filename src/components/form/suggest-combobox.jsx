@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
  * @param {boolean} [props.disabled]
  * @param {string} [props.className]
  * @param {boolean} [props.allowCustom=true]
+ * @param {number} [props.maxLength] Cap on custom free-text commits and search input
  */
 export function SuggestCombobox({
   value,
@@ -32,6 +33,7 @@ export function SuggestCombobox({
   disabled = false,
   className,
   allowCustom = true,
+  maxLength,
 }) {
   const t = useTranslations("suggest");
   const [open, setOpen] = useState(false);
@@ -52,15 +54,22 @@ export function SuggestCombobox({
   const showCustom =
     allowCustom && trimmedQuery.length > 0 && !exactLabelMatch;
 
+  function clamp(text) {
+    if (typeof maxLength === "number" && text.length > maxLength) {
+      return text.slice(0, maxLength);
+    }
+    return text;
+  }
+
   function commit(next) {
-    onChange(next);
+    onChange(clamp(next));
     setOpen(false);
     setQuery("");
   }
 
   function handleOpenChange(nextOpen) {
     if (!nextOpen && allowCustom && trimmedQuery && trimmedQuery !== value) {
-      onChange(trimmedQuery);
+      onChange(clamp(trimmedQuery));
     }
     if (!nextOpen) setQuery("");
     setOpen(nextOpen);
@@ -92,6 +101,7 @@ export function SuggestCombobox({
           <Input
             placeholder={t("search")}
             value={query}
+            maxLength={maxLength}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {

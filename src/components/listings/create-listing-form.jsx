@@ -24,6 +24,7 @@ const CREATE_ERROR_KEYS = {
   contact_required: "contactRequired",
   images_required: "imagesRequired",
   invalid_coordinates: "locationRequired",
+  validation_failed: "validationFailed",
   create_failed: "createFailed",
   listing_limit_daily: "listingLimitDaily",
   listing_limit_monthly: "listingLimitMonthly",

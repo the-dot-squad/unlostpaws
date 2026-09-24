@@ -490,6 +490,7 @@
       "uploadDailyLimit": "You've uploaded too many photos today. Try again tomorrow.",
       "rateLimitExceeded": "Too many requests. Please wait a moment and try again.",
       "userBanned": "Your account cannot post alerts.",
+      "validationFailed": "Some fields are too long or invalid. Please check and try again.",
       "createFailed": "Could not create the listing. Please try again."
     },
     "country": "Country",
@@ -772,6 +773,7 @@
     "saving": "Saving...",
     "cancel": "Cancel",
     "fillRequired": "Please fill in all required fields",
+    "validationFailed": "Some fields are too long or invalid. Please check and try again.",
     "invalidMicrochip": "Invalid microchip ID (must be 15 digits).",
     "microchipDuplicate": "This microchip is already registered",
     "maxPetsReached": "You've reached the maximum number of registered pets",

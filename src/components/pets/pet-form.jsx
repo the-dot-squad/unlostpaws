@@ -26,6 +26,11 @@ import { DigitalCollarFields } from "./digital-collar-fields";
 import { createOwnedPet, updateOwnedPet } from "@/lib/actions/owned-pets";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
+import {
+  MAX_DESCRIPTION,
+  MAX_MICROCHIP_INPUT,
+  MAX_NAME,
+} from "@/config/constants/field-limits";
 
 const ERROR_KEYS = {
   INVALID_MICROCHIP: "invalidMicrochip",
@@ -37,6 +42,7 @@ const ERROR_KEYS = {
   premium_required: "digitalCollar.premiumRequired",
   CONTACT_REQUIRED: "digitalCollar.contactRequired",
   MEDICAL_ALERTS_TOO_LONG: "digitalCollar.medicalAlertsTooLong",
+  VALIDATION_FAILED: "validationFailed",
 };
 
 export function PetForm({ locale, pet = null, premium = false }) {
@@ -131,6 +137,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       value={form.name}
                       onChange={(e) => update("name", e.target.value)}
                       required
+                      maxLength={MAX_NAME}
                     />
                   </div>
 
@@ -142,6 +149,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       placeholder="900123456789012"
                       className="font-mono"
                       required
+                      maxLength={MAX_MICROCHIP_INPUT}
                     />
                     <p className="text-xs text-muted-foreground">{t("microchipHint")}</p>
                   </div>
@@ -199,6 +207,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       value={form.description}
                       onChange={(e) => update("description", e.target.value)}
                       rows={4}
+                      maxLength={MAX_DESCRIPTION}
                     />
                   </div>
 

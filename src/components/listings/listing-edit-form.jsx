@@ -18,6 +18,7 @@ import { updateListing } from "@/lib/actions/listings";
 import { ListingExtensionPanel } from "@/components/listings/listing-extension-panel";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { hasSetCoordinates } from "@/lib/geo";
+import { MAX_ADDRESS, MAX_CITY, MAX_DESCRIPTION } from "@/config/constants/field-limits";
 
 /**
  * Owner-only form to update editable listing fields (not photos or alert type).
@@ -129,6 +130,7 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
                 rows={4}
+                maxLength={MAX_DESCRIPTION}
               />
             </div>
 
@@ -161,6 +163,7 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
                   id="address"
                   value={form.address}
                   onChange={(e) => update("address", e.target.value)}
+                  maxLength={MAX_ADDRESS}
                 />
               </div>
               <div className="space-y-2">
@@ -169,6 +172,7 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
                   id="city"
                   value={form.city}
                   onChange={(e) => update("city", e.target.value)}
+                  maxLength={MAX_CITY}
                 />
               </div>
               <CountrySelect

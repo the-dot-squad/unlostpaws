@@ -94,6 +94,17 @@ export async function createListing(data) {
       if (!parsed.ok) {
         if (parsed.error === "invalid_coordinates") return { error: "invalid_coordinates" };
         if (parsed.error === "contact_required") return { error: "contact_required" };
+        if (
+          parsed.error === "description_too_long" ||
+          parsed.error === "breed_too_long" ||
+          parsed.error === "color_too_long" ||
+          parsed.error === "address_too_long" ||
+          parsed.error === "city_too_long" ||
+          parsed.error === "too_long" ||
+          parsed.error === "invalid_country"
+        ) {
+          return { error: "validation_failed" };
+        }
         return { error: "images_required" };
       }
 

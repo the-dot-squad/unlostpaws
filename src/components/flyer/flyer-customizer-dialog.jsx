@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { PrintableFlyer } from "@/components/flyer/printable-flyer";
 import { Printer, Image as ImageIcon, Check } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MAX_FLYER_HEADLINE, MAX_FLYER_NOTES } from "@/config/constants/field-limits";
 
 const MAX_FLYER_IMAGES = 2;
 
@@ -143,6 +144,7 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
                 value={customHeadline}
                 onChange={(e) => setCustomHeadline(e.target.value)}
                 placeholder={t("headlineMissing")}
+                maxLength={MAX_FLYER_HEADLINE}
               />
             </div>
 
@@ -155,6 +157,7 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
                 value={customNotes}
                 onChange={(e) => setCustomNotes(e.target.value)}
                 placeholder={t("customNotesPlaceholder")}
+                maxLength={MAX_FLYER_NOTES}
               />
             </div>
 
