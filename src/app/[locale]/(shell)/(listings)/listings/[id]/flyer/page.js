@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { getListingForPage } from "@/lib/services/listings";
 import { PrintableFlyer } from "@/components/flyer/printable-flyer";
@@ -8,6 +8,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { listingPublicId } from "@/models/listing";
 import { getAuthUserById } from "@/lib/auth/users";
+import { getSession, isActiveUser } from "@/lib/auth/session";
+import { isStaffRole } from "@/lib/auth/ban";
 
 export async function generateMetadata({ params }) {
   const { locale, id } = await params;
@@ -30,12 +32,21 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
   const listing = await getListingForPage(id);
   if (!listing) notFound();
 
-  // Fetch owner user details to obtain email and phone
+  const session = await getSession();
+  if (!session?.user || !isActiveUser(session.user)) {
+    redirect(`/${locale}/login`);
+  }
+
+  const isOwner = session.user.id === listing.userId;
+  const isStaff = isStaffRole(session.user.role);
+  if (!isOwner && !isStaff) {
+    notFound();
+  }
+
   const ownerUser = await getAuthUserById(listing.userId);
 
   const slug = listing.publicId || listingPublicId(listing);
   const imageCount = listing.images?.length || 0;
-  // Support img=0 or img=0,2 (max two unique in-range indexes)
   const selectedImageIndexes = String(img ?? "0")
     .split(",")
     .map((part) => parseInt(part.trim(), 10))
@@ -44,16 +55,20 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
   if (selectedImageIndexes.length === 0) {
     selectedImageIndexes.push(0);
   }
-  const showPhone = phone !== "0";
-  const showEmail = email !== "0";
+
+  const allowPhone = Boolean(listing.contact?.allowPhone);
+  const allowEmail = Boolean(listing.contact?.allowEmail);
+  const showPhone = allowPhone && phone !== "0";
+  const showEmail = allowEmail && email !== "0";
   const shouldAutoPrint = print === "true";
 
-  // Convert listing to plain JSON object with populated contact info and publicId slug
   const plainListing = {
     ...JSON.parse(JSON.stringify(listing)),
     publicId: slug,
-    contactPhone: ownerUser?.phone || ownerUser?.phoneNumber || listing.contactPhone || "",
-    contactEmail: ownerUser?.email || listing.contactEmail || "",
+    contactPhone: allowPhone
+      ? ownerUser?.phone || ownerUser?.phoneNumber || listing.contactPhone || ""
+      : "",
+    contactEmail: allowEmail ? ownerUser?.email || listing.contactEmail || "" : "",
   };
 
   return (
@@ -86,7 +101,6 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
           `,
         }}
       />
-      {/* Top Action Toolbar (Hidden when printing) */}
       <div className="mx-auto max-w-[210mm] mb-6 flex items-center justify-between print:hidden">
         <Link href={`/${locale}/listings/${slug}`}>
           <Button variant="ghost" size="sm" className="gap-2 text-slate-700">
@@ -103,7 +117,6 @@ export default async function ListingFlyerPrintPage({ params, searchParams }) {
         </div>
       </div>
 
-      {/* Main Printable Poster */}
       <main>
         <PrintableFlyer
           listing={plainListing}

@@ -1,14 +1,20 @@
 /** @file Shared listing title and address formatting for UI surfaces. */
 
 import { getCountryName } from "@/config/countries";
+import { resolveAttributeLabel } from "@/config/pet-attributes";
 
 /** Pet type — color — breed line for cards and match views. */
-export function formatListingPetLine(listing, t) {
+export function formatListingPetLine(listing, t, tColors, tBreeds) {
   if (!listing) return "";
 
-  return [t(`petTypes.${listing.petType}`), listing.color, listing.breed]
-    .filter(Boolean)
-    .join(" — ");
+  const color = tColors
+    ? resolveAttributeLabel(listing.color, tColors)
+    : listing.color;
+  const breed = tBreeds
+    ? resolveAttributeLabel(listing.breed, tBreeds)
+    : listing.breed;
+
+  return [t(`petTypes.${listing.petType}`), color, breed].filter(Boolean).join(" — ");
 }
 
 /** Address, city, and localized country label. */

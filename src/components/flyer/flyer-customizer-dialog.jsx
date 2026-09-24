@@ -32,8 +32,14 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
   const [selectedImageIndexes, setSelectedImageIndexes] = useState([0]);
   const [customHeadline, setCustomHeadline] = useState("");
   const [customNotes, setCustomNotes] = useState("");
-  const [showPhone, setShowPhone] = useState(true);
-  const [showEmail, setShowEmail] = useState(true);
+  const allowPhone =
+    Boolean(listing?.contact?.allowPhone) &&
+    Boolean(listing?.contactPhone || listing?.contact?.phone || listing?.phone);
+  const allowEmail =
+    Boolean(listing?.contact?.allowEmail) &&
+    Boolean(listing?.contactEmail || listing?.contact?.email || listing?.email);
+  const [showPhone, setShowPhone] = useState(allowPhone);
+  const [showEmail, setShowEmail] = useState(allowEmail);
 
   if (!listing) return null;
 
@@ -63,8 +69,8 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
     params.set("img", selectedImageIndexes.join(","));
     if (customHeadline) params.set("headline", customHeadline);
     if (customNotes) params.set("notes", customNotes);
-    params.set("phone", showPhone ? "1" : "0");
-    params.set("email", showEmail ? "1" : "0");
+    params.set("phone", allowPhone && showPhone ? "1" : "0");
+    params.set("email", allowEmail && showEmail ? "1" : "0");
     params.set("print", "true");
 
     const printUrl = `/${locale}/listings/${slug}/flyer?${params.toString()}`;
@@ -161,30 +167,36 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
               />
             </div>
 
-            {/* Contact Privacy Toggles */}
-            <div className="grid gap-4 rounded-xl border border-border p-4 bg-muted/40 sm:grid-cols-2">
-              <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
-                <Label htmlFor="show-phone-switch" className="cursor-pointer text-sm font-medium">
-                  {t("showPhone")}
-                </Label>
-                <Switch
-                  id="show-phone-switch"
-                  checked={showPhone}
-                  onCheckedChange={setShowPhone}
-                />
-              </div>
+            {/* Contact Privacy Toggles — only when listing allows the channel and value exists */}
+            {(allowPhone || allowEmail) && (
+              <div className="grid gap-4 rounded-xl border border-border p-4 bg-muted/40 sm:grid-cols-2">
+                {allowPhone ? (
+                  <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
+                    <Label htmlFor="show-phone-switch" className="cursor-pointer text-sm font-medium">
+                      {t("showPhone")}
+                    </Label>
+                    <Switch
+                      id="show-phone-switch"
+                      checked={showPhone}
+                      onCheckedChange={setShowPhone}
+                    />
+                  </div>
+                ) : null}
 
-              <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
-                <Label htmlFor="show-email-switch" className="cursor-pointer text-sm font-medium">
-                  {t("showEmail")}
-                </Label>
-                <Switch
-                  id="show-email-switch"
-                  checked={showEmail}
-                  onCheckedChange={setShowEmail}
-                />
+                {allowEmail ? (
+                  <div className="flex items-center justify-between space-x-2 rtl:space-x-reverse">
+                    <Label htmlFor="show-email-switch" className="cursor-pointer text-sm font-medium">
+                      {t("showEmail")}
+                    </Label>
+                    <Switch
+                      id="show-email-switch"
+                      checked={showEmail}
+                      onCheckedChange={setShowEmail}
+                    />
+                  </div>
+                ) : null}
               </div>
-            </div>
+            )}
           </TabsContent>
 
           {/* Tab 2: Live Poster Preview */}
@@ -196,8 +208,8 @@ export function FlyerCustomizerDialog({ open, onOpenChange, listing, locale, t }
                 selectedImageIndexes={selectedImageIndexes}
                 customHeadline={customHeadline}
                 customNotes={customNotes}
-                showPhone={showPhone}
-                showEmail={showEmail}
+                showPhone={allowPhone && showPhone}
+                showEmail={allowEmail && showEmail}
                 t={t}
                 targetUrl={targetUrl}
               />

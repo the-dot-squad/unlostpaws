@@ -26,6 +26,7 @@ import { SiteContainer } from "@/components/layout/site-container";
 import { getAuthUserById } from "@/lib/auth/users";
 import { showsVerifiedBadge } from "@/lib/premium/entitlements";
 import { userPublicPath, getUserPublicIdentifier } from "@/lib/public-id";
+import { resolveAttributeLabel } from "@/config/pet-attributes";
 import {
   listingPublicId,
   serializeListingImages,
@@ -35,11 +36,33 @@ import { getAppSettings } from "@/lib/services/settings";
 import { serializeExtensionPolicy } from "@/lib/listings/expiry";
 import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunify";
 
+/**
+ * Prefill sighting create form from a missing listing's pet + location fields.
+ * @param {string} prefix
+ * @param {object} listing
+ * @param {{ lat?: number|null, lng?: number|null, city?: string, country?: string, address?: string } | null} location
+ */
+function buildSightingCreateHref(prefix, listing, location) {
+  const params = new URLSearchParams({ type: "sighting" });
+  if (listing.petType) params.set("petType", listing.petType);
+  if (listing.color) params.set("color", listing.color);
+  if (listing.breed) params.set("breed", listing.breed);
+  if (location?.lat != null && location?.lng != null) {
+    params.set("lat", String(location.lat));
+    params.set("lng", String(location.lng));
+  }
+  if (location?.city) params.set("city", location.city);
+  if (location?.country) params.set("country", location.country);
+  if (location?.address) params.set("address", location.address);
+  return `${prefix}/listings/new?${params.toString()}`;
+}
+
 export async function generateMetadata({ params }) {
   const { locale, id } = await params;
   const t = await getTranslations({ locale, namespace: "seo" });
   const tTypes = await getTranslations({ locale, namespace: "listingTypes" });
   const tPetTypes = await getTranslations({ locale, namespace: "petTypes" });
+  const tColors = await getTranslations({ locale, namespace: "colors" });
 
   const listing = await getListingForPage(id);
   if (!listing) return {};
@@ -49,9 +72,10 @@ export async function generateMetadata({ params }) {
   const location = [city, country].filter(Boolean).join(", ") || "—";
   const typeLabel = tTypes(listing.type);
   const petTypeLabel = tPetTypes(listing.petType);
+  const colorLabel = resolveAttributeLabel(listing.color, tColors);
   const title = t("listingDetailTitle", {
     type: typeLabel,
-    color: listing.color || "—",
+    color: colorLabel || "—",
     petType: petTypeLabel,
     location,
   });
@@ -72,6 +96,8 @@ export default async function ListingDetailPage({ params, searchParams }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
+  const tColors = await getTranslations("colors");
+  const tBreeds = await getTranslations("breeds");
   const session = await getSession();
   const sp = await searchParams;
 
@@ -81,7 +107,11 @@ export default async function ListingDetailPage({ params, searchParams }) {
   const isOwner = session?.user?.id === listing.userId;
   const isStaff = session?.user?.role === "admin" || session?.user?.role === "moderator";
  
-  if (listing.status === "removed" && !isOwner && !isStaff) {
+  if (
+    (listing.status === "removed" || listing.status === "under_review") &&
+    !isOwner &&
+    !isStaff
+  ) {
     notFound();
   }
   const prefix = `/${locale}`;
@@ -89,6 +119,8 @@ export default async function ListingDetailPage({ params, searchParams }) {
   const countryLabel = getCountryName(location?.country || listing.location?.country, locale);
   const images = serializeListingImages(listing.images);
   const petTypeLabel = t(`petTypes.${listing.petType}`);
+  const colorLabel = resolveAttributeLabel(listing.color, tColors);
+  const breedLabel = resolveAttributeLabel(listing.breed, tBreeds);
 
   const ownerUser = await getAuthUserById(listing.userId);
   const ownerPublicId = ownerUser ? getUserPublicIdentifier(ownerUser) : null;
@@ -104,8 +136,8 @@ export default async function ListingDetailPage({ params, searchParams }) {
       }
     : null;
 
-  // Owner edit mode (?edit=1)
-  if (isOwner && sp.edit === "1" && listing.status === "active") {
+  // Owner edit mode (?edit=1) — active listings (full edit) or expired (revive)
+  if (isOwner && sp.edit === "1" && (listing.status === "active" || listing.status === "expired")) {
     const settings = await getAppSettings();
     const extensionLocked = await hasReunionExtensionLock(listing._id);
     return (
@@ -118,7 +150,9 @@ export default async function ListingDetailPage({ params, searchParams }) {
           color: listing.color,
           breed: listing.breed,
           description: listing.description,
+          petType: listing.petType,
           location,
+          contact: listing.contact,
         }}
         extensionPolicy={serializeExtensionPolicy(settings)}
         extensionLocked={extensionLocked}
@@ -128,7 +162,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
 
   const showContact =
     listing.status === "active" && !isOwner;
-  const canEdit = isOwner && listing.status === "active";
+  const canEdit = isOwner && (listing.status === "active" || listing.status === "expired");
 
   const city = location?.city || "";
   const locationLabel = [city, countryLabel].filter(Boolean).join(", ");
@@ -140,7 +174,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
   });
   const listingTitle = t("seo.listingDetailTitle", {
     type: typeLabel,
-    color: listing.color || "—",
+    color: colorLabel || "—",
     petType: petTypeLabel,
     location: locationLabel || "—",
   });
@@ -155,12 +189,22 @@ export default async function ListingDetailPage({ params, searchParams }) {
     title: listingTitle,
   });
 
-  const listingWithContact = {
+  const publicId = listing.publicId || listingPublicId(listing);
+  // Never ship owner PII to public visitors. Flyer/QR for owners only get contact when allow* is set.
+  const listingForTools = {
     ...listing,
-    publicId: listing.publicId || listingPublicId(listing),
-    contactPhone: ownerUser?.phone || ownerUser?.phoneNumber || listing.contactPhone || "",
-    contactEmail: ownerUser?.email || listing.contactEmail || "",
+    publicId,
+    contactPhone: "",
+    contactEmail: "",
   };
+  if (isOwner || isStaff) {
+    listingForTools.contactPhone =
+      listing.contact?.allowPhone
+        ? ownerUser?.phone || ownerUser?.phoneNumber || listing.contactPhone || ""
+        : "";
+    listingForTools.contactEmail =
+      listing.contact?.allowEmail ? ownerUser?.email || listing.contactEmail || "" : "";
+  }
 
   return (
     <SiteContainer className="max-w-4xl space-y-6 py-8">
@@ -198,10 +242,10 @@ export default async function ListingDetailPage({ params, searchParams }) {
           </div>
 
           <h1 className="text-2xl font-bold capitalize">
-            {petTypeLabel} · {listing.color}
+            {petTypeLabel} · {colorLabel}
           </h1>
-          {listing.breed ? (
-            <p className="text-muted-foreground">{listing.breed}</p>
+          {breedLabel ? (
+            <p className="text-muted-foreground">{breedLabel}</p>
           ) : null}
         </div>
 
@@ -209,12 +253,14 @@ export default async function ListingDetailPage({ params, searchParams }) {
           <ShareButton
             typeLabel={t(`listingTypes.${listing.type}`)}
             petTypeLabel={petTypeLabel}
-            color={listing.color}
-            breed={listing.breed}
+            color={colorLabel}
+            breed={breedLabel}
             locationLabel={locationLabel}
           />
-          <QRCodeButton listing={listingWithContact} locale={locale} />
-          <FlyerCustomizerButton listing={listingWithContact} locale={locale} />
+          <QRCodeButton listing={listingForTools} locale={locale} />
+          {(isOwner || isStaff) && (
+            <FlyerCustomizerButton listing={listingForTools} locale={locale} />
+          )}
           {!isOwner && listing.status === "active" && (
             <ReportDialog
               listingId={id}
@@ -226,7 +272,9 @@ export default async function ListingDetailPage({ params, searchParams }) {
             <Button asChild variant="outline" size="sm">
               <Link href={`${prefix}/listings/${id}?edit=1`}>
                 <Pencil className="me-2 size-4" />
-                {t("listings.editListing")}
+                {listing.status === "expired"
+                  ? t("listings.reviveListing")
+                  : t("listings.editListing")}
               </Link>
             </Button>
           )}
@@ -299,7 +347,7 @@ export default async function ListingDetailPage({ params, searchParams }) {
                 </div>
               </div>
               <Button asChild size="default" className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-medium shadow-sm transition-transform active:scale-95">
-                <Link href={`${prefix}/listings/new?type=sighting`}>
+                <Link href={buildSightingCreateHref(prefix, listing, location)}>
                   {t("listings.sightingWidget.cta")}
                 </Link>
               </Button>

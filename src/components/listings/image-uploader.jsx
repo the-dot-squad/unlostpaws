@@ -19,6 +19,7 @@ const BLOCKING_ERROR_CODES = new Set([
   "rate_limit_exceeded",
   "rate_limit_unavailable",
   "user_banned",
+  "age_required",
 ]);
 
 function resolveErrorMessage(code, t) {
@@ -39,6 +40,8 @@ function resolveErrorMessage(code, t) {
       return t("rateLimitUnavailable");
     case "user_banned":
       return t("userBanned");
+    case "age_required":
+      return t("ageRequired");
     default:
       return t("failed");
   }
@@ -202,7 +205,10 @@ function useImageUpload({ images, onChange, onGpsFound, onBlockedChange, t }) {
         releasePreview(target?.preview);
         return items.filter((item) => item.id !== upload.id);
       });
-      onChange([...imagesRef.current, uploaded]);
+      // Sync ref before parent re-render so parallel uploads cannot drop images.
+      const next = [...imagesRef.current, uploaded];
+      imagesRef.current = next;
+      onChange(next);
     } catch (err) {
       console.error(err);
       const code = err.code || "";
@@ -247,7 +253,11 @@ function useImageUpload({ images, onChange, onGpsFound, onBlockedChange, t }) {
   }
 
   const removeImage = (index) => {
-    if (!blocked) onChange(images.filter((_, i) => i !== index));
+    if (!blocked) {
+      const next = imagesRef.current.filter((_, i) => i !== index);
+      imagesRef.current = next;
+      onChange(next);
+    }
   };
 
   const isUploading = pending.some((item) => !item.error);
@@ -267,7 +277,14 @@ function useImageUpload({ images, onChange, onGpsFound, onBlockedChange, t }) {
   };
 }
 
-export function ImageUploader({ images, onChange, hint, onGpsFound, onBlockedChange }) {
+export function ImageUploader({
+  images,
+  onChange,
+  hint,
+  onGpsFound,
+  onBlockedChange,
+  onUploadingChange,
+}) {
   const t = useTranslations("upload");
   const {
     pending,
@@ -279,6 +296,10 @@ export function ImageUploader({ images, onChange, hint, onGpsFound, onBlockedCha
     removeImage,
     removePending,
   } = useImageUpload({ images, onChange, onGpsFound, onBlockedChange, t });
+
+  useEffect(() => {
+    onUploadingChange?.(isUploading);
+  }, [isUploading, onUploadingChange]);
 
   return (
     <div className="space-y-3">

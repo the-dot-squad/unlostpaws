@@ -8,6 +8,7 @@ import { MapPin } from "lucide-react";
 import { getCountryName } from "@/config/countries";
 import { FlyerCustomizerButton } from "@/components/flyer/flyer-customizer-button";
 import { QRCodeButton } from "@/components/flyer/qr-code-button";
+import { AttributeLabel } from "@/components/form/attribute-label";
 
 /**
  * @param {object} props
@@ -58,9 +59,13 @@ export function ListingCard({
       </div>
       <CardContent className="p-4">
         <p className="font-medium capitalize">
-          {petTypeLabel} · {listing.color}
+          {petTypeLabel} · <AttributeLabel value={listing.color} namespace="colors" />
         </p>
-        {listing.breed ? <p className="text-sm text-muted-foreground">{listing.breed}</p> : null}
+        {listing.breed ? (
+          <p className="text-sm text-muted-foreground">
+            <AttributeLabel value={listing.breed} namespace="breeds" />
+          </p>
+        ) : null}
         {locationLine ? (
           <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="size-3" />

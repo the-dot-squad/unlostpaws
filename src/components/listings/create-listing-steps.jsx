@@ -101,7 +101,14 @@ export function CreateListingDetailsStep({ form, update, t }) {
   );
 }
 
-export function CreateListingPhotosStep({ form, update, t, onGpsFound, onUploadBlockedChange }) {
+export function CreateListingPhotosStep({
+  form,
+  update,
+  t,
+  onGpsFound,
+  onUploadBlockedChange,
+  onUploadingChange,
+}) {
   return (
     <div className="space-y-6">
       <ImageUploader
@@ -110,6 +117,7 @@ export function CreateListingPhotosStep({ form, update, t, onGpsFound, onUploadB
         hint={t("listings.imagesHint")}
         onGpsFound={onGpsFound}
         onBlockedChange={onUploadBlockedChange}
+        onUploadingChange={onUploadingChange}
       />
 
       <div className="space-y-4 rounded-lg border bg-muted/20 p-4">

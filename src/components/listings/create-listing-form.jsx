@@ -22,7 +22,10 @@ const STEPS = ["details", "photos", "location"];
 
 const CREATE_ERROR_KEYS = {
   contact_required: "contactRequired",
+  phone_required: "phoneRequired",
+  age_required: "ageRequired",
   images_required: "imagesRequired",
+  upload_invalid: "uploadInvalid",
   invalid_coordinates: "locationRequired",
   validation_failed: "validationFailed",
   create_failed: "createFailed",
@@ -34,7 +37,7 @@ const CREATE_ERROR_KEYS = {
 };
 
 /** Validates each step input for creating listing. */
-function validateCreateListingStep(step, form, uploadBlocked, t) {
+function validateCreateListingStep(step, form, { uploadBlocked, isUploading }, t) {
   switch (step) {
     case 0:
       if (!form.color.trim()) {
@@ -44,6 +47,10 @@ function validateCreateListingStep(step, form, uploadBlocked, t) {
       return true;
     case 1:
       if (uploadBlocked) return false;
+      if (isUploading) {
+        toast.error(t("listings.createErrors.imagesUploading"));
+        return false;
+      }
       if (form.images.length < MIN_LISTING_IMAGES) {
         toast.error(t("listings.createErrors.imagesRequired"));
         return false;
@@ -95,26 +102,28 @@ async function submitListing(form, locale, t) {
 }
 
 /** Custom hook containing form state, validation, geolocation helpers, and submission logic. */
-function useCreateListingState({ locale, defaultType }) {
+function useCreateListingState({ locale, prefill = {} }) {
   const t = useTranslations();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [uploadBlocked, setUploadBlocked] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const submittingRef = useRef(false);
+  const hasPrefillCoords = hasSetCoordinates(prefill.lng, prefill.lat);
   const [form, setForm] = useState({
-    type: defaultType || "missing",
+    type: prefill.type || "missing",
     images: [],
-    petType: "dog",
-    breed: "",
-    color: "",
+    petType: prefill.petType || "dog",
+    breed: prefill.breed || "",
+    color: prefill.color || "",
     description: "",
-    address: "",
-    city: "",
-    country: "",
-    lng: null,
-    lat: null,
-    locationSource: "manual",
+    address: prefill.address || "",
+    city: prefill.city || "",
+    country: prefill.country || "",
+    lng: hasPrefillCoords ? prefill.lng : null,
+    lat: hasPrefillCoords ? prefill.lat : null,
+    locationSource: hasPrefillCoords ? "prefill" : "manual",
     allowEmail: true,
     allowPhone: false,
   });
@@ -171,8 +180,8 @@ function useCreateListingState({ locale, defaultType }) {
   }
 
   function goNext() {
-    if (uploadBlocked) return;
-    if (!validateCreateListingStep(step, form, uploadBlocked, t)) return;
+    if (uploadBlocked || isUploading) return;
+    if (!validateCreateListingStep(step, form, { uploadBlocked, isUploading }, t)) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
@@ -181,11 +190,11 @@ function useCreateListingState({ locale, defaultType }) {
   }
 
   async function handleSubmit() {
-    if (submittingRef.current || loading || uploadBlocked) return;
+    if (submittingRef.current || loading || uploadBlocked || isUploading) return;
     if (
-      !validateCreateListingStep(0, form, uploadBlocked, t) ||
-      !validateCreateListingStep(1, form, uploadBlocked, t) ||
-      !validateCreateListingStep(2, form, uploadBlocked, t)
+      !validateCreateListingStep(0, form, { uploadBlocked, isUploading }, t) ||
+      !validateCreateListingStep(1, form, { uploadBlocked, isUploading }, t) ||
+      !validateCreateListingStep(2, form, { uploadBlocked, isUploading }, t)
     ) {
       return;
     }
@@ -222,6 +231,7 @@ function useCreateListingState({ locale, defaultType }) {
     step,
     loading,
     uploadBlocked,
+    isUploading,
     form,
     stepLabels,
     locationFromPhoto,
@@ -231,14 +241,15 @@ function useCreateListingState({ locale, defaultType }) {
     handleSubmit,
     handleGpsFromPhoto,
     handleUploadBlocked,
+    setIsUploading,
     handleMapCoordinatesChange,
     handleReverseGeocode,
   };
 }
 
-export function CreateListingForm({ locale, defaultType }) {
+export function CreateListingForm({ locale, prefill }) {
   const t = useTranslations();
-  const state = useCreateListingState({ locale, defaultType });
+  const state = useCreateListingState({ locale, prefill });
 
   return (
     <Card className="w-full max-w-[58rem] overflow-hidden shadow-lg">
@@ -254,6 +265,7 @@ export function CreateListingForm({ locale, defaultType }) {
               t={t}
               onGpsFound={state.handleGpsFromPhoto}
               onUploadBlockedChange={state.handleUploadBlocked}
+              onUploadingChange={state.setIsUploading}
             />
           )}
           {state.step === 2 && (
@@ -271,7 +283,7 @@ export function CreateListingForm({ locale, defaultType }) {
             step={state.step}
             stepCount={STEPS.length}
             loading={state.loading}
-            disabled={state.uploadBlocked}
+            disabled={state.uploadBlocked || state.isUploading}
             t={t}
             onBack={state.goBack}
             onNext={state.goNext}
