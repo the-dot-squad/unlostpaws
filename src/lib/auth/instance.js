@@ -59,6 +59,9 @@ export function createAuthInstance(db) {
         premiumPeriodEnd: { type: "date", required: false, input: false },
         premiumStartedAt: { type: "date", required: false, input: false },
         premiumSource: { type: "string", required: false, input: false },
+        birthMonth: { type: "number", required: false, input: false },
+        birthYear: { type: "number", required: false, input: false },
+        ageConfirmedAt: { type: "date", required: false, input: false },
       },
     },
     databaseHooks: {
@@ -117,23 +120,49 @@ export function createAuthInstance(db) {
         }
       }),
       /**
-       * Discard sessions created for suspended accounts (e.g. OAuth callback).
+       * Discard sessions created for suspended or blocklisted accounts (e.g. OAuth callback).
        * Admin bans also revoke sessions via {@link revokeUserSessions} in session.js;
-       * this hook covers sign-in attempts after a ban is already in place.
+       * this hook covers sign-in attempts after a ban or under-13 refusal is already in place.
        */
       after: createAuthMiddleware(async (ctx) => {
         const newSession = ctx.context.newSession;
-        const status = newSession?.user?.status || (newSession?.user?.banned ? "banned" : "active");
-        if (status === "active") return;
+        if (!newSession?.user) return;
 
         const userId = newSession.user.id;
-        if (userId) {
-          const { revokeUserSessions } = await import("./session");
-          await revokeUserSessions(userId);
+        const locale = newSession.user.locale || defaultLocale;
+        const status = newSession.user.status || (newSession.user.banned ? "banned" : "active");
+
+        if (status !== "active") {
+          if (userId) {
+            const { revokeUserSessions } = await import("./session");
+            await revokeUserSessions(userId);
+          }
+          redirectToLogin(ctx, `user_${status}`, locale);
         }
 
-        const locale = newSession.user.locale || defaultLocale;
-        redirectToLogin(ctx, `user_${status}`, locale);
+        const { isBlocked } = await import("@/lib/moderation/blocklist");
+        const { getUserLinkedAccounts } = await import("./users");
+        const identities = userId ? await getUserLinkedAccounts(userId) : [];
+        const blocked = await isBlocked({
+          email: newSession.user.email,
+          identities,
+        });
+
+        if (blocked) {
+          if (userId) {
+            const { revokeUserSessions } = await import("./session");
+            const { purgeUserAccount } = await import("@/lib/services/users");
+            const { normalizeAuthUser } = await import("./users");
+            await revokeUserSessions(userId);
+            // Remove any account that slipped past create before identities were linked.
+            try {
+              await purgeUserAccount(normalizeAuthUser(newSession.user));
+            } catch {
+              // User may already be gone
+            }
+          }
+          redirectToLogin(ctx, "user_blocked", locale);
+        }
       }),
     },
     experimental: { joins: true },

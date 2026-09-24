@@ -684,7 +684,42 @@
       "user_banned": "Your account has been suspended due to violations of our policies.",
       "user_deactivated": "Your account has been deactivated.",
       "user_deleted": "Your account has been deleted.",
+      "user_blocked": "This account cannot be used. If you believe this is a mistake, contact support.",
+      "age_under13": "UnLostPaws is only available to people aged 13 or older. This identity cannot register again.",
       "generic": "An unexpected authentication error occurred. Please try again."
+    }
+  },
+  "age": {
+    "title": "Confirm your age",
+    "description": "You must be at least 13 to use UnLostPaws. Enter your birth month and year — we only store those, not a full date of birth.",
+    "monthLabel": "Birth month",
+    "yearLabel": "Birth year",
+    "monthPlaceholder": "Month",
+    "yearPlaceholder": "Year",
+    "submit": "Continue",
+    "submitting": "Saving…",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "errors": {
+      "required": "Please select your birth month and year.",
+      "invalid_birth_month": "Please choose a valid birth month.",
+      "invalid_birth_year": "Please choose a valid birth year.",
+      "age_required": "Please confirm your age to continue.",
+      "unauthorized": "Please sign in again.",
+      "confirm_failed": "Something went wrong. Please try again.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "myPets": {

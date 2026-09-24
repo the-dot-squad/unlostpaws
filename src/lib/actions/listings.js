@@ -126,7 +126,7 @@ export async function createListing(data) {
       revalidatePath("/");
       return { success: true, id };
     },
-    { rethrow: false, error: "create_failed" }
+    { rethrow: false, error: "create_failed", requireAge: false }
   );
 }
 
