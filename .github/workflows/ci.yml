@@ -38,7 +38,7 @@ jobs:
   release:
     name: GitHub Release
     needs: lint
-    if: startsWith(github.ref, "refs/tags/v")
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
