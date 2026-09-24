@@ -3,6 +3,7 @@
 import { getAuthUserById } from "@/lib/auth/users";
 import { getSession } from "@/lib/auth/session";
 import { findListingByPublicId } from "@/lib/public-id";
+import { isPhoneVerified } from "@/lib/premium/entitlements";
 
 /**
  * Resolve contact details for an active listing after Turnstile verification.
@@ -30,7 +31,7 @@ export async function revealListingContact(publicId) {
   if (listing.contact.allowEmail && owner?.email) {
     contact.email = owner.email;
   }
-  if (listing.contact.allowPhone && owner?.phone) {
+  if (listing.contact.allowPhone && isPhoneVerified(owner)) {
     contact.phone = owner.phone;
   }
 

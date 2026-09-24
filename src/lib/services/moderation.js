@@ -81,7 +81,10 @@ export async function resolveReportCase({
       status: { $in: ["open", "reviewing"] },
     });
 
-    if (remainingOpen === 0 && action === "dismiss") {
+    if (
+      remainingOpen === 0 &&
+      (action === "dismiss" || action === "confirm_violation")
+    ) {
       await setListingStatus(listing, "active");
     }
   }

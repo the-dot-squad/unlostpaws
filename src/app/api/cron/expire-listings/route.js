@@ -1,8 +1,8 @@
-import { env } from "@/config/env";
 import { connectDB } from "@/config/db";
 import { Listing } from "@/models/listing";
 import { syncListingImageStatusBulk } from "@/lib/intelligence";
 import { withCronJob } from "@/lib/api/cron";
+import { invalidateGeoCache } from "@/lib/listings/cache";
 
 export const maxDuration = 120;
 
@@ -24,6 +24,7 @@ export async function GET(request) {
     const ids = expired.map((l) => l._id);
     await Listing.updateMany({ _id: { $in: ids } }, { $set: { status: "expired" } });
     await syncListingImageStatusBulk(ids, "expired");
+    await invalidateGeoCache();
 
     return { expired: ids.length };
   });

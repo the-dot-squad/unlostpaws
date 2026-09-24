@@ -7,6 +7,7 @@ import {
   normalizeDigitalCollar,
 } from "@/lib/pets/digital-collar-shared";
 import { findOwnedPetByPublicId } from "@/lib/public-id";
+import { isPhoneVerified } from "@/lib/premium/entitlements";
 
 /**
  * Resolve contact details for an eligible Digital Collar after Turnstile verification.
@@ -39,7 +40,7 @@ export async function revealTagContact(publicId) {
   if (collar.allowEmail && owner?.email) {
     contact.email = owner.email;
   }
-  if (collar.allowPhone && owner?.phone) {
+  if (collar.allowPhone && isPhoneVerified(owner)) {
     contact.phone = owner.phone;
   }
 

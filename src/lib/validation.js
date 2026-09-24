@@ -217,14 +217,21 @@ export const createListingSchema = z
     path: ["allowEmail"],
   });
 
-/** Listing update payload — owner may edit details and location only. */
+/** Listing update payload — owner may edit details, location, and contact prefs. */
 export const updateListingSchema = withListingCoordinates(
-  z.object({
-    color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
-    breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
-    description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
-    ...listingLocationFieldShape,
-  }),
+  z
+    .object({
+      color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+      breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+      description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
+      allowEmail: z.boolean().optional().default(false),
+      allowPhone: z.boolean().optional().default(false),
+      ...listingLocationFieldShape,
+    })
+    .refine(({ allowEmail, allowPhone }) => allowEmail || allowPhone, {
+      message: "contact_required",
+      path: ["allowEmail"],
+    }),
 );
 
 /** Digital Collar settings nested on owned pets. */

@@ -32,7 +32,7 @@ export function isActiveUser(user) {
  * Active signed-in user — throws when missing or banned.
  * @param {{ requireAge?: boolean }} [options]
  *   When `requireAge` is true (default), users without `ageConfirmedAt` are rejected.
- *   Pass `requireAge: false` for the age confirmation action and ungated flows (e.g. create listing).
+ *   Pass `requireAge: false` for the age confirmation action only.
  */
 export async function requireActiveSession({ requireAge = true } = {}) {
   const session = await getSession();

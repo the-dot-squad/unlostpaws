@@ -6,6 +6,31 @@ import { cutoffBeforeHours } from "@/lib/storage/constants";
 import { Upload } from "@/models/upload";
 
 /**
+ * Ensure every storage key has an Upload owned by the given user.
+ * Rejects missing keys and uploads belonging to another user.
+ *
+ * @param {string | string[]} keys
+ * @param {string} userId
+ * @returns {Promise<{ ok: true } | { ok: false, error: "upload_invalid" }>}
+ */
+export async function assertUploadsOwnedByUser(keys, userId) {
+  const keyList = [...new Set((Array.isArray(keys) ? keys : [keys]).filter(Boolean))];
+  if (!keyList.length) return { ok: true };
+
+  const uploads = await Upload.find({ key: { $in: keyList } })
+    .select({ key: 1, userId: 1 })
+    .lean();
+
+  if (uploads.length !== keyList.length) {
+    return { ok: false, error: "upload_invalid" };
+  }
+  if (uploads.some((upload) => upload.userId !== userId)) {
+    return { ok: false, error: "upload_invalid" };
+  }
+  return { ok: true };
+}
+
+/**
  * Mark upload tracking documents as attached after media is linked to a record.
  * @param {string | string[]} keys
  */
