@@ -187,14 +187,21 @@ export async function findListingMatches({
     listingAId: c.listingAId,
     listingBId: c.listingBId,
   }));
-  const existingMatches = await ListingMatch.find({ $or: orClauses }).select("listingAId listingBId").lean();
-  const existingMatchesSet = new Set(existingMatches.map((em) => `${em.listingAId}_${em.listingBId}`));
+  const existingMatches = await ListingMatch.find({ $or: orClauses })
+    .select("_id listingAId listingBId status")
+    .lean();
+  /** @type {Map<string, { _id: unknown, status: string }>} */
+  const existingByKey = new Map(
+    existingMatches.map((em) => [`${em.listingAId}_${em.listingBId}`, em])
+  );
 
   let created = 0;
 
   for (const item of matchCandidates) {
     const key = `${item.listingAId}_${item.listingBId}`;
-    if (existingMatchesSet.has(key)) {
+    const existing = existingByKey.get(key);
+    // Skip active/confirmed pairs; reopen dismissed so they can resurface.
+    if (existing && existing.status !== "dismissed") {
       continue;
     }
 
@@ -216,7 +223,7 @@ export async function findListingMatches({
         : listingId
       : null;
 
-    await ListingMatch.create({
+    const payload = {
       listingAId: item.listingAId,
       listingBId: item.listingBId,
       listingAUserId,
@@ -240,7 +247,17 @@ export async function findListingMatches({
           ? item.match.matchedQueryImageUrl
           : item.match.matchedCandidateImageUrl,
       status: "pending",
-    });
+      decidedByUserId: null,
+      decidedAt: null,
+      notifiedAt: null,
+      notifiedUserIds: [],
+    };
+
+    if (existing) {
+      await ListingMatch.updateOne({ _id: existing._id }, { $set: payload });
+    } else {
+      await ListingMatch.create(payload);
+    }
 
     created += 1;
   }

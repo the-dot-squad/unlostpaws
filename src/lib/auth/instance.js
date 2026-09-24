@@ -10,6 +10,7 @@ import { nextCookies } from "better-auth/next-js";
 import { ObjectId } from "mongodb";
 import { env } from "@/config/env";
 import { defaultLocale } from "@/i18n/routing";
+import { resolveAuthRequestLocale, resolveRequestLocale } from "@/lib/i18n/locale";
 import { encodeUserPublicId } from "@/lib/public-id";
 import { buildSocialProviders } from "./providers";
 
@@ -75,12 +76,14 @@ export function createAuthInstance(db) {
                 : new ObjectId();
 
             const publicId = user.publicId || encodeUserPublicId(_id);
+            const locale = user.locale || (await resolveRequestLocale());
 
             return {
               data: {
                 ...user,
                 _id,
                 id: _id.toString(),
+                locale,
                 role: "user",
                 status: "active",
                 phoneVerified: false,
@@ -116,7 +119,7 @@ export function createAuthInstance(db) {
       before: createAuthMiddleware(async (ctx) => {
         if (ctx.path === "/error") {
           const error = ctx.query.error || "generic";
-          redirectToLogin(ctx, error);
+          redirectToLogin(ctx, error, resolveAuthRequestLocale(ctx));
         }
       }),
       /**
@@ -129,7 +132,8 @@ export function createAuthInstance(db) {
         if (!newSession?.user) return;
 
         const userId = newSession.user.id;
-        const locale = newSession.user.locale || defaultLocale;
+        const locale =
+          newSession.user.locale || resolveAuthRequestLocale(ctx) || defaultLocale;
         const status = newSession.user.status || (newSession.user.banned ? "banned" : "active");
 
         if (status !== "active") {

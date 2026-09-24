@@ -14,6 +14,7 @@ import {
   updateAuthUserById,
 } from "@/lib/auth/users";
 import { defaultLocale } from "@/i18n/routing";
+import { resolveRequestLocale } from "@/lib/i18n/locale";
 import { addToBlocklist } from "@/lib/moderation/blocklist";
 import { purgeUserAccount } from "@/lib/services/users";
 
@@ -28,7 +29,8 @@ export async function confirmAge({ birthMonth, birthYear }) {
   return withAuthAction(
     "confirmAge",
     async (session) => {
-      const locale = session.user.locale || defaultLocale;
+      const locale =
+        session.user.locale || (await resolveRequestLocale()) || defaultLocale;
       const parsed = parseBirthMonthYear(birthMonth, birthYear);
       if (!parsed.ok) {
         return { error: parsed.error };

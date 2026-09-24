@@ -9,30 +9,19 @@ import { markUploadsAttached } from "@/lib/storage/cleanup";
 import { resolveStorageKey } from "@/lib/storage/urls";
 import { getMongoDb } from "@/config/db";
 import { encodeUserPublicId } from "@/lib/public-id";
-import { revalidatePath } from "next/cache";
+import { revalidateLocalizedPath } from "@/lib/i18n/revalidate";
 import { isPremium, phoneChangeAvailableAt } from "@/lib/premium/entitlements";
-
-const ERROR_MESSAGES = {
-  invalid_phone: "Invalid phone number",
-  invalid_country: "Invalid country code",
-  invalid_username: "Invalid username. Must be 3-30 characters (letters, numbers, underscores).",
-  username_already_taken: "This username is already taken",
-  only_premium_can_set_username: "Only Premium accounts can set a custom handle",
-  use_phone_verify_flow: "Premium members must verify a new phone number with a code",
-  phone_change_cooldown: "You cannot change your phone number yet. Please wait until the cooldown ends.",
-  invalid_input: "Invalid input",
-};
 
 /** Update the signed-in user's profile (name, contact, locale, location, avatar, username). */
 export async function updateProfile({ name, phone, locale, country, city, image, username }) {
   return withAuthAction("updateProfile", async (session) => {
     const parsed = validate(updateProfileSchema, { name, phone, locale, country, city, image, username });
     if (!parsed.ok) {
-      return { error: ERROR_MESSAGES[parsed.error] ?? ERROR_MESSAGES.invalid_input };
+      return { error: parsed.error || "invalid_input" };
     }
 
     const existingUser = await getAuthUserById(session.user.id);
-    if (!existingUser) return { error: "Account not found" };
+    if (!existingUser) return { error: "not_found" };
 
     const updates = {};
     if (parsed.data.name !== undefined) updates.name = parsed.data.name;
@@ -49,7 +38,7 @@ export async function updateProfile({ name, phone, locale, country, city, image,
       if (premium) {
         if (!nextPhone) {
           if (existingUser.phoneVerified && phoneChangeAvailableAt(existingUser)) {
-            return { error: ERROR_MESSAGES.phone_change_cooldown };
+            return { error: "phone_change_cooldown" };
           }
           updates.phone = "";
           updates.phoneVerified = false;
@@ -63,7 +52,7 @@ export async function updateProfile({ name, phone, locale, country, city, image,
           updates.phoneVerifiedAt = null;
           updates.phoneOtp = null;
         } else {
-          return { error: ERROR_MESSAGES.use_phone_verify_flow };
+          return { error: "use_phone_verify_flow" };
         }
       } else {
         updates.phone = nextPhone;
@@ -81,7 +70,7 @@ export async function updateProfile({ name, phone, locale, country, city, image,
 
       if (cleanUsername) {
         if (!premium) {
-          return { error: ERROR_MESSAGES.only_premium_can_set_username };
+          return { error: "only_premium_can_set_username" };
         }
 
         const db = await getMongoDb();
@@ -94,7 +83,7 @@ export async function updateProfile({ name, phone, locale, country, city, image,
         });
 
         if (existingTaken) {
-          return { error: ERROR_MESSAGES.username_already_taken };
+          return { error: "username_already_taken" };
         }
       }
 
@@ -112,8 +101,8 @@ export async function updateProfile({ name, phone, locale, country, city, image,
       if (key) await markUploadsAttached(key);
     }
 
-    revalidatePath("/");
-    revalidatePath("/account/settings");
+    await revalidateLocalizedPath("/");
+    await revalidateLocalizedPath("/account/settings");
     return { success: true, locale: parsed.data.locale };
   });
 }
@@ -122,12 +111,12 @@ export async function updateProfile({ name, phone, locale, country, city, image,
 export async function deleteMyAccount() {
   return withAuthAction("deleteMyAccount", async (session) => {
     const user = normalizeAuthUser(await getAuthUserById(session.user.id));
-    if (!user) return { error: "Account not found" };
+    if (!user) return { error: "not_found" };
 
     await purgeUserAccount(user);
 
-    revalidatePath("/");
-    revalidatePath("/account", "layout");
+    await revalidateLocalizedPath("/");
+    await revalidateLocalizedPath("/account", "layout");
     return { success: true };
   });
 }

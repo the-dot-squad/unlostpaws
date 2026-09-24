@@ -25,6 +25,19 @@ import { isPremium, showsVerifiedBadge } from "@/lib/premium/entitlements";
 import { userPath } from "@/lib/paths";
 import { MAX_CITY, MAX_NAME, MAX_USERNAME } from "@/config/constants/field-limits";
 
+const PROFILE_ERROR_KEYS = {
+  invalid_phone: "account.profile.errors.invalid_phone",
+  invalid_country: "account.profile.errors.invalid_country",
+  invalid_username: "account.profile.errors.invalid_username",
+  reserved_username: "account.profile.errors.reserved_username",
+  username_already_taken: "account.profile.errors.username_already_taken",
+  only_premium_can_set_username: "account.profile.errors.only_premium_can_set_username",
+  use_phone_verify_flow: "account.profile.errors.use_phone_verify_flow",
+  phone_change_cooldown: "account.profile.errors.phone_change_cooldown",
+  invalid_input: "account.profile.errors.invalid_input",
+  not_found: "account.profile.errors.not_found",
+};
+
 /**
  * Profile settings form — name, avatar, contact, language, location, and verified handle.
  */
@@ -69,7 +82,8 @@ export function ProfileForm({ user }) {
     setLoading(false);
 
     if (result.error) {
-      toast.error(result.error);
+      const key = PROFILE_ERROR_KEYS[result.error] ?? "account.profile.errors.generic";
+      toast.error(t(key));
       return;
     }
 
@@ -97,7 +111,7 @@ export function ProfileForm({ user }) {
     setDeleting(false);
 
     if (result?.error) {
-      toast.error(result.error);
+      toast.error(t("account.profile.deleteAccountError"));
       return;
     }
 

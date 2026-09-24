@@ -7,6 +7,7 @@ import { Loader2, MapPin, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LISTING_TYPES, PET_TYPES } from "@/config/constants/enums";
 import {
   Select,
@@ -18,7 +19,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { CountrySelect } from "@/components/form/country-select";
-import { ColorSuggest } from "@/components/form/breed-color-suggest";
+import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-suggest";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
@@ -26,9 +27,11 @@ import { trackEvent } from "@/lib/analytics/track";
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 
 const EMPTY_FILTERS = {
+  q: "",
   type: "",
   petType: "",
   color: "",
+  breed: "",
   country: "",
   lat: "",
   lng: "",
@@ -37,9 +40,11 @@ const EMPTY_FILTERS = {
 
 function filtersFromParams(params) {
   return {
+    q: params.get("q") || "",
     type: params.get("type") || "",
     petType: params.get("petType") || "",
     color: params.get("color") || "",
+    breed: params.get("breed") || "",
     country: params.get("country") || "",
     lat: params.get("lat") || "",
     lng: params.get("lng") || "",
@@ -49,9 +54,11 @@ function filtersFromParams(params) {
 
 function filtersEqual(a, b) {
   return (
+    a.q === b.q &&
     a.type === b.type &&
     a.petType === b.petType &&
     a.color === b.color &&
+    a.breed === b.breed &&
     a.country === b.country &&
     a.lat === b.lat &&
     a.lng === b.lng &&
@@ -61,9 +68,11 @@ function filtersEqual(a, b) {
 
 function filtersToSearchParams(filters) {
   const next = new URLSearchParams();
+  if (filters.q.trim()) next.set("q", filters.q.trim());
   if (filters.type) next.set("type", filters.type);
   if (filters.petType) next.set("petType", filters.petType);
   if (filters.color.trim()) next.set("color", filters.color.trim());
+  if (filters.breed.trim()) next.set("breed", filters.breed.trim());
   if (filters.country) next.set("country", filters.country);
   if (filters.lat && filters.lng) {
     next.set("lat", filters.lat);
@@ -73,83 +82,108 @@ function filtersToSearchParams(filters) {
   return next;
 }
 
-/** Renders standard search selectors: type, petType, color, country. */
+/** Renders text search plus type, petType, color, breed, country filters. */
 function SearchFields({ draft, updateDraft, t }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label className="text-xs">{t("listings.type")}</Label>
-        <Select
-          value={draft.type || "all"}
-          onValueChange={(v) => updateDraft("type", v === "all" ? "" : v)}
-        >
-          <SelectTrigger className="h-9 bg-background">
-            <SelectValue placeholder={t("common.all")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("common.all")}</SelectItem>
-            {LISTING_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {t(`listingTypes.${type}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">{t("listings.petType")}</Label>
-        <Select
-          value={draft.petType || "all"}
-          onValueChange={(v) => updateDraft("petType", v === "all" ? "" : v)}
-        >
-          <SelectTrigger className="h-9 bg-background">
-            <SelectValue placeholder={t("common.all")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("common.all")}</SelectItem>
-            {PET_TYPES.map((pt) => (
-              <SelectItem key={pt} value={pt}>
-                <span className="flex items-center gap-2">
-                  <PetTypeIcon type={pt} />
-                  {t(`petTypes.${pt}`)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">{t("listings.color")}</Label>
-        <ColorSuggest
+        <Label className="text-xs" htmlFor="listing-search-q">
+          {t("listings.searchQuery")}
+        </Label>
+        <Input
+          id="listing-search-q"
           className="h-9 bg-background"
-          value={draft.color}
-          onChange={(v) => updateDraft("color", v)}
+          value={draft.q}
+          onChange={(e) => updateDraft("q", e.target.value)}
+          placeholder={t("listings.searchQueryPlaceholder")}
         />
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-end gap-1">
-          <div className="min-w-0 flex-1">
-            <CountrySelect
-              label={t("listings.country")}
-              value={draft.country}
-              onChange={(code) => updateDraft("country", code)}
-            />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="space-y-1.5">
+          <Label className="text-xs">{t("listings.type")}</Label>
+          <Select
+            value={draft.type || "all"}
+            onValueChange={(v) => updateDraft("type", v === "all" ? "" : v)}
+          >
+            <SelectTrigger className="h-9 bg-background">
+              <SelectValue placeholder={t("common.all")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              {LISTING_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {t(`listingTypes.${type}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">{t("listings.petType")}</Label>
+          <Select
+            value={draft.petType || "all"}
+            onValueChange={(v) => updateDraft("petType", v === "all" ? "" : v)}
+          >
+            <SelectTrigger className="h-9 bg-background">
+              <SelectValue placeholder={t("common.all")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              {PET_TYPES.map((pt) => (
+                <SelectItem key={pt} value={pt}>
+                  <span className="flex items-center gap-2">
+                    <PetTypeIcon type={pt} />
+                    {t(`petTypes.${pt}`)}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">{t("listings.color")}</Label>
+          <ColorSuggest
+            className="h-9 bg-background"
+            value={draft.color}
+            onChange={(v) => updateDraft("color", v)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">{t("listings.breed")}</Label>
+          <BreedSuggest
+            className="h-9 bg-background"
+            value={draft.breed}
+            onChange={(v) => updateDraft("breed", v)}
+            petType={draft.petType || undefined}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-end gap-1">
+            <div className="min-w-0 flex-1">
+              <CountrySelect
+                label={t("listings.country")}
+                value={draft.country}
+                onChange={(code) => updateDraft("country", code)}
+              />
+            </div>
+            {draft.country ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="shrink-0"
+                aria-label={t("listings.clearCountry")}
+                onClick={() => updateDraft("country", "")}
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
           </div>
-          {draft.country ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="shrink-0"
-              aria-label={t("listings.clearCountry")}
-              onClick={() => updateDraft("country", "")}
-            >
-              <X className="size-4" />
-            </Button>
-          ) : null}
         </div>
       </div>
     </div>
@@ -237,7 +271,12 @@ function ListingSearchForm({ applied, embedded }) {
   const hasGeoDraft = Boolean(draft.lat && draft.lng);
 
   function updateDraft(field, value) {
-    setDraft((prev) => ({ ...prev, [field]: value }));
+    setDraft((prev) => {
+      if (field === "petType") {
+        return { ...prev, petType: value, breed: value === prev.petType ? prev.breed : "" };
+      }
+      return { ...prev, [field]: value };
+    });
   }
 
   function applySearch() {
@@ -247,6 +286,8 @@ function ListingSearchForm({ applied, embedded }) {
       type: draft.type,
       pet_type: draft.petType,
       country: draft.country,
+      has_query: Boolean(draft.q.trim()),
+      has_breed: Boolean(draft.breed.trim()),
       has_location: Boolean(draft.lat && draft.lng),
     });
     router.push(qs ? `${pathname}?${qs}` : pathname);
