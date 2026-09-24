@@ -913,7 +913,7 @@
   "consent": {
     "consentModal": {
       "title": "We value your privacy",
-      "description": "We use essential cookies to keep you signed in and remember your preferences. With your permission, we also use analytics cookies to understand how UnLostPaws is used and improve the service.",
+      "description": "We use essential cookies to keep you signed in and remember your preferences. With your permission, we also use analytics tools to see how UnLostPaws is used and improve the service.",
       "acceptAll": "Accept all",
       "rejectAll": "Reject all",
       "managePreferences": "Manage preferences",
@@ -938,7 +938,7 @@
         },
         "analytics": {
           "title": "Analytics",
-          "description": "Help us understand how visitors use UnLostPaws through Google Tag Manager. Data is used in aggregate to improve the platform. No advertising cookies are set by us."
+          "description": "If you allow analytics, we load Google Tag Manager and Vercel Web Analytics so we can see which pages and features people use. We look at this in aggregate to improve the site. We don't use these tools for advertising."
         },
         "moreInfo": {
           "title": "More information",
@@ -947,7 +947,8 @@
       }
     },
     "services": {
-      "gtm": "Google Tag Manager"
+      "gtm": "Google Tag Manager",
+      "vercel": "Vercel Web Analytics"
     }
   },
   "pages": {
@@ -1015,7 +1016,7 @@
     "privacy": {
       "title": "Privacy Policy",
       "heroSubtitle": "How we collect, use, and protect your information when you use UnLostPaws.",
-      "lastUpdated": "Last updated: June 2026",
+      "lastUpdated": "Last updated: 24 September 2026",
       "s1Title": "1. Information we collect",
       "s1": "We collect information you provide when signing in (name, email via OAuth), posting alerts (photos, location, pet details), and using the platform.",
       "s2Title": "2. How we use data",
@@ -1027,7 +1028,9 @@
       "s5Title": "5. Data retention",
       "s5": "Alerts expire automatically. You may request deletion of your account and associated data by contacting us.",
       "s6Title": "6. Contact",
-      "s6": "For privacy questions, please use our contact page."
+      "s6": "For privacy questions, please use our contact page.",
+      "s7Title": "7. Cookies and analytics",
+      "s7": "Necessary cookies keep you signed in and protect the site. If you accept analytics cookies, we load Google Tag Manager and Vercel Web Analytics to see which pages and features people use. You can change this in Cookie settings."
     },
     "contact": {
       "title": "Contact Us",

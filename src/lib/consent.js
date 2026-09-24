@@ -70,7 +70,7 @@ export function buildConsentConfig(locale) {
 
   return {
     mode: "opt-in",
-    revision: 1,
+    revision: 2,
 
     cookie: {
       name: "ulp_cookie_consent",
@@ -104,6 +104,9 @@ export function buildConsentConfig(locale) {
         services: {
           gtm: {
             label: t.services.gtm,
+          },
+          vercel: {
+            label: t.services.vercel,
           },
         },
       },

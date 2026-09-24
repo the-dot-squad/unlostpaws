@@ -5,6 +5,7 @@ import { getAuthUserById } from "@/lib/auth/users";
 import { hasConfirmedAge } from "@/lib/auth/age";
 import { SiteContainer } from "@/components/layout/site-container";
 import { AccountSidebar } from "@/components/account/account-sidebar";
+import { AuthAnalyticsBeacon } from "@/components/analytics/auth-analytics-beacon";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { toPlainObject } from "@/lib/utils";
 
@@ -34,6 +35,10 @@ export default async function AccountLayout({ children, params }) {
 
   return (
     <SiteContainer className="py-8">
+      <AuthAnalyticsBeacon
+        createdAt={sidebarUser?.createdAt}
+        ageConfirmedAt={sidebarUser?.ageConfirmedAt}
+      />
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         <AccountSidebar locale={locale} user={sidebarUser} />
         <main className="min-w-0 flex-1">{children}</main>

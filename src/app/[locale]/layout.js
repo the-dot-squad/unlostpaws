@@ -8,6 +8,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { IntlProvider } from "@/components/providers/intl-provider";
 import { CookieConsentManager } from "@/components/consent/cookie-consent-manager";
+import { VercelAnalytics } from "@/components/consent/vercel-analytics";
 import { Toaster } from "sonner";
 import "@/app/globals.css";
 
@@ -57,6 +58,7 @@ export default async function LocaleLayout({ children, params }) {
           </IntlProvider>
         </ThemeProvider>
         <CookieConsentManager />
+        <VercelAnalytics />
       </body>
     </html>
   );

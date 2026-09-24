@@ -39,16 +39,18 @@ function aboutFallback(locale) {
 
 function policyFallback(slug, locale, key) {
   const p = (MESSAGES_BY_LOCALE[locale] ?? enMessages).pages[key];
-  const sections = [1, 2, 3, 4, 5, 6]
-    .map((n) => `<h2>${p[`s${n}Title`]}</h2><p>${p[`s${n}`]}</p>`)
-    .join("");
+  const maxSection = p.s7Title ? 7 : 6;
+  const sections = [];
+  for (let n = 1; n <= maxSection; n += 1) {
+    sections.push(`<h2>${p[`s${n}Title`]}</h2><p>${p[`s${n}`]}</p>`);
+  }
 
   return {
     title: p.title,
     slug,
     locale,
     excerpt: p.heroSubtitle,
-    body: `<p>${p.lastUpdated}</p>${sections}`,
+    body: `<p>${p.lastUpdated}</p>${sections.join("")}`,
   };
 }
 
