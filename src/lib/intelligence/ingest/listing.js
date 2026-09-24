@@ -54,15 +54,13 @@ export async function ingestProcessedListing({
     safetyModel: safetyModel || "",
   };
 
-  if (!images?.length && errors.length) {
+  if (!images?.length) {
     listing.processingStatus = "failed";
-    listing.processingError = errors.map((e) => e.error).join("; ");
+    listing.processingError = errors.length
+      ? errors.map((e) => e.error).join("; ")
+      : "No images processed";
     await listing.save();
     return { success: false, failed: true };
-  }
-
-  if (!images?.length) {
-    return { error: "No images processed", status: 400 };
   }
 
   const contentSafety = await assessContentSafety({ listing, images });

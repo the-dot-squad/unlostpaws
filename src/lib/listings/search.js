@@ -7,6 +7,33 @@ import { buildGeoNearPipeline, kmToMeters, isValidCoordinates } from "@/lib/geo"
 import { makeVariantInsensitiveRegex } from "@/lib/text.js";
 import { cachedBrowse } from "@/lib/listings/cache";
 import { toPlainObject } from "@/lib/utils";
+import { attributeSearchTerms } from "@/config/pet-attributes";
+import enMessages from "../../../messages/en.json";
+import faMessages from "../../../messages/fa.json";
+
+const ATTRIBUTE_CATALOGS = {
+  en: { colors: enMessages.colors, breeds: enMessages.breeds },
+  fa: { colors: faMessages.colors, breeds: faMessages.breeds },
+};
+
+/**
+ * @param {"color" | "breed"} kind
+ * @param {string} [raw]
+ * @returns {import("mongodb").Filter | null}
+ */
+function attributeFieldFilter(kind, raw) {
+  const terms = attributeSearchTerms(kind, raw, {
+    en: ATTRIBUTE_CATALOGS.en[kind === "color" ? "colors" : "breeds"],
+    fa: ATTRIBUTE_CATALOGS.fa[kind === "color" ? "colors" : "breeds"],
+  });
+  if (!terms.length) return null;
+  if (terms.length === 1) {
+    return { [kind]: makeVariantInsensitiveRegex(terms[0]) };
+  }
+  return {
+    $or: terms.map((term) => ({ [kind]: makeVariantInsensitiveRegex(term) })),
+  };
+}
 
 /**
  * Build the MongoDB match object shared by geo and non-geo listing searches.
@@ -29,15 +56,23 @@ function buildListingMatch({
   country,
 }) {
   const countryCode = normalizeCountryCode(country);
-
-  return {
+  const match = {
     status,
     ...(type && { type }),
     ...(petType && { petType }),
-    ...(color && { color: makeVariantInsensitiveRegex(color) }),
-    ...(breed && { breed: makeVariantInsensitiveRegex(breed) }),
     ...(countryCode && { "location.country": countryCode }),
   };
+
+  const and = [];
+  const colorFilter = attributeFieldFilter("color", color);
+  const breedFilter = attributeFieldFilter("breed", breed);
+  if (colorFilter?.$or) and.push(colorFilter);
+  else if (colorFilter) Object.assign(match, colorFilter);
+  if (breedFilter?.$or) and.push(breedFilter);
+  else if (breedFilter) Object.assign(match, breedFilter);
+  if (and.length) match.$and = and;
+
+  return match;
 }
 
 /**

@@ -13,6 +13,11 @@ import { TurnstileChallenge } from "@/components/security/turnstile-challenge";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { ANALYTICS_EVENTS } from "@/config/constants/analytics-events";
 import { trackEvent } from "@/lib/analytics/track";
+import {
+  MAX_CONTACT_MESSAGE,
+  MAX_CONTACT_TOPIC,
+  MAX_NAME,
+} from "@/config/constants/field-limits";
 
 export function ContactForm() {
   const t = useTranslations("pages.contact.form");
@@ -64,7 +69,7 @@ export function ContactForm() {
           onChange={(e) => setName(e.target.value)}
           placeholder={t("namePlaceholder")}
           required
-          maxLength={100}
+          maxLength={MAX_NAME}
           autoComplete="name"
         />
       </div>
@@ -78,7 +83,7 @@ export function ContactForm() {
           onChange={(e) => setTopic(e.target.value)}
           placeholder={t("topicPlaceholder")}
           required
-          maxLength={120}
+          maxLength={MAX_CONTACT_TOPIC}
         />
       </div>
 
@@ -92,7 +97,7 @@ export function ContactForm() {
           placeholder={t("messagePlaceholder")}
           required
           rows={6}
-          maxLength={5000}
+          maxLength={MAX_CONTACT_MESSAGE}
           className="min-h-32 resize-y"
         />
       </div>

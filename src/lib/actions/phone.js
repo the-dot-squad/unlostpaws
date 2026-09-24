@@ -10,7 +10,7 @@ import {
 import { sendPhoneCode, checkPhoneCode } from "@/lib/prelude/verify";
 import { validate, startPhoneVerificationSchema, confirmPhoneVerificationSchema } from "@/lib/validation";
 import { getMongoDb } from "@/config/db";
-import { revalidatePath } from "next/cache";
+import { revalidateLocalizedPath } from "@/lib/i18n/revalidate";
 
 const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
 const MAX_SENDS_PER_DAY = 3;
@@ -224,8 +224,8 @@ export async function confirmPhoneVerification(data) {
       },
     });
 
-    revalidatePath("/");
-    revalidatePath("/account/settings");
+    await revalidateLocalizedPath("/");
+    await revalidateLocalizedPath("/account/settings");
     return { success: true };
   });
 }

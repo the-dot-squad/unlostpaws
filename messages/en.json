@@ -48,7 +48,8 @@
     "uploadDailyLimit": "You've uploaded too many photos today. Try again tomorrow.",
     "rateLimitExceeded": "Too many requests. Please wait a moment and try again.",
     "rateLimitUnavailable": "Uploads are temporarily unavailable. Please try again later.",
-    "userBanned": "Your account cannot post alerts."
+    "userBanned": "Your account cannot post alerts.",
+    "ageRequired": "Confirm your age before uploading photos."
   },
   "nav": {
     "home": "Home",
@@ -308,7 +309,7 @@
   },
   "listings": {
     "title": "Pet Alerts",
-    "heroSubtitle": "Filter by type, pet, color, or location.",
+    "heroSubtitle": "Search by keyword, or filter by type, pet, breed, color, or location.",
     "createTitle": "Create Pet Alert",
     "detailTitle": "Alert Details",
     "noResults": "No alerts found",
@@ -331,6 +332,8 @@
     "noResultsDescription": "Try adjusting your filters or expanding your search radius.",
     "noResultsAction": "Post an alert",
     "search": "Search",
+    "searchQuery": "Keywords",
+    "searchQueryPlaceholder": "Search descriptions and details…",
     "clearFilters": "Clear filters",
     "resultsSummary": "Showing {from}-{to} of {total} results",
     "radiusOptions": {
@@ -421,6 +424,7 @@
     "copyLink": "Copy Link",
     "showOnMap": "Show on map",
     "editListing": "Edit alert",
+    "reviveListing": "Revive alert",
     "sightingWidget": {
       "title": "Have you seen this pet?",
       "description": "Think you've seen this pet? Post a sighting with at least 2 clear photos from different angles so we can compare them.",
@@ -438,14 +442,18 @@
       "expiresOn": "Expires on {date}",
       "disabled": "Extensions are not available for alerts at this time.",
       "canExtend": "You can extend this alert by {days} days ({remaining, plural, one {# day} other {# days}} left).",
+      "canRevive": "This alert has expired. You can revive it for {days} more days.",
       "tooEarly": "Extension opens when {fromDay} or fewer days remain (currently {remaining} days left).",
-      "expired": "This alert has expired and can no longer be extended.",
+      "expired": "This alert has expired.",
       "extendButton": "Extend by {days} days",
+      "reviveButton": "Revive for {days} days",
       "extending": "Extending…",
+      "reviving": "Reviving…",
       "success": "Alert extended successfully",
+      "reviveSuccess": "Alert revived successfully",
       "errors": {
         "extension_disabled": "Extensions are currently disabled.",
-        "not_active": "Only active alerts can be extended.",
+        "not_active": "Only active or expired alerts can be extended.",
         "no_expiry": "This alert has no expiry date.",
         "already_expired": "This alert has already expired.",
         "too_early": "It is too early to extend this alert.",
@@ -484,13 +492,18 @@
       "captchaUnavailable": "Verification is temporarily unavailable.",
       "contactRequired": "Turn on at least one way to reach you: email or phone.",
       "imagesRequired": "Upload at least 2 clear photos.",
+      "imagesUploading": "Wait for your photos to finish uploading.",
+      "uploadInvalid": "One or more photos could not be verified. Please re-upload and try again.",
       "uploadLimit": "Photo limit reached for this session. Go back and verify again to continue.",
       "listingLimitDaily": "You've reached your daily limit for posting alerts. Try again tomorrow.",
       "listingLimitMonthly": "You've reached your monthly limit for posting alerts.",
       "uploadDailyLimit": "You've uploaded too many photos today. Try again tomorrow.",
       "rateLimitExceeded": "Too many requests. Please wait a moment and try again.",
       "userBanned": "Your account cannot post alerts.",
-      "createFailed": "Could not create the listing. Please try again."
+      "validationFailed": "Some fields are too long or invalid. Please check and try again.",
+      "createFailed": "Could not create the listing. Please try again.",
+      "ageRequired": "Confirm your age before posting an alert.",
+      "phoneRequired": "Add a phone number to your account before allowing phone contact."
     },
     "country": "Country",
     "city": "City",
@@ -626,7 +639,20 @@
       "deleteAccountAction": "Delete my account",
       "deleteAccountConfirm": "Delete your account ({email})? This permanently removes your alerts, pets, uploads, and all activity logs. This cannot be undone.",
       "deleteAccountSuccess": "Your account has been deleted",
-      "deleteAccountError": "Could not delete your account"
+      "deleteAccountError": "Could not delete your account",
+      "errors": {
+        "generic": "Couldn't save your profile. Please try again.",
+        "invalid_input": "Check your details and try again.",
+        "invalid_phone": "Enter a valid phone number.",
+        "invalid_country": "Pick a valid country.",
+        "invalid_username": "Handle must be 3–30 characters (letters, numbers, underscores).",
+        "reserved_username": "That handle isn't available.",
+        "username_already_taken": "That handle is already taken.",
+        "only_premium_can_set_username": "Custom handles need Premium.",
+        "use_phone_verify_flow": "Verify the new number with a code first.",
+        "phone_change_cooldown": "You can't change your phone number yet. Wait until the cooldown ends.",
+        "not_found": "We couldn't find your account."
+      }
     }
   },
   "matches": {
@@ -684,7 +710,42 @@
       "user_banned": "Your account has been suspended due to violations of our policies.",
       "user_deactivated": "Your account has been deactivated.",
       "user_deleted": "Your account has been deleted.",
+      "user_blocked": "This account cannot be used. If you believe this is a mistake, contact support.",
+      "age_under13": "UnLostPaws is only available to people aged 13 or older. This identity cannot register again.",
       "generic": "An unexpected authentication error occurred. Please try again."
+    }
+  },
+  "age": {
+    "title": "Confirm your age",
+    "description": "You must be at least 13 to use UnLostPaws. Enter your birth month and year — we only store those, not a full date of birth.",
+    "monthLabel": "Birth month",
+    "yearLabel": "Birth year",
+    "monthPlaceholder": "Month",
+    "yearPlaceholder": "Year",
+    "submit": "Continue",
+    "submitting": "Saving…",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "errors": {
+      "required": "Please select your birth month and year.",
+      "invalid_birth_month": "Please choose a valid birth month.",
+      "invalid_birth_year": "Please choose a valid birth year.",
+      "age_required": "Please confirm your age to continue.",
+      "unauthorized": "Please sign in again.",
+      "confirm_failed": "Something went wrong. Please try again.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "myPets": {
@@ -737,10 +798,12 @@
     "saving": "Saving...",
     "cancel": "Cancel",
     "fillRequired": "Please fill in all required fields",
+    "validationFailed": "Some fields are too long or invalid. Please check and try again.",
     "invalidMicrochip": "Invalid microchip ID (must be 15 digits).",
     "microchipDuplicate": "This microchip is already registered",
     "maxPetsReached": "You've reached the maximum number of registered pets",
     "photoRequired": "A photo is required",
+    "uploadInvalid": "One or more photos could not be verified. Please re-upload and try again.",
     "notFound": "Pet not found",
     "digitalCollar": {
       "title": "Digital Collar",

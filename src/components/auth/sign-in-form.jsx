@@ -42,6 +42,8 @@ export function SignInForm({ locale, providerIds, error }) {
     "user_banned",
     "user_deactivated",
     "user_deleted",
+    "user_blocked",
+    "age_under13",
   ];
   const errorKey = error && knownErrors.includes(error) ? `errors.${error}` : "errors.generic";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -26,17 +26,25 @@ import { DigitalCollarFields } from "./digital-collar-fields";
 import { createOwnedPet, updateOwnedPet } from "@/lib/actions/owned-pets";
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
+import {
+  MAX_DESCRIPTION,
+  MAX_MICROCHIP_INPUT,
+  MAX_NAME,
+} from "@/config/constants/field-limits";
 
 const ERROR_KEYS = {
   INVALID_MICROCHIP: "invalidMicrochip",
   MICROCHIP_DUPLICATE: "microchipDuplicate",
   MAX_PETS_REACHED: "maxPetsReached",
   PHOTO_REQUIRED: "photoRequired",
+  UPLOAD_INVALID: "uploadInvalid",
   NOT_FOUND: "notFound",
   CANNOT_EDIT_ARCHIVED: "cannotEditArchived",
   premium_required: "digitalCollar.premiumRequired",
   CONTACT_REQUIRED: "digitalCollar.contactRequired",
   MEDICAL_ALERTS_TOO_LONG: "digitalCollar.medicalAlertsTooLong",
+  REQUIRED: "fillRequired",
+  VALIDATION_FAILED: "validationFailed",
 };
 
 export function PetForm({ locale, pet = null, premium = false }) {
@@ -45,6 +53,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
   const tPetTypes = useTranslations("petTypes");
   const tBreeds = useTranslations("breeds");
   const router = useRouter();
+  const submittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: pet?.name || "",
@@ -75,6 +84,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submittingRef.current || loading) return;
 
     if (!form.name || !form.microchipId || !form.color || !form.photo) {
       toast.error(t("fillRequired"));
@@ -86,25 +96,30 @@ export function PetForm({ locale, pet = null, premium = false }) {
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
-    const payload = {
-      ...form,
-      digitalCollar: premium ? form.digitalCollar : undefined,
-    };
-    const result = pet
-      ? await updateOwnedPet(pet.publicId, payload)
-      : await createOwnedPet(payload);
-    setLoading(false);
+    try {
+      const payload = {
+        ...form,
+        digitalCollar: premium ? form.digitalCollar : undefined,
+      };
+      const result = pet
+        ? await updateOwnedPet(pet.publicId, payload)
+        : await createOwnedPet(payload);
 
-    if (result.error) {
-      const key = ERROR_KEYS[result.error];
-      toast.error(key ? t(key) : result.error);
-      return;
+      if (result.error) {
+        const key = ERROR_KEYS[result.error];
+        toast.error(key ? t(key) : result.error);
+        return;
+      }
+
+      toast.success(pet ? t("updated") : t("created"));
+      router.push(`/${locale}/account/pets/${result.id || pet.publicId}`);
+      router.refresh();
+    } finally {
+      submittingRef.current = false;
+      setLoading(false);
     }
-
-    toast.success(pet ? t("updated") : t("created"));
-    router.push(`/${locale}/account/pets/${result.id || pet.publicId}`);
-    router.refresh();
   }
 
   return (
@@ -131,6 +146,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       value={form.name}
                       onChange={(e) => update("name", e.target.value)}
                       required
+                      maxLength={MAX_NAME}
                     />
                   </div>
 
@@ -142,6 +158,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       placeholder="900123456789012"
                       className="font-mono"
                       required
+                      maxLength={MAX_MICROCHIP_INPUT}
                     />
                     <p className="text-xs text-muted-foreground">{t("microchipHint")}</p>
                   </div>
@@ -199,6 +216,7 @@ export function PetForm({ locale, pet = null, premium = false }) {
                       value={form.description}
                       onChange={(e) => update("description", e.target.value)}
                       rows={4}
+                      maxLength={MAX_DESCRIPTION}
                     />
                   </div>
 

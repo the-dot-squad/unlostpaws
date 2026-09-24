@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { resolveReportCase } from "@/lib/actions/admin";
+import { MAX_NOTE } from "@/config/constants/field-limits";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ export function ReportCaseActions({ listingId, reason }) {
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={3}
+        maxLength={MAX_NOTE}
       />
       <div className="flex flex-wrap gap-2">
         <Button

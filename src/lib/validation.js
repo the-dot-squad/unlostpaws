@@ -3,16 +3,61 @@
 import { z } from "zod";
 import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
 import {
+  LISTING_STATUSES,
   LISTING_TYPES,
   MAX_LISTING_IMAGES,
   MIN_LISTING_IMAGES,
+  OWNED_PET_STATUSES,
   PET_TYPES,
+  REPORT_CASE_ACTIONS,
   REPORT_REASONS,
   USER_ROLES,
 } from "@/config/constants/enums";
+import {
+  MAX_ADDRESS,
+  MAX_ADMIN_NOTE,
+  MAX_BREED,
+  MAX_CITY,
+  MAX_COLOR,
+  MAX_CONTACT_MESSAGE,
+  MAX_CONTACT_TOPIC,
+  MAX_COUNTRY,
+  MAX_DESCRIPTION,
+  MAX_NAME,
+  MAX_NOTE,
+  MAX_OTP_CODE,
+  MAX_REPORT_DETAILS,
+  MAX_USERNAME,
+} from "@/config/constants/field-limits";
 import { FEED_FORMATS } from "@/config/constants/feeds";
 import { ALLOWED_IMAGE_EXTENSIONS } from "@/lib/storage/images";
 import { RESERVED_USERNAMES } from "@/config/constants/usernames";
+
+const localeSchema = z.enum(["en", "fa"]);
+
+/** Required trimmed string with max length. */
+function requiredTrimmedMax(max, tooLongMessage = "too_long") {
+  return z.string().trim().min(1, "required").max(max, tooLongMessage);
+}
+
+/** Optional string; empty after trim becomes undefined; max length when present. */
+function optionalTrimmedMax(max, tooLongMessage = "too_long") {
+  return z
+    .string()
+    .max(max, tooLongMessage)
+    .optional()
+    .transform((value) => {
+      const trimmed = value?.trim() || "";
+      return trimmed || undefined;
+    });
+}
+
+/** Optional country: empty or ISO-2. */
+const optionalCountrySchema = z
+  .string()
+  .optional()
+  .transform((value) => value?.trim().toUpperCase() || "")
+  .refine((value) => !value || value.length === MAX_COUNTRY, { message: "invalid_country" });
 
 /**
  * @template T
@@ -131,9 +176,9 @@ const invalidZeroCoordinatesRefine = {
 const listingLocationFieldShape = {
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
+  address: optionalTrimmedMax(MAX_ADDRESS, "address_too_long"),
+  city: optionalTrimmedMax(MAX_CITY, "city_too_long"),
+  country: optionalCountrySchema,
 };
 
 /** @template {z.ZodObject<any>} T */
@@ -149,19 +194,19 @@ export const createListingSchema = z
   .object({
     type: z.enum(LISTING_TYPES),
     petType: z.enum(PET_TYPES),
-    breed: z.string().optional(),
-    color: z.string().min(1),
-    description: z.string().optional(),
+    breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+    color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+    description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
     images: z.array(imageRefSchema).min(MIN_LISTING_IMAGES).max(MAX_LISTING_IMAGES),
     lng: z.number().min(-180).max(180),
     lat: z.number().min(-90).max(90),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    country: z.string().optional(),
+    address: optionalTrimmedMax(MAX_ADDRESS, "address_too_long"),
+    city: optionalTrimmedMax(MAX_CITY, "city_too_long"),
+    country: optionalCountrySchema,
     locationSource: z.enum(["manual", "exif"]).optional(),
     allowEmail: z.boolean().optional(),
     allowPhone: z.boolean().optional(),
-    locale: z.enum(["en", "fa"]).optional().default("en"),
+    locale: localeSchema.optional().default("en"),
   })
   .refine(invalidZeroCoordinatesRefine.refine, {
     message: invalidZeroCoordinatesRefine.message,
@@ -172,14 +217,21 @@ export const createListingSchema = z
     path: ["allowEmail"],
   });
 
-/** Listing update payload — owner may edit details and location only. */
+/** Listing update payload — owner may edit details, location, and contact prefs. */
 export const updateListingSchema = withListingCoordinates(
-  z.object({
-    color: z.string().min(1),
-    breed: z.string().optional(),
-    description: z.string().optional(),
-    ...listingLocationFieldShape,
-  }),
+  z
+    .object({
+      color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+      breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+      description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
+      allowEmail: z.boolean().optional().default(false),
+      allowPhone: z.boolean().optional().default(false),
+      ...listingLocationFieldShape,
+    })
+    .refine(({ allowEmail, allowPhone }) => allowEmail || allowPhone, {
+      message: "contact_required",
+      path: ["allowEmail"],
+    }),
 );
 
 /** Digital Collar settings nested on owned pets. */
@@ -190,7 +242,7 @@ export const digitalCollarSchema = z
     allowPhone: z.boolean().optional().default(false),
     medicalAlerts: z
       .string()
-      .max(500, "medical_alerts_too_long")
+      .max(MAX_NOTE, "medical_alerts_too_long")
       .optional()
       .transform((value) => value?.trim() || ""),
   })
@@ -201,12 +253,12 @@ export const digitalCollarSchema = z
 
 /** Owned-pet create/update payload (server action). */
 export const ownedPetSchema = z.object({
-  name: z.string().min(1),
+  name: requiredTrimmedMax(MAX_NAME, "name_too_long"),
   microchipId: microchipSchema,
   petType: z.enum(PET_TYPES),
-  breed: z.string().optional(),
-  color: z.string().min(1),
-  description: z.string().optional(),
+  breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+  color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+  description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
   photo: imageRefSchema,
   photo2: imageRefSchema
     .optional()
@@ -223,11 +275,11 @@ export const ownedPetSchema = z.object({
 export const adminListingSchema = withListingCoordinates(
   z.object({
     type: z.enum(LISTING_TYPES),
-    status: z.enum(["active", "resolved", "expired", "removed", "under_review"]),
+    status: z.enum(LISTING_STATUSES),
     petType: z.enum(PET_TYPES),
-    breed: z.string().optional(),
-    color: z.string().min(1),
-    description: z.string().optional(),
+    breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+    color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+    description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
     ...listingLocationFieldShape,
   }),
 );
@@ -238,21 +290,19 @@ export const usernameSchema = z
   .trim()
   .toLowerCase()
   .transform((val) => val.replace(/^@/, ""))
-  .refine((val) => !val || /^[a-z0-9_]{3,30}$/.test(val), { message: "invalid_username" })
+  .refine((val) => !val || new RegExp(`^[a-z0-9_]{3,${MAX_USERNAME}}$`).test(val), {
+    message: "invalid_username",
+  })
   .refine((val) => !val || !RESERVED_USERNAMES.includes(val), { message: "reserved_username" });
 
 /** Admin user edit payload. */
 export const adminUserSchema = z.object({
-  name: z.string().trim().min(1).max(100),
+  name: requiredTrimmedMax(MAX_NAME, "name_too_long"),
   phone: optionalPhoneSchema.optional(),
   phoneVerified: z.boolean().optional(),
-  country: z
-    .string()
-    .optional()
-    .transform((value) => value?.trim().toUpperCase() || "")
-    .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
-  city: z.string().trim().max(100).optional(),
-  locale: z.string().min(2).optional(),
+  country: optionalCountrySchema,
+  city: z.string().trim().max(MAX_CITY).optional(),
+  locale: localeSchema.optional(),
   role: z
     .string()
     .optional()
@@ -260,7 +310,7 @@ export const adminUserSchema = z.object({
   username: usernameSchema.optional().or(z.literal("")),
   status: z.enum(["active", "banned", "deactivated", "deleted"]).optional(),
   /** Optional note included in the manual ban email (admin edit form). */
-  banReason: z.string().trim().max(500).optional(),
+  banReason: z.string().trim().max(MAX_NOTE).optional(),
 });
 
 /** Start phone OTP — E.164 required. */
@@ -271,7 +321,7 @@ export const startPhoneVerificationSchema = z.object({
 /** Confirm phone OTP. */
 export const confirmPhoneVerificationSchema = z.object({
   phone: optionalPhoneSchema,
-  code: z.string().trim().min(4).max(12),
+  code: z.string().trim().min(4).max(MAX_OTP_CODE),
 }).refine((data) => Boolean(data.phone), { message: "invalid_phone", path: ["phone"] });
 
 /** Admin complimentary Premium grant — years=0 means forever. */
@@ -281,29 +331,74 @@ export const adminGrantPremiumSchema = z.object({
 
 /** Admin owned-pet edit payload. */
 export const adminOwnedPetSchema = z.object({
-  name: z.string().min(1),
+  name: requiredTrimmedMax(MAX_NAME, "name_too_long"),
   microchipId: microchipSchema,
   petType: z.enum(PET_TYPES),
-  breed: z.string().optional(),
-  color: z.string().min(1),
-  description: z.string().optional(),
-  status: z.enum(["active", "archived", "removed"]),
-  adminNote: z.string().optional(),
+  breed: optionalTrimmedMax(MAX_BREED, "breed_too_long"),
+  color: requiredTrimmedMax(MAX_COLOR, "color_too_long"),
+  description: optionalTrimmedMax(MAX_DESCRIPTION, "description_too_long"),
+  status: z.enum(OWNED_PET_STATUSES),
+  adminNote: z
+    .string()
+    .max(MAX_ADMIN_NOTE, "admin_note_too_long")
+    .optional()
+    .transform((value) => value?.trim() || ""),
 });
 
 /** Profile update payload (server action). */
 export const updateProfileSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
+  name: z.string().trim().min(1).max(MAX_NAME).optional(),
   phone: optionalPhoneSchema.optional(),
-  locale: z.string().min(2).optional(),
-  country: z
-    .string()
-    .optional()
-    .transform((value) => value?.trim().toUpperCase() || "")
-    .refine((value) => !value || value.length === 2, { message: "invalid_country" }),
-  city: z.string().trim().max(100).optional(),
+  locale: localeSchema.optional(),
+  country: optionalCountrySchema,
+  city: z.string().trim().max(MAX_CITY).optional(),
   image: z.union([z.string().url(), z.literal("")]).optional(),
   username: usernameSchema.optional().or(z.literal("")),
+});
+
+/** Admin listing status change. */
+export const adminListingStatusSchema = z.object({
+  status: z.enum(LISTING_STATUSES),
+});
+
+/** Admin owned-pet status change. */
+export const adminOwnedPetStatusSchema = z.object({
+  status: z.enum(OWNED_PET_STATUSES),
+});
+
+/** Admin user role change. */
+export const adminUserRoleSchema = z.object({
+  role: z.enum(USER_ROLES),
+});
+
+/** Admin ban toggle with optional reason. */
+export const adminBanUserSchema = z.object({
+  reason: z
+    .string()
+    .max(MAX_NOTE, "ban_reason_too_long")
+    .optional()
+    .transform((value) => value?.trim() || undefined),
+});
+
+/** Admin owned-pet note update. */
+export const adminOwnedPetNoteSchema = z.object({
+  adminNote: z
+    .string()
+    .max(MAX_ADMIN_NOTE, "admin_note_too_long")
+    .optional()
+    .transform((value) => value?.trim() || ""),
+});
+
+/** Admin moderation case resolution. */
+export const resolveReportCaseSchema = z.object({
+  listingId: z.string().trim().min(1).max(80),
+  reason: z.enum(REPORT_REASONS),
+  action: z.enum(REPORT_CASE_ACTIONS),
+  note: z
+    .string()
+    .max(MAX_NOTE, "note_too_long")
+    .optional()
+    .transform((value) => value?.trim() || ""),
 });
 
 /**
@@ -319,9 +414,9 @@ export function formatPhoneDisplay(phone) {
 
 /** Public contact form on the contact page. */
 export const contactFormSchema = z.object({
-  name: z.string().trim().min(2, "name_too_short").max(100, "name_too_long"),
-  topic: z.string().trim().min(2, "topic_too_short").max(120, "topic_too_long"),
-  message: z.string().trim().min(10, "message_too_short").max(5000, "message_too_long"),
+  name: z.string().trim().min(2, "name_too_short").max(MAX_NAME, "name_too_long"),
+  topic: z.string().trim().min(2, "topic_too_short").max(MAX_CONTACT_TOPIC, "topic_too_long"),
+  message: z.string().trim().min(10, "message_too_short").max(MAX_CONTACT_MESSAGE, "message_too_long"),
   token: z.string().min(1, "captcha_required"),
 });
 
@@ -341,7 +436,7 @@ export const listingReportSchema = z.object({
   reason: z.enum(REPORT_REASONS),
   details: z
     .string()
-    .max(2000, "details_too_long")
+    .max(MAX_REPORT_DETAILS, "details_too_long")
     .optional()
     .transform((value) => value?.trim() || ""),
 });

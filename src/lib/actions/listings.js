@@ -16,7 +16,7 @@ import {
   listingContactSchema,
   listingReportSchema,
 } from "@/lib/validation";
-import { revalidatePath } from "next/cache";
+import { revalidateLocalizedPath, revalidateLocalizedPathAll } from "@/lib/i18n/revalidate";
 import { getAuthUserById } from "@/lib/auth/users";
 import { canUserExtendListing, computeInitialExpiresAt } from "@/lib/listings/expiry";
 import { hasReunionExtensionLock } from "@/lib/intelligence/matching/reunify";
@@ -24,7 +24,7 @@ import { revealListingContact } from "@/lib/listings/reveal-contact";
 import { submitListingReport } from "@/lib/listings/submit-report";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { runTurnstileAction } from "@/lib/turnstile";
-import { markUploadsAttached } from "@/lib/storage/cleanup";
+import { markUploadsAttached, assertUploadsOwnedByUser } from "@/lib/storage/cleanup";
 import { invalidateGeoCache } from "@/lib/listings/cache";
 
 /**
@@ -81,6 +81,17 @@ async function persistListing(listingData, userId, expiresAt) {
   return listing;
 }
 
+/** Map createListing Zod failures to client error codes. */
+function mapCreateListingValidationError(parsed) {
+  if (parsed.ok) return null;
+  if (parsed.error === "invalid_coordinates") return "invalid_coordinates";
+  if (parsed.error === "contact_required") return "contact_required";
+  if (parsed.field === "images" || parsed.field?.startsWith("images.")) {
+    return "images_required";
+  }
+  return "validation_failed";
+}
+
 /** Create a listing, enqueue ML processing, and apply rate limits. */
 export async function createListing(data) {
   return withAuthAction(
@@ -91,11 +102,19 @@ export async function createListing(data) {
       const { rateCheck } = limitCheck;
 
       const parsed = validate(createListingSchema, data);
-      if (!parsed.ok) {
-        if (parsed.error === "invalid_coordinates") return { error: "invalid_coordinates" };
-        if (parsed.error === "contact_required") return { error: "contact_required" };
-        return { error: "images_required" };
+      const validationError = mapCreateListingValidationError(parsed);
+      if (validationError) return { error: validationError };
+
+      if (parsed.data.allowPhone) {
+        const user = await getAuthUserById(session.user.id);
+        if (!user?.phone) {
+          return { error: "phone_required" };
+        }
       }
+
+      const s3Keys = parsed.data.images.map((img) => img.s3Key).filter(Boolean);
+      const ownership = await assertUploadsOwnedByUser(s3Keys, session.user.id);
+      if (!ownership.ok) return { error: ownership.error };
 
       const settings = await getAppSettings();
       const expiresAt = computeInitialExpiresAt(new Date(), settings);
@@ -119,11 +138,11 @@ export async function createListing(data) {
 
       if (!enqueueResult.ok) {
         await markProcessingFailed(listing, enqueueResult.error || "ENQUEUE_FAILED");
-        revalidatePath("/");
+        await revalidateLocalizedPath("/");
         return { success: true, id, processingFailed: true };
       }
 
-      revalidatePath("/");
+      await revalidateLocalizedPath("/");
       return { success: true, id };
     },
     { rethrow: false, error: "create_failed" }
@@ -133,11 +152,11 @@ export async function createListing(data) {
 /** Mark the owner's listing as resolved. */
 export async function resolveListing(publicId) {
   return withAuthAction("resolveListing", async (session) => {
-    const owned = await requireOwnedListing(session, publicId);
+    const owned = await requireOwnedListing(session, publicId, { status: "active" });
     if (owned.error) return owned;
 
     await resolveListingRecord(owned.listing);
-    revalidatePath("/");
+    await revalidateLocalizedPath("/");
     return { success: true };
   });
 }
@@ -153,8 +172,8 @@ export async function deleteListing(publicId) {
     }
 
     await deleteListingRecord(owned.listing);
-    revalidatePath("/");
-    revalidatePath(`/listings/${publicId}`);
+    await revalidateLocalizedPath("/");
+    revalidateLocalizedPathAll(`/listings/${publicId}`);
     return { success: true };
   });
 }
@@ -168,13 +187,27 @@ export async function updateListing(publicId, data) {
     const parsed = validate(updateListingSchema, data);
     if (!parsed.ok) {
       if (parsed.error === "invalid_coordinates") {
-        return { error: "Invalid coordinates" };
+        return { error: "invalid_coordinates" };
       }
-      return { error: "Validation failed" };
+      if (parsed.error === "contact_required") {
+        return { error: "contact_required" };
+      }
+      if (parsed.error === "phone_required") {
+        return { error: "phone_required" };
+      }
+      return { error: "validation_failed" };
     }
 
-    const { color, breed, description, address, city, country, lng, lat } = parsed.data;
+    const { color, breed, description, address, city, country, lng, lat, allowEmail, allowPhone } =
+      parsed.data;
     const listing = owned.listing;
+
+    if (allowPhone) {
+      const user = await getAuthUserById(session.user.id);
+      if (!user?.phone) {
+        return { error: "phone_required" };
+      }
+    }
 
     listing.color = color;
     listing.breed = breed || "";
@@ -185,10 +218,15 @@ export async function updateListing(publicId, data) {
       country: country || "",
       coordinates: [lng, lat],
     };
+    listing.contact = {
+      allowEmail: Boolean(allowEmail),
+      allowPhone: Boolean(allowPhone),
+    };
 
     await listing.save();
     await invalidateGeoCache();
-    revalidatePath("/");
+    await revalidateLocalizedPath("/");
+    revalidateLocalizedPathAll(`/listings/${publicId}`);
     return { success: true };
   });
 }
@@ -211,7 +249,8 @@ export async function extendListing(publicId) {
     }
 
     await extendListingRecord(listing, settings);
-    revalidatePath("/");
+    await revalidateLocalizedPath("/");
+    revalidateLocalizedPathAll(`/listings/${publicId}`);
     return { success: true, expiresAt: listing.expiresAt.toISOString() };
   });
 }
@@ -248,8 +287,8 @@ export async function submitListingReportAction({ listingPublicId, token, reason
         return { error: result.error };
       }
 
-      revalidatePath("/");
-      revalidatePath(`/listings/${listingPublicId}`);
+      await revalidateLocalizedPath("/");
+      revalidateLocalizedPathAll(`/listings/${listingPublicId}`);
       return { success: true };
     }
   );

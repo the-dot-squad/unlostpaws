@@ -35,8 +35,8 @@ export function daysUntilExpiry(expiresAt) {
 }
 
 /**
- * Whether the listing owner may extend under current settings.
- * @param {{ status: string, expiresAt?: Date | string | null }} listing
+ * Whether the listing owner may extend (or revive an expired listing) under current settings.
+ * @param {{ status: string, expiresAt?: Date | string | null, extensionLocked?: boolean }} listing
  * @param {{
  *   listingExtensionEnabled?: boolean,
  *   listingExtensionFromDay?: number,
@@ -49,7 +49,7 @@ export function canUserExtendListing(listing, settings) {
   if (!settings.listingExtensionEnabled) {
     return { allowed: false, reason: "extension_disabled" };
   }
-  if (listing.status !== "active") {
+  if (listing.status !== "active" && listing.status !== "expired") {
     return { allowed: false, reason: "not_active" };
   }
   if (!listing.expiresAt) {
@@ -57,16 +57,17 @@ export function canUserExtendListing(listing, settings) {
   }
 
   const remaining = daysUntilExpiry(listing.expiresAt);
-  if (remaining <= 0) {
-    return { allowed: false, reason: "already_expired" };
+  const isExpired = listing.status === "expired" || remaining <= 0;
+
+  // Expired listings (or past expiresAt) may be revived; active listings must be within the window.
+  if (!isExpired) {
+    const fromDay = settings.listingExtensionFromDay ?? 14;
+    if (remaining > fromDay) {
+      return { allowed: false, reason: "too_early", daysUntil: remaining, fromDay };
+    }
   }
 
-  const fromDay = settings.listingExtensionFromDay ?? 14;
-  if (remaining > fromDay) {
-    return { allowed: false, reason: "too_early", daysUntil: remaining, fromDay };
-  }
-
-  return { allowed: true, daysUntil: remaining };
+  return { allowed: true, daysUntil: remaining, revive: isExpired };
 }
 
 /** Serializable extension policy for client forms. */

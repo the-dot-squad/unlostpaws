@@ -34,8 +34,12 @@ export default async function MyListingsPage({ params }) {
             const daysLeft = isActive ? daysUntilExpiry(listing.expiresAt) : 0;
             const listingWithContact = {
               ...listing,
-              contactPhone: session?.user?.phone || session?.user?.phoneNumber || listing.contactPhone || "",
-              contactEmail: session?.user?.email || listing.contactEmail || "",
+              contactPhone: listing.contact?.allowPhone
+                ? session?.user?.phone || session?.user?.phoneNumber || listing.contactPhone || ""
+                : "",
+              contactEmail: listing.contact?.allowEmail
+                ? session?.user?.email || listing.contactEmail || ""
+                : "",
             };
 
             return (

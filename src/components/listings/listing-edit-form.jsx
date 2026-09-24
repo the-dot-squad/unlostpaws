@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,14 @@ import { updateListing } from "@/lib/actions/listings";
 import { ListingExtensionPanel } from "@/components/listings/listing-extension-panel";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { hasSetCoordinates } from "@/lib/geo";
+import { MAX_ADDRESS, MAX_CITY, MAX_DESCRIPTION } from "@/config/constants/field-limits";
+
+const UPDATE_ERROR_KEYS = {
+  contact_required: "listings.createErrors.contactRequired",
+  phone_required: "listings.createErrors.phoneRequired",
+  invalid_coordinates: "listings.locationRequired",
+  validation_failed: "listings.createErrors.validationFailed",
+};
 
 /**
  * Owner-only form to update editable listing fields (not photos or alert type).
@@ -27,6 +36,7 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
   const router = useRouter();
   const submittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
+  const isExpired = listing.status === "expired";
 
   const [form, setForm] = useState({
     color: listing.color || "",
@@ -37,6 +47,8 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
     country: listing.location?.country || "",
     lng: listing.location?.lng ?? null,
     lat: listing.location?.lat ?? null,
+    allowEmail: Boolean(listing.contact?.allowEmail),
+    allowPhone: Boolean(listing.contact?.allowPhone),
   });
 
   function update(field, value) {
@@ -54,10 +66,15 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (submittingRef.current) return;
+    if (submittingRef.current || isExpired) return;
 
     if (!form.color.trim()) {
       toast.error(t("listings.colorRequired"));
+      return;
+    }
+
+    if (!form.allowEmail && !form.allowPhone) {
+      toast.error(t("listings.contactRequired"));
       return;
     }
 
@@ -73,7 +90,8 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
       const result = await updateListing(listingId, form);
 
       if (result.error) {
-        toast.error(result.error);
+        const key = UPDATE_ERROR_KEYS[result.error];
+        toast.error(key ? t(key) : result.error);
         return;
       }
 
@@ -98,40 +116,6 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="color">{t("listings.color")}</Label>
-              <ColorSuggest
-                id="color"
-                value={form.color}
-                onChange={(v) => update("color", v)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="breed">
-                {t("listings.breed")} ({t("common.optional")})
-              </Label>
-              <BreedSuggest
-                id="breed"
-                value={form.breed}
-                onChange={(v) => update("breed", v)}
-                petType={listing.petType}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">
-                {t("listings.description")} ({t("common.optional")})
-              </Label>
-              <Textarea
-                id="description"
-                value={form.description}
-                onChange={(e) => update("description", e.target.value)}
-                rows={4}
-              />
-            </div>
-
             {extensionPolicy ? (
               <ListingExtensionPanel
                 listingId={listingId}
@@ -141,42 +125,107 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
               />
             ) : null}
 
-            <div className="space-y-4 border-t pt-6">
-              <p className="text-sm font-medium">{t("listings.location")}</p>
+            {!isExpired ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="color">{t("listings.color")}</Label>
+                  <ColorSuggest
+                    id="color"
+                    value={form.color}
+                    onChange={(v) => update("color", v)}
+                    required
+                  />
+                </div>
 
-              <LocationPickerMap
-                lat={form.lat}
-                lng={form.lng}
-                onCoordinatesChange={(nextLat, nextLng) => {
-                  setForm((f) => ({ ...f, lat: nextLat, lng: nextLng }));
-                }}
-                onReverseGeocode={handleReverseGeocode}
-              />
+                <div className="space-y-2">
+                  <Label htmlFor="breed">
+                    {t("listings.breed")} ({t("common.optional")})
+                  </Label>
+                  <BreedSuggest
+                    id="breed"
+                    value={form.breed}
+                    onChange={(v) => update("breed", v)}
+                    petType={listing.petType}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">
-                  {t("listings.address")} ({t("common.optional")})
-                </Label>
-                <Input
-                  id="address"
-                  value={form.address}
-                  onChange={(e) => update("address", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city">{t("listings.city")}</Label>
-                <Input
-                  id="city"
-                  value={form.city}
-                  onChange={(e) => update("city", e.target.value)}
-                />
-              </div>
-              <CountrySelect
-                label={t("listings.country")}
-                value={form.country}
-                onChange={(code) => update("country", code)}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">
+                    {t("listings.description")} ({t("common.optional")})
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={form.description}
+                    onChange={(e) => update("description", e.target.value)}
+                    rows={4}
+                    maxLength={MAX_DESCRIPTION}
+                  />
+                </div>
+
+                <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                  <p className="text-sm text-muted-foreground">{t("listings.contactHint")}</p>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="edit-email"
+                      checked={form.allowEmail}
+                      onCheckedChange={(v) => update("allowEmail", !!v)}
+                    />
+                    <Label htmlFor="edit-email" className="font-normal">
+                      {t("listings.allowEmail")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="edit-phone"
+                      checked={form.allowPhone}
+                      onCheckedChange={(v) => update("allowPhone", !!v)}
+                    />
+                    <Label htmlFor="edit-phone" className="font-normal">
+                      {t("listings.allowPhone")}
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t pt-6">
+                  <p className="text-sm font-medium">{t("listings.location")}</p>
+
+                  <LocationPickerMap
+                    lat={form.lat}
+                    lng={form.lng}
+                    onCoordinatesChange={(nextLat, nextLng) => {
+                      setForm((f) => ({ ...f, lat: nextLat, lng: nextLng }));
+                    }}
+                    onReverseGeocode={handleReverseGeocode}
+                  />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address">
+                      {t("listings.address")} ({t("common.optional")})
+                    </Label>
+                    <Input
+                      id="address"
+                      value={form.address}
+                      onChange={(e) => update("address", e.target.value)}
+                      maxLength={MAX_ADDRESS}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">{t("listings.city")}</Label>
+                    <Input
+                      id="city"
+                      value={form.city}
+                      onChange={(e) => update("city", e.target.value)}
+                      maxLength={MAX_CITY}
+                    />
+                  </div>
+                  <CountrySelect
+                    label={t("listings.country")}
+                    value={form.country}
+                    onChange={(code) => update("country", code)}
+                  />
+                </div>
+              </>
+            ) : null}
 
             <div className="flex items-center justify-between border-t pt-6">
               <DeleteListingButton listingId={listingId} locale={locale} />
@@ -184,9 +233,11 @@ export function ListingEditForm({ locale, listingId, listing, extensionPolicy, e
                 <Button type="button" variant="outline" asChild>
                   <Link href={`/${locale}/listings/${listingId}`}>{t("common.cancel")}</Link>
                 </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? t("common.loading") : t("listings.saveChanges")}
-                </Button>
+                {!isExpired ? (
+                  <Button type="submit" disabled={loading}>
+                    {loading ? t("common.loading") : t("listings.saveChanges")}
+                  </Button>
+                ) : null}
               </div>
             </div>
           </form>

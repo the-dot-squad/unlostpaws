@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { requireActiveSessionPage } from "@/lib/auth/session";
 import { getAuthUserById } from "@/lib/auth/users";
+import { hasConfirmedAge } from "@/lib/auth/age";
 import { SiteContainer } from "@/components/layout/site-container";
 import { AccountSidebar } from "@/components/account/account-sidebar";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -23,6 +25,11 @@ export default async function AccountLayout({ children, params }) {
   const { locale } = await params;
   const session = await requireActiveSessionPage(locale);
   const authUser = await getAuthUserById(session.user.id);
+
+  if (!hasConfirmedAge(authUser)) {
+    redirect(`/${locale}/age`);
+  }
+
   const sidebarUser = toPlainObject(authUser || session.user);
 
   return (

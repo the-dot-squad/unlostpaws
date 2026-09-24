@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getMongoDb } from "@/config/db";
 import { routing } from "@/i18n/routing";
 import { isStaffRole } from "@/lib/auth/ban";
+import { hasConfirmedAge } from "@/lib/auth/age";
 import { getAuth } from "./index";
 
 export async function getSession() {
@@ -27,8 +28,13 @@ export function isActiveUser(user) {
   return resolveUserStatus(user) === "active";
 }
 
-/** Active signed-in user — throws when missing or banned. */
-export async function requireActiveSession() {
+/**
+ * Active signed-in user — throws when missing or banned.
+ * @param {{ requireAge?: boolean }} [options]
+ *   When `requireAge` is true (default), users without `ageConfirmedAt` are rejected.
+ *   Pass `requireAge: false` for the age confirmation action only.
+ */
+export async function requireActiveSession({ requireAge = true } = {}) {
   const session = await getSession();
   if (!session) {
     throw new Error("UNAUTHORIZED");
@@ -39,6 +45,15 @@ export async function requireActiveSession() {
     if (status === "deactivated") throw new Error("DEACTIVATED");
     if (status === "deleted") throw new Error("DELETED");
     throw new Error("INACTIVE");
+  }
+  if (requireAge && !hasConfirmedAge(session.user)) {
+    // Session payload may omit additionalFields after a schema add; fall back to DB.
+    const { getAuthUserById } = await import("./users");
+    const user = await getAuthUserById(session.user.id);
+    if (!hasConfirmedAge(user)) {
+      throw new Error("AGE_REQUIRED");
+    }
+    session.user = { ...session.user, ...user };
   }
   return session;
 }
@@ -112,6 +127,7 @@ export function authActionError(err) {
   if (err.message === "DEACTIVATED") return { error: "deactivated" };
   if (err.message === "DELETED") return { error: "deleted" };
   if (err.message === "FORBIDDEN") return { error: "forbidden" };
+  if (err.message === "AGE_REQUIRED") return { error: "age_required" };
   return null;
 }
 
@@ -127,6 +143,10 @@ async function runGuardedAction(label, guard, handler, { rethrow = true, error =
     const guardResult = await guard();
     return await handler(guardResult);
   } catch (err) {
+    // `redirect()` / `notFound()` must propagate out of the action.
+    const { isNextRouterError } = await import("next/dist/client/components/is-next-router-error");
+    if (isNextRouterError(err)) throw err;
+
     const authErr = authActionError(err);
     if (authErr) return authErr;
     console.error(`${label} failed:`, err);
@@ -140,10 +160,16 @@ async function runGuardedAction(label, guard, handler, { rethrow = true, error =
  * @template T
  * @param {string} label
  * @param {(session: Awaited<ReturnType<typeof requireActiveSession>>) => Promise<T>} handler
- * @param {{ rethrow?: boolean; error?: string }} [options]
+ * @param {{ rethrow?: boolean; error?: string; requireAge?: boolean }} [options]
  */
-export function withAuthAction(label, handler, options) {
-  return runGuardedAction(label, requireActiveSession, handler, options);
+export function withAuthAction(label, handler, options = {}) {
+  const { requireAge = true, ...rest } = options;
+  return runGuardedAction(
+    label,
+    () => requireActiveSession({ requireAge }),
+    handler,
+    rest,
+  );
 }
 
 /**

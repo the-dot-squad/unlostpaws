@@ -49,6 +49,10 @@ export async function getMatchGroupsForUser(userId) {
     const listing = ownMap.get(ownId);
     if (!listing) continue;
 
+    // Drop orphans — counterpart listing deleted/removed — so counts stay honest.
+    const counterpartListing = counterpartMap.get(otherId);
+    if (!counterpartListing) continue;
+
     if (!groups.has(ownId)) {
       groups.set(ownId, { listing, matches: [], pendingCount: 0 });
     }
@@ -56,7 +60,7 @@ export async function getMatchGroupsForUser(userId) {
     const group = groups.get(ownId);
     group.matches.push({
       ...match,
-      counterpartListing: counterpartMap.get(otherId) ?? null,
+      counterpartListing,
     });
 
     if (
@@ -113,14 +117,17 @@ export async function getMatchesForListing(userId, listingPublicId) {
 
   const counterpartMap = await loadListingsMap(otherIds);
 
-  const enriched = matches.map((match) => {
+  const enriched = [];
+  for (const match of matches) {
     const isA = String(match.listingAId) === String(lid);
     const otherId = String(isA ? match.listingBId : match.listingAId);
-    return {
+    const counterpartListing = counterpartMap.get(otherId);
+    if (!counterpartListing) continue;
+    enriched.push({
       ...match,
-      counterpartListing: counterpartMap.get(otherId) ?? null,
-    };
-  });
+      counterpartListing,
+    });
+  }
 
   return { listing, matches: enriched };
 }

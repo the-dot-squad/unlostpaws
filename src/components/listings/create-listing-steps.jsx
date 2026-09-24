@@ -21,6 +21,7 @@ import { BreedSuggest, ColorSuggest } from "@/components/form/breed-color-sugges
 import { PetTypeIcon } from "@/components/pets/pet-type-icon";
 import { ImageUploader } from "@/components/listings/image-uploader";
 import { LocationPickerMap } from "@/components/map/location-picker";
+import { MAX_ADDRESS, MAX_CITY, MAX_DESCRIPTION } from "@/config/constants/field-limits";
 
 export function CreateListingDetailsStep({ form, update, t }) {
   const tBreeds = useTranslations("breeds");
@@ -93,13 +94,21 @@ export function CreateListingDetailsStep({ form, update, t }) {
           value={form.description}
           onChange={(e) => update("description", e.target.value)}
           rows={4}
+          maxLength={MAX_DESCRIPTION}
         />
       </div>
     </div>
   );
 }
 
-export function CreateListingPhotosStep({ form, update, t, onGpsFound, onUploadBlockedChange }) {
+export function CreateListingPhotosStep({
+  form,
+  update,
+  t,
+  onGpsFound,
+  onUploadBlockedChange,
+  onUploadingChange,
+}) {
   return (
     <div className="space-y-6">
       <ImageUploader
@@ -108,6 +117,7 @@ export function CreateListingPhotosStep({ form, update, t, onGpsFound, onUploadB
         hint={t("listings.imagesHint")}
         onGpsFound={onGpsFound}
         onBlockedChange={onUploadBlockedChange}
+        onUploadingChange={onUploadingChange}
       />
 
       <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
@@ -167,11 +177,19 @@ export function CreateListingLocationStep({
         <Label>
           {t("listings.address")} ({t("common.optional")})
         </Label>
-        <Input value={form.address} onChange={(e) => update("address", e.target.value)} />
+        <Input
+          value={form.address}
+          onChange={(e) => update("address", e.target.value)}
+          maxLength={MAX_ADDRESS}
+        />
       </div>
       <div className="space-y-2">
         <Label>{t("listings.city")}</Label>
-        <Input value={form.city} onChange={(e) => update("city", e.target.value)} />
+        <Input
+          value={form.city}
+          onChange={(e) => update("city", e.target.value)}
+          maxLength={MAX_CITY}
+        />
       </div>
       <CountrySelect
         label={t("listings.country")}

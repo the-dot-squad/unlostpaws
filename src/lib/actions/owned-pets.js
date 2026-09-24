@@ -15,13 +15,14 @@ import {
 import { revalidatePath } from "next/cache";
 import { deleteOwnedPetVector } from "@/lib/qdrant";
 import { encodeOwnedPetPublicId } from "@/lib/public-id";
-import { markUploadsAttached } from "@/lib/storage/cleanup";
+import { markUploadsAttached, assertUploadsOwnedByUser } from "@/lib/storage/cleanup";
 import { isPremium } from "@/lib/premium/entitlements";
 import { normalizeDigitalCollar } from "@/lib/pets/digital-collar-shared";
 import { revealTagContact } from "@/lib/pets/reveal-tag-contact";
 import { runTurnstileAction } from "@/lib/turnstile";
 import { TURNSTILE_ACTIONS } from "@/config/constants/turnstile";
 import { connectDB } from "@/config/db";
+import { getAuthUserById } from "@/lib/auth/users";
 
 function mapOwnedPetValidationError(parsed) {
   if (parsed.ok) return null;
@@ -29,7 +30,33 @@ function mapOwnedPetValidationError(parsed) {
   if (parsed.error === "contact_required") return "CONTACT_REQUIRED";
   if (parsed.error === "medical_alerts_too_long") return "MEDICAL_ALERTS_TOO_LONG";
   if (parsed.error === "required") return "REQUIRED";
-  return "PHOTO_REQUIRED";
+  if (
+    parsed.error === "name_too_long" ||
+    parsed.error === "breed_too_long" ||
+    parsed.error === "color_too_long" ||
+    parsed.error === "description_too_long" ||
+    parsed.error === "too_long"
+  ) {
+    return "VALIDATION_FAILED";
+  }
+  if (parsed.field === "photo" || parsed.field?.startsWith("photo.")) {
+    return "PHOTO_REQUIRED";
+  }
+  return "VALIDATION_FAILED";
+}
+
+/**
+ * Collect image s3 keys and verify they belong to the session user.
+ * @param {{ photo?: { s3Key?: string }, photo2?: { s3Key?: string }, passportPhoto?: { s3Key?: string } }} petData
+ * @param {string} userId
+ */
+async function assertOwnedPetUploads(petData, userId) {
+  const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(
+    Boolean
+  );
+  const ownership = await assertUploadsOwnedByUser(s3Keys, userId);
+  if (!ownership.ok) return { error: "UPLOAD_INVALID" };
+  return { s3Keys };
 }
 
 /**
@@ -81,7 +108,8 @@ export async function createOwnedPet(data) {
     }
 
     const petData = parsed.data;
-    const collarWrite = resolveDigitalCollarWrite(session.user, petData.digitalCollar);
+    const authUser = await getAuthUserById(session.user.id);
+    const collarWrite = resolveDigitalCollarWrite(authUser, petData.digitalCollar);
     if (collarWrite.error) return { error: collarWrite.error };
 
     const settings = await getAppSettings();
@@ -98,6 +126,9 @@ export async function createOwnedPet(data) {
     if (!isUnique) {
       return { error: "MICROCHIP_DUPLICATE" };
     }
+
+    const uploadCheck = await assertOwnedPetUploads(petData, session.user.id);
+    if (uploadCheck.error) return { error: uploadCheck.error };
 
     const pet = await OwnedPet.create({
       userId: session.user.id,
@@ -118,8 +149,7 @@ export async function createOwnedPet(data) {
     pet.publicId = encodeOwnedPetPublicId(pet._id);
     await pet.save();
 
-    const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
-    await markUploadsAttached(s3Keys);
+    await markUploadsAttached(uploadCheck.s3Keys);
 
     const enqueueResult = await enqueueOwnedPetProcessing({
       ownedPetId: pet._id.toString(),
@@ -154,13 +184,17 @@ export async function updateOwnedPet(publicId, data) {
     }
 
     const petData = parsed.data;
-    const collarWrite = resolveDigitalCollarWrite(session.user, petData.digitalCollar);
+    const authUser = await getAuthUserById(session.user.id);
+    const collarWrite = resolveDigitalCollarWrite(authUser, petData.digitalCollar);
     if (collarWrite.error) return { error: collarWrite.error };
 
     const isUnique = await checkMicrochipUnique(petData.microchipId, pet._id);
     if (!isUnique) {
       return { error: "MICROCHIP_DUPLICATE" };
     }
+
+    const uploadCheck = await assertOwnedPetUploads(petData, session.user.id);
+    if (uploadCheck.error) return { error: uploadCheck.error };
 
     const photoChanged = pet.photo.url !== petData.photo.url;
 
@@ -171,8 +205,12 @@ export async function updateOwnedPet(publicId, data) {
     pet.color = petData.color;
     pet.description = petData.description || "";
     pet.photo = petData.photo;
-    pet.photo2 = petData.photo2;
-    pet.passportPhoto = petData.passportPhoto;
+    if (petData.photo2) {
+      pet.photo2 = petData.photo2;
+    }
+    if (petData.passportPhoto) {
+      pet.passportPhoto = petData.passportPhoto;
+    }
     if (collarWrite.collar) {
       pet.digitalCollar = collarWrite.collar;
     }
@@ -194,8 +232,14 @@ export async function updateOwnedPet(publicId, data) {
 
     await pet.save();
 
-    const s3Keys = [petData.photo?.s3Key, petData.photo2?.s3Key, petData.passportPhoto?.s3Key].filter(Boolean);
-    await markUploadsAttached(s3Keys);
+    const unsetFields = {};
+    if (!petData.photo2) unsetFields.photo2 = 1;
+    if (!petData.passportPhoto) unsetFields.passportPhoto = 1;
+    if (Object.keys(unsetFields).length) {
+      await OwnedPet.updateOne({ _id: pet._id }, { $unset: unsetFields });
+    }
+
+    await markUploadsAttached(uploadCheck.s3Keys);
 
     revalidatePath("/");
     revalidateTagPage(publicId);

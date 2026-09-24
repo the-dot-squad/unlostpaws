@@ -30,6 +30,12 @@ import { formatDate } from "@/lib/format";
 import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import {
+  MAX_ADDRESS,
+  MAX_CITY,
+  MAX_COUNTRY,
+  MAX_DESCRIPTION,
+} from "@/config/constants/field-limits";
 
 /** Sub-component for editing listing details. */
 function DetailsCard({ form, update }) {
@@ -101,7 +107,12 @@ function DetailsCard({ form, update }) {
 
         <div className="space-y-2">
           <Label>Description</Label>
-          <Textarea rows={4} value={form.description} onChange={(e) => update("description", e.target.value)} />
+          <Textarea
+            rows={4}
+            value={form.description}
+            onChange={(e) => update("description", e.target.value)}
+            maxLength={MAX_DESCRIPTION}
+          />
         </div>
       </CardContent>
     </Card>
@@ -154,17 +165,29 @@ function LocationCard({ form, update, onCoordinatesChange, onReverseGeocode }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>City</Label>
-            <Input value={form.city} onChange={(e) => update("city", e.target.value)} />
+            <Input
+              value={form.city}
+              onChange={(e) => update("city", e.target.value)}
+              maxLength={MAX_CITY}
+            />
           </div>
           <div className="space-y-2">
             <Label>Country</Label>
-            <Input value={form.country} onChange={(e) => update("country", e.target.value)} />
+            <Input
+              value={form.country}
+              onChange={(e) => update("country", e.target.value)}
+              maxLength={MAX_COUNTRY}
+            />
           </div>
         </div>
 
         <div className="space-y-2">
           <Label>Address</Label>
-          <Input value={form.address} onChange={(e) => update("address", e.target.value)} />
+          <Input
+            value={form.address}
+            onChange={(e) => update("address", e.target.value)}
+            maxLength={MAX_ADDRESS}
+          />
         </div>
       </CardContent>
     </Card>

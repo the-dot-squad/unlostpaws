@@ -23,6 +23,12 @@ import { AdminRequeueProcessingButton } from "@/components/admin/requeue-process
 import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import {
+  MAX_ADMIN_NOTE,
+  MAX_DESCRIPTION,
+  MAX_MICROCHIP_INPUT,
+  MAX_NAME,
+} from "@/config/constants/field-limits";
 
 /** Admin form to edit registered pet details. */
 export function AdminPetForm({ pet, owner }) {
@@ -82,7 +88,11 @@ export function AdminPetForm({ pet, owner }) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => update("name", e.target.value)} />
+              <Input
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+                maxLength={MAX_NAME}
+              />
             </div>
             <div className="space-y-2">
               <Label>Microchip ID</Label>
@@ -90,6 +100,7 @@ export function AdminPetForm({ pet, owner }) {
                 value={form.microchipId}
                 onChange={(e) => update("microchipId", e.target.value)}
                 className="font-mono"
+                maxLength={MAX_MICROCHIP_INPUT}
               />
             </div>
           </div>
@@ -136,12 +147,23 @@ export function AdminPetForm({ pet, owner }) {
 
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea rows={3} value={form.description} onChange={(e) => update("description", e.target.value)} />
+            <Textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => update("description", e.target.value)}
+              maxLength={MAX_DESCRIPTION}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Admin note</Label>
-            <Textarea rows={2} value={form.adminNote} onChange={(e) => update("adminNote", e.target.value)} placeholder="Internal note visible only to admins" />
+            <Textarea
+              rows={2}
+              value={form.adminNote}
+              onChange={(e) => update("adminNote", e.target.value)}
+              placeholder="Internal note visible only to admins"
+              maxLength={MAX_ADMIN_NOTE}
+            />
           </div>
         </CardContent>
       </Card>

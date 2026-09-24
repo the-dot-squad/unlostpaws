@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { getBreedKeys, getColorKeys } from "@/config/pet-attributes";
+import { MAX_BREED, MAX_COLOR } from "@/config/constants/field-limits";
 import { SuggestCombobox } from "@/components/form/suggest-combobox";
 
 /**
@@ -42,6 +43,7 @@ export function ColorSuggest({
       disabled={disabled}
       placeholder={placeholder}
       className={className}
+      maxLength={MAX_COLOR}
     />
   );
 }
@@ -84,6 +86,7 @@ export function BreedSuggest({
       disabled={disabled}
       placeholder={placeholder}
       className={className}
+      maxLength={MAX_BREED}
     />
   );
 }

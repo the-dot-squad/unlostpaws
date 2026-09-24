@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 /**
  * Hybrid combobox: pick a suggestion or commit custom free-text.
+ * Suggestion picks store `option.value` (canonical key); the trigger shows `option.label`.
  *
  * @param {object} props
  * @param {string} props.value
@@ -21,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
  * @param {boolean} [props.disabled]
  * @param {string} [props.className]
  * @param {boolean} [props.allowCustom=true]
+ * @param {number} [props.maxLength] Cap on custom free-text commits and search input
  */
 export function SuggestCombobox({
   value,
@@ -32,6 +34,7 @@ export function SuggestCombobox({
   disabled = false,
   className,
   allowCustom = true,
+  maxLength,
 }) {
   const t = useTranslations("suggest");
   const [open, setOpen] = useState(false);
@@ -45,22 +48,41 @@ export function SuggestCombobox({
     );
   }, [options, query]);
 
+  const displayValue = useMemo(() => {
+    if (!value) return "";
+    const match = options.find((o) => o.value === value || o.label === value);
+    return match ? match.label : value;
+  }, [value, options]);
+
   const trimmedQuery = query.trim();
-  const exactLabelMatch = options.some(
-    (o) => o.label.toLowerCase() === trimmedQuery.toLowerCase()
+  const exactOptionMatch = options.some(
+    (o) =>
+      o.label.toLowerCase() === trimmedQuery.toLowerCase() ||
+      o.value.toLowerCase() === trimmedQuery.toLowerCase()
   );
-  const showCustom =
-    allowCustom && trimmedQuery.length > 0 && !exactLabelMatch;
+  const showCustom = allowCustom && trimmedQuery.length > 0 && !exactOptionMatch;
+
+  function clamp(text) {
+    if (typeof maxLength === "number" && text.length > maxLength) {
+      return text.slice(0, maxLength);
+    }
+    return text;
+  }
 
   function commit(next) {
-    onChange(next);
+    onChange(clamp(next));
     setOpen(false);
     setQuery("");
   }
 
   function handleOpenChange(nextOpen) {
-    if (!nextOpen && allowCustom && trimmedQuery && trimmedQuery !== value) {
-      onChange(trimmedQuery);
+    if (!nextOpen && allowCustom && trimmedQuery && trimmedQuery !== value && trimmedQuery !== displayValue) {
+      const matched = options.find(
+        (o) =>
+          o.label.toLowerCase() === trimmedQuery.toLowerCase() ||
+          o.value.toLowerCase() === trimmedQuery.toLowerCase()
+      );
+      onChange(clamp(matched ? matched.value : trimmedQuery));
     }
     if (!nextOpen) setQuery("");
     setOpen(nextOpen);
@@ -79,8 +101,8 @@ export function SuggestCombobox({
           disabled={disabled}
           className={cn("w-full justify-between font-normal", className)}
         >
-          {value ? (
-            <span className="truncate">{value}</span>
+          {displayValue ? (
+            <span className="truncate">{displayValue}</span>
           ) : (
             <span className="text-muted-foreground">{placeholder || t("search")}</span>
           )}
@@ -92,6 +114,7 @@ export function SuggestCombobox({
           <Input
             placeholder={t("search")}
             value={query}
+            maxLength={maxLength}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -99,7 +122,7 @@ export function SuggestCombobox({
                 if (showCustom) {
                   commit(trimmedQuery);
                 } else if (filtered[0]) {
-                  commit(filtered[0].label);
+                  commit(filtered[0].value);
                 }
               }
             }}
@@ -131,14 +154,14 @@ export function SuggestCombobox({
                   type="button"
                   className={cn(
                     "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent",
-                    value === option.label && "bg-accent"
+                    (value === option.value || value === option.label) && "bg-accent"
                   )}
-                  onClick={() => commit(option.label)}
+                  onClick={() => commit(option.value)}
                 >
                   <Check
                     className={cn(
                       "size-4",
-                      value === option.label ? "opacity-100" : "opacity-0"
+                      value === option.value || value === option.label ? "opacity-100" : "opacity-0"
                     )}
                   />
                   <span className="flex-1 text-start">{option.label}</span>

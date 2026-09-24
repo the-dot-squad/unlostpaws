@@ -11,7 +11,7 @@ import { canUserExtendListing } from "@/lib/listings/expiry";
 import { formatDate } from "@/lib/format";
 
 /**
- * Owner extension UI shown on the listing edit form.
+ * Owner extension / revive UI shown on the listing edit form.
  */
 export function ListingExtensionPanel({ listingId, listing, extensionPolicy, extensionLocked }) {
   const t = useTranslations("listings.extension");
@@ -41,7 +41,7 @@ export function ListingExtensionPanel({ listingId, listing, extensionPolicy, ext
     if (result.expiresAt) {
       setExpiresAt(result.expiresAt);
     }
-    toast.success(t("success"));
+    toast.success(check.revive ? t("reviveSuccess") : t("success"));
     router.refresh();
   }
 
@@ -58,6 +58,10 @@ export function ListingExtensionPanel({ listingId, listing, extensionPolicy, ext
           ) : null}
           {!extensionPolicy.enabled ? (
             <p className="text-sm text-muted-foreground">{t("disabled")}</p>
+          ) : check.allowed && check.revive ? (
+            <p className="text-sm text-muted-foreground">
+              {t("canRevive", { days: extensionPolicy.extensionDays })}
+            </p>
           ) : check.allowed ? (
             <p className="text-sm text-muted-foreground">
               {t("canExtend", {
@@ -69,8 +73,6 @@ export function ListingExtensionPanel({ listingId, listing, extensionPolicy, ext
             <p className="text-sm text-muted-foreground">
               {t("tooEarly", { fromDay: check.fromDay, remaining: check.daysUntil })}
             </p>
-          ) : check.reason === "already_expired" ? (
-            <p className="text-sm text-muted-foreground">{t("expired")}</p>
           ) : check.reason === "reunion_confirmed" ? (
             <p className="text-sm text-muted-foreground">{t("reunionLocked")}</p>
           ) : null}
@@ -79,7 +81,13 @@ export function ListingExtensionPanel({ listingId, listing, extensionPolicy, ext
 
       {check.allowed ? (
         <Button type="button" variant="secondary" onClick={handleExtend} disabled={loading}>
-          {loading ? t("extending") : t("extendButton", { days: extensionPolicy.extensionDays })}
+          {loading
+            ? check.revive
+              ? t("reviving")
+              : t("extending")
+            : check.revive
+              ? t("reviveButton", { days: extensionPolicy.extensionDays })
+              : t("extendButton", { days: extensionPolicy.extensionDays })}
         </Button>
       ) : null}
     </div>

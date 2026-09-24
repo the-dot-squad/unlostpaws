@@ -27,7 +27,7 @@ const ownedPetSchema = new mongoose.Schema(
     publicId: { type: String, unique: true, sparse: true, index: true },
     userId: { type: String, required: true, index: true },
     name: { type: String, required: true },
-    microchipId: { type: String, required: true, unique: true, index: true },
+    microchipId: { type: String, required: true },
     petType: { type: String, enum: PET_TYPES, required: true, index: true },
     breed: { type: String, default: "" },
     color: { type: String, required: true },
@@ -59,6 +59,13 @@ const ownedPetSchema = new mongoose.Schema(
 );
 
 ownedPetSchema.index({ userId: 1, status: 1, createdAt: -1 });
+ownedPetSchema.index(
+  { microchipId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["active", "archived"] } },
+  }
+);
 
 export const OwnedPet =
   mongoose.models.OwnedPet || mongoose.model("OwnedPet", ownedPetSchema);

@@ -61,6 +61,21 @@ function listingCountIncrementCond(resetField, countField, dateFormat, currentPe
   );
 }
 
+/**
+ * Apply admin listingLimitOverride as a numeric cap (0 = no listings).
+ * Non-finite / missing override leaves settings-based caps unchanged.
+ *
+ * @param {object | null | undefined} user
+ * @param {{ maxListingsPerDay: number, maxListingsPerMonth: number, premium: boolean }} caps
+ */
+function applyListingLimitOverride(user, caps) {
+  if (user?.listingLimitOverride == null) return caps;
+  const override = Number(user.listingLimitOverride);
+  if (!Number.isFinite(override)) return caps;
+  const n = Math.max(0, override);
+  return { ...caps, maxListingsPerDay: n, maxListingsPerMonth: n };
+}
+
 export async function checkListingRateLimit(userId) {
   const settings = await getAppSettings();
   const user = await getAuthUserById(userId);
@@ -68,7 +83,6 @@ export async function checkListingRateLimit(userId) {
   if (!user) return { allowed: false, reason: "user_not_found" };
   const status = user.status || (user.banned ? "banned" : "active");
   if (status !== "active") return { allowed: false, reason: status === "banned" ? "banned" : "inactive" };
-  if (user.listingLimitOverride != null) return { allowed: true };
 
   const now = new Date();
   const listingQuota = user.quota?.listing || {};
@@ -78,7 +92,7 @@ export async function checkListingRateLimit(userId) {
   if (!listingQuota.todayReset || !isSameDay(new Date(listingQuota.todayReset), now)) today = 0;
   if (!listingQuota.monthReset || !isSameMonth(new Date(listingQuota.monthReset), now)) month = 0;
 
-  const caps = listingCapsForUser(user, settings);
+  const caps = applyListingLimitOverride(user, listingCapsForUser(user, settings));
   if (today >= caps.maxListingsPerDay) return { allowed: false, reason: "daily" };
   if (month >= caps.maxListingsPerMonth) return { allowed: false, reason: "monthly" };
 
@@ -170,7 +184,7 @@ export async function enforceUploadRateLimits({ userId, prefix }) {
   try {
     const settings = await getAppSettings();
     const user = await getAuthUserById(userId);
-    const caps = listingCapsForUser(user, settings);
+    const caps = applyListingLimitOverride(user, listingCapsForUser(user, settings));
     const cap = caps.maxListingsPerDay * MAX_LISTING_IMAGES;
     if ((await getDailyUploadCount(userId, prefix)) >= cap) {
       return { allowed: false, error: "upload_daily_limit", status: 429 };

@@ -9,8 +9,8 @@ import {
   dismissReunionMatch,
   isMissingListingOwner,
 } from "@/lib/intelligence/matching/reunify";
+import { revalidateLocalizedPath } from "@/lib/i18n/revalidate";
 import { updateMatchStatusSchema, validate } from "@/lib/validation";
-import { revalidatePath } from "next/cache";
 
 /** Confirm or dismiss a reunification match (missing alert owner only). */
 export async function updateMatchStatus(matchId, status) {
@@ -38,7 +38,9 @@ export async function updateMatchStatus(matchId, status) {
 
     if (result.error) return { error: result.error };
 
-    revalidatePath("/");
+    await revalidateLocalizedPath("/");
+    await revalidateLocalizedPath("/account");
+    await revalidateLocalizedPath("/account/matches");
     return { success: true };
   });
 }

@@ -18,10 +18,11 @@ export async function dispatchMlCallback(request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const jobType = body.jobType || (body.ownedPetId ? "owned-pet" : "listing");
+  const jobType = body.jobType || (body.ownedPetId ? "owned-pet" : body.listingId ? "listing" : null);
 
+  // Failure payloads may omit jobType; body.error + entity id is enough.
   if (typeof body.error === "string" && !body.images?.length) {
-    return processFailureCallback(body);
+    return processFailureCallback({ ...body, jobType: body.jobType || jobType });
   }
 
   if (jobType === "owned-pet") {
@@ -32,5 +33,9 @@ export async function dispatchMlCallback(request) {
     return NextResponse.json({ success: true, acknowledged: true });
   }
 
-  return processListingCallback(body);
+  if (!jobType || jobType === "listing") {
+    return processListingCallback(body);
+  }
+
+  return NextResponse.json({ error: "Unknown job type" }, { status: 400 });
 }

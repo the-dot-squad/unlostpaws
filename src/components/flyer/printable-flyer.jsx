@@ -4,6 +4,7 @@ import Image from "next/image";
 import { QRCodeDisplay } from "@/components/flyer/qr-code-display";
 import { MapPin, Calendar, Phone, Mail, Award, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { resolveAttributeLabel } from "@/config/pet-attributes";
 
 /**
  * Splits an address string into detailed line 1 and line 2 for poster printing.
@@ -42,9 +43,13 @@ export function PrintableFlyer({
 }) {
   const flyerT = useTranslations("flyer");
   const tPetTypes = useTranslations("petTypes");
+  const tColors = useTranslations("colors");
+  const tBreeds = useTranslations("breeds");
   const t = tProp || flyerT;
 
   const petTypeLabel = listing.petType ? tPetTypes(listing.petType) || listing.petType : "";
+  const colorLabel = resolveAttributeLabel(listing.color, tColors);
+  const breedLabel = resolveAttributeLabel(listing.breed, tBreeds);
 
   const images = listing.images || [];
   const indexList =
@@ -107,11 +112,11 @@ export function PrintableFlyer({
           {t("details")}
         </div>
         <h2 className="mt-1 text-2xl font-extrabold capitalize text-slate-900">
-          {petTypeLabel} {listing.breed ? `· ${listing.breed}` : ""}
+          {petTypeLabel} {breedLabel ? `· ${breedLabel}` : ""}
         </h2>
         <div className="mt-3 flex items-center gap-2 text-sm">
           <span className="font-semibold text-slate-700">{t("color") || "Color"}:</span>
-          <span className="capitalize text-slate-900">{listing.color}</span>
+          <span className="capitalize text-slate-900">{colorLabel}</span>
         </div>
       </div>
 

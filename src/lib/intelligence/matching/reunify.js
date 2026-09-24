@@ -52,15 +52,23 @@ export async function confirmReunionMatch(match, userId) {
     await resolveListingRecord(missingListing);
   }
 
-  await ListingMatch.updateMany(
-    {
-      _id: { $ne: match._id },
-      tier: "reunification",
-      missingListingId: missingId,
-      status: { $in: ["pending", "notified"] },
-    },
-    { $set: { status: "dismissed", decidedByUserId: userId, decidedAt: now } }
-  );
+  // Dismiss sibling reunification candidates for the same missing alert.
+  // Prefer missingListingId, but also match by A/B id+type for older rows.
+  if (missingId) {
+    await ListingMatch.updateMany(
+      {
+        _id: { $ne: match._id },
+        tier: "reunification",
+        status: { $in: ["pending", "notified"] },
+        $or: [
+          { missingListingId: missingId },
+          { listingAId: missingId, listingAType: "missing" },
+          { listingBId: missingId, listingBType: "missing" },
+        ],
+      },
+      { $set: { status: "dismissed", decidedByUserId: userId, decidedAt: now } }
+    );
+  }
 
   return { success: true };
 }
